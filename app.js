@@ -1,11 +1,20 @@
+require("express-async-errors");
+// essentials
 const express = require("express");
 const connectDB = require("./db/connection");
+//middlewares
+const errorHandlerMiddleware = require("./middlewares/errorHandlerMiddleware");
+const notFoundMiddleware = require("./middlewares/notFoundMiddleware");
+
 const PORT = process.env.PORT;
 const app = express();
 
 app.get("/", (req, res) => {
   res.send("Welcome to tikitaka prototype backend");
 });
+
+app.use(errorHandlerMiddleware);
+app.use(notFoundMiddleware);
 
 const start = async () => {
   try {
