@@ -13,6 +13,8 @@ app.get("/", (req, res) => {
   res.send("Welcome to tikitaka prototype backend");
 });
 
+app.get("/api/v1/auth", authRouter);
+
 app.use(errorHandlerMiddleware);
 app.use(notFoundMiddleware);
 
