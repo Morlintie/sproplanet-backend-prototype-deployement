@@ -10,9 +10,8 @@ const authRouter = require("./routes/authRouter");
 const PORT = process.env.PORT;
 const app = express();
 
-app.get("/", (req, res) => {
-  res.send("Welcome to tikitaka prototype backend");
-});
+app.use(express.json());
+app.use(express.static("./public"));
 
 app.use("/api/v1/auth", authRouter);
 

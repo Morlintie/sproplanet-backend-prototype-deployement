@@ -5,14 +5,14 @@ const nodemailerConfig = {
   port: 587,
   secure: false,
   auth: {
-    user: "	fidel.jones@ethereal.email",
-    pass: "	HBZhAb15322yrgjFN9",
+    user: "romaine.sawayn@ethereal.email",
+    pass: "vjrBBMeBEwCdEFdf6Z",
   },
 };
 
 const sendEmail = async (to, subject, text, html) => {
   const transporter = nodemailer.createTransport(nodemailerConfig);
-  await transporter.sendEmail({
+  await transporter.sendMail({
     from: "Morlintie <valinumvenenum@gmail.com>",
     to: to,
     subject: subject,
