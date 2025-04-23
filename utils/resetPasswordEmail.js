@@ -7,9 +7,6 @@ const resetPasswordEmail = async (to, name, code) => {
   Here is your verification code ${code}`;
   const realCode = code.split("");
 
-  const logoBuffer = await fs.readFile("../media/sporplanet.png");
-  const logoBase64 = logoBuffer.toString("base64");
-
   const html = `<!DOCTYPE html>
 <html lang="en">
   <head>

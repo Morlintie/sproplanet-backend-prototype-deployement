@@ -73,15 +73,37 @@ const userSchema = new mongoose.Schema({
     type: [mongoose.Types.ObjectId],
     default: [],
   },
+  goalKeeper: {
+    type: Boolean,
+    required: [true, "Please provide a keeper status"],
+    default: false,
+  },
 
   //previous matches?
 });
 
 userSchema.pre("save", async function () {
-  const salt = await bcrypt.genSalt(10);
+  if (this.isModified("password")) {
+    const salt = await bcrypt.genSalt(10);
 
-  this.password = await bcrypt.hash(this.password, salt);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
 });
+
+userSchema.pre("findOneAndUpdate", async function () {
+  if (this.getUpdate().password) {
+    const salt = await bcrypt.genSalt(10);
+    this.getUpdate().password = await bcrypt.hash(
+      this.getUpdate().password,
+      salt
+    );
+  }
+});
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  const passwordValid = await bcrypt.compare(candidatePassword, this.password);
+  return passwordValid;
+};
 
 const User = mongoose.model("User", userSchema);
 
