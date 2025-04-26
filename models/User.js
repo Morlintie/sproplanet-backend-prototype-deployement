@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, "Please provide username"],
-    trim: true,
   },
   email: {
     type: String,
@@ -16,8 +15,15 @@ const userSchema = new mongoose.Schema({
 
   password: {
     type: String,
-    required: [true, "Please provide user password"],
+    required: [
+      function () {
+        return !this.googleId;
+      },
+      "Please provide user password.",
+    ],
   },
+
+  googleId: { type: String },
 
   validationNumber: {
     type: String,

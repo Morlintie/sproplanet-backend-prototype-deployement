@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 //middlewares
 const errorHandlerMiddleware = require("./middlewares/errorHandlerMiddleware");
 const notFoundMiddleware = require("./middlewares/notFoundMiddleware");
+const passport = require("passport");
 //routers
 const authRouter = require("./routes/authRouter");
 const PORT = process.env.PORT;
@@ -17,8 +18,15 @@ const morgan = require("morgan");
 app.use(express.json());
 app.use(morgan("tiny"));
 app.use(cookieParser(process.env.JWT_SECRET));
+app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRouter);
+
+app.get("/", (req, res) => {
+  res.send(
+    "<a href ='/api/v1/auth/google'> Click here to test google oauth </a> "
+  );
+});
 
 app.use(errorHandlerMiddleware);
 app.use(notFoundMiddleware);

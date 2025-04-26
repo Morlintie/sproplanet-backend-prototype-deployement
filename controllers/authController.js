@@ -1,3 +1,4 @@
+require("../utils/config/oauthConfig");
 const User = require("../models/User");
 const Token = require("../models/Token");
 const { StatusCodes } = require("http-status-codes");
@@ -6,6 +7,7 @@ const { BadRequestError, UnauthorizedError } = require("../errors");
 const { createCookie } = require("../utils");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 
 const register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -171,6 +173,57 @@ const resetPassword = async (req, res) => {
     .json({ msg: "Your password has been successfully changed" });
 };
 
+const takeGoogleInfo = passport.authenticate("google", {
+  scope: ["email", "profile"],
+});
+
+const authenticateGoogleInfo = [
+  passport.authenticate("google", {
+    failureRedirect: "/failure",
+    session: false,
+  }),
+  async (req, res) => {
+    if (req.user?.isSync) {
+      res.redirect("/home");
+    }
+    if (req.user?.signGoogle) {
+      const code = String(Math.ceil(Math.random() * 999999));
+      const fiveMinutes = 1000 * 60 * 5;
+      const validationExpirationDate = new Date(Date.now() + fiveMinutes);
+      await User.findOneAndUpdate(
+        { _id: req.user.userId },
+        { validationExpirationDate },
+        { new: true, runValidators: true }
+      );
+      await validationEmail(req.user.email, req.user.name, code);
+      res.redirect("/reactLogin");
+    }
+
+    const user = await User.findOne({ _id: req.user.userId });
+    if (user) {
+      const isUserValid = user.isValid;
+      if (!isUserValid) {
+        throw new UnauthorizedError("Your account has been not verified yet.");
+      }
+      const cookieUser = {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        userId: user._id,
+      };
+
+      let refreshToken = await Token.findOne({ user: user._id });
+      if (!refreshToken) {
+        const token = crypto.randomBytes(16).toString("hex");
+        refreshToken = await Token.create({ token, user: user._id });
+      }
+
+      createCookie(res, cookieUser, refreshToken);
+    }
+
+    res.redirect("/home");
+  },
+];
 module.exports = {
   register,
   login,
@@ -179,4 +232,6 @@ module.exports = {
   userVerification,
   checkPasswordCode,
   resetPassword,
+  takeGoogleInfo,
+  authenticateGoogleInfo,
 };
