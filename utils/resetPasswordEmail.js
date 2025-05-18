@@ -1,5 +1,4 @@
 const sendEmail = require("./email");
-const fs = require("fs/promises");
 
 const resetPasswordEmail = async (to, name, code) => {
   const subject = "Password reset";

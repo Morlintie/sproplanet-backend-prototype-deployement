@@ -37,7 +37,7 @@ const verifyCookie = async (req, res) => {
     }
 
     if (refreshToken) {
-      const { user, token } = jwt.verify(token, process.env.JWT_SECRET);
+      const { user, token } = jwt.verify(refreshToken, process.env.JWT_SECRET);
 
       createCookie(res, user, token);
       return {
@@ -60,5 +60,6 @@ const verifyCookie = async (req, res) => {
 
 module.exports = {
   createCookie,
+
   verifyCookie,
 };

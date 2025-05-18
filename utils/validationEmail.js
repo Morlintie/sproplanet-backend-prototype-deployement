@@ -1,6 +1,4 @@
 const sendEmail = require("./email");
-const fs = require("fs/promises");
-const path = require("path");
 
 const validationEmail = async (to, name, code) => {
   const subject = "Email verification";

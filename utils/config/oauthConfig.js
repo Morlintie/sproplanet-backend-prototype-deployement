@@ -7,28 +7,10 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:5055/api/v1/auth/google/callback",
-      passReqToCallback: true,
+      callbackURL: "http://localhost:5000/api/v1/auth/google/callback",
     },
-    async (req, accessToken, refreshToken, profile, done) => {
+    async (accessToken, refreshToken, profile, done) => {
       try {
-        if (req.user?.userId) {
-          const userId = req.user.userId;
-          const syncUser = await User.findOneAndUpdate(
-            { _id: userId },
-            { googleId: profile.id },
-            { new: true, runValidators: true }
-          );
-          const user = {
-            name: syncUser.name,
-            email: syncUser.email,
-            role: syncUser.role,
-            userId: syncUser._id,
-            isSync: true,
-          };
-          return done(null, user);
-        }
-
         const logUser = await User.findOne({ googleId: profile.id });
         if (logUser) {
           const user = {

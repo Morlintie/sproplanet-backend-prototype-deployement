@@ -8,6 +8,7 @@ const {
   userVerification,
   resetPassword,
   checkPasswordCode,
+
   takeGoogleInfo,
   authenticateGoogleInfo,
 } = require("../controllers/authController");

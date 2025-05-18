@@ -2,11 +2,20 @@ require("../utils/config/oauthConfig");
 const User = require("../models/User");
 const Token = require("../models/Token");
 const { StatusCodes } = require("http-status-codes");
-const { validationEmail, resetPasswordEmail } = require("../utils");
-const { BadRequestError, UnauthorizedError } = require("../errors");
-const { createCookie } = require("../utils");
+const {
+  validationEmail,
+  resetPasswordEmail,
+  createCookie,
+} = require("../utils");
+const {
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+} = require("../errors");
+
 const crypto = require("crypto");
-const jwt = require("jsonwebtoken");
+
 const passport = require("passport");
 
 const register = async (req, res) => {
@@ -60,6 +69,16 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (user) {
+    if (user.role === "banned") {
+      throw new ForbiddenError(
+        "You have been banned, please get contact with our customer service."
+      );
+    }
+
+    if (user.isDeleted) {
+      throw new NotFoundError("User couldn't found.");
+    }
+
     const isUserVerified = user.isValid;
     if (!isUserVerified) {
       throw new UnauthorizedError("Your account haven't been verified yet.");
@@ -116,6 +135,20 @@ const forgot = async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
   if (user) {
+    if (user.role === "banned") {
+      throw new ForbiddenError(
+        "You have been banned, please get contact with our customer service."
+      );
+    }
+
+    if (user.isDeleted) {
+      throw new NotFoundError("User couldn't found.");
+    }
+
+    const isUserValid = user.isValid;
+    if (!isUserValid) {
+      throw new UnauthorizedError("Your account haven't been verified yet.");
+    }
     const code = String(Math.ceil(Math.random() * 999999));
     const fiveMinutes = 1000 * 60 * 5;
     const passwordExpirationDate = new Date(Date.now() + fiveMinutes);
@@ -139,6 +172,20 @@ const checkPasswordCode = async (req, res) => {
   const user = await User.findOne({ _id: userId });
 
   if (user) {
+    if (user.role === "banned") {
+      throw new ForbiddenError(
+        "You have been banned, please get contact with our customer service."
+      );
+    }
+
+    if (user.isDeleted) {
+      throw new NotFoundError("User couldn't found.");
+    }
+
+    const isUserValid = user.isValid;
+    if (!isUserValid) {
+      throw new UnauthorizedError("Your account haven't been verified yet.");
+    }
     if (code === user.passwordNumber) {
       if (user.passwordExpirationDate > Date.now()) {
         await User.findOneAndUpdate(
@@ -161,12 +208,36 @@ const checkPasswordCode = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const { newPassword } = req.body;
+  const { newPassword, newPasswordBackup } = req.body;
   const { id } = req.params;
+
+  const user = await User.findOne({ _id: id });
+  if (user.role === "banned") {
+    throw new ForbiddenError(
+      "You have been banned, please get contact with our customer service."
+    );
+  }
+
+  if (user.isDeleted) {
+    throw new NotFoundError("User couldn't found.");
+  }
+
+  const isUserValid = user.isValid;
+  if (!isUserValid) {
+    throw new UnauthorizedError("Your account haven't been verified yet.");
+  }
+
+  if (!newPassword || !newPasswordBackup) {
+    throw new BadRequestError("Please provide all requested data.");
+  }
+
+  if (!(newPassword === newPasswordBackup)) {
+    throw new BadRequestError("Both passwords have to match with each other.");
+  }
   await User.findOneAndUpdate(
     { _id: id },
     { password: newPassword },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true, timestamps: true }
   );
   res
     .status(StatusCodes.OK)
@@ -182,10 +253,8 @@ const authenticateGoogleInfo = [
     failureRedirect: "/failure",
     session: false,
   }),
+
   async (req, res) => {
-    if (req.user?.isSync) {
-      res.redirect("/home");
-    }
     if (req.user?.signGoogle) {
       const code = String(Math.ceil(Math.random() * 999999));
       const fiveMinutes = 1000 * 60 * 5;
@@ -196,11 +265,20 @@ const authenticateGoogleInfo = [
         { new: true, runValidators: true }
       );
       await validationEmail(req.user.email, req.user.name, code);
-      res.redirect("/reactLogin");
+      res.status(StatusCodes.OK).json({ userId: req.user.userId });
     }
 
     const user = await User.findOne({ _id: req.user.userId });
     if (user) {
+      if (user.role === "banned") {
+        throw new ForbiddenError(
+          "You have been banned, please get contact with our customer service."
+        );
+      }
+
+      if (user.idDeleted) {
+        throw new NotFoundError("User couldn't found.");
+      }
       const isUserValid = user.isValid;
       if (!isUserValid) {
         throw new UnauthorizedError("Your account has been not verified yet.");
@@ -232,6 +310,7 @@ module.exports = {
   userVerification,
   checkPasswordCode,
   resetPassword,
+
   takeGoogleInfo,
   authenticateGoogleInfo,
 };
