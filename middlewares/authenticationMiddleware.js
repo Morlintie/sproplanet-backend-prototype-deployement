@@ -1,8 +1,13 @@
 const { verifyCookie } = require("../utils");
 
 const authenticationMiddleware = async (req, res, next) => {
-  req.user = verifyCookie(req, res);
+  const cookieUser = verifyCookie(req, res);
+  if (cookieUser.role === "admin") {
+    req.user = cookieUser;
+    next();
+  }
 
+  req.user = cookieUser;
   next();
 };
 

@@ -10,10 +10,12 @@ const notFoundMiddleware = require("./middlewares/notFoundMiddleware");
 const passport = require("passport");
 //routers
 const authRouter = require("./routes/authRouter");
-const PORT = process.env.PORT;
-const app = express();
+const userRouter = require("./routes/userRouter");
 //others
 const morgan = require("morgan");
+
+const PORT = process.env.PORT;
+const app = express();
 
 app.use(express.json());
 app.use(morgan("tiny"));
@@ -21,6 +23,7 @@ app.use(cookieParser(process.env.JWT_SECRET));
 app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/user", userRouter);
 
 app.get("/", (req, res) => {
   res.send(
