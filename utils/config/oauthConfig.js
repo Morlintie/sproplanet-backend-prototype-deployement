@@ -1,6 +1,7 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth2").Strategy;
 const User = require("../../models/User");
+const { NotFoundError } = require("../../errors");
 
 passport.use(
   new GoogleStrategy(
@@ -8,11 +9,15 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:5000/api/v1/auth/google/callback",
+      passReqToCallback: true,
     },
-    async (accessToken, refreshToken, profile, done) => {
+    async (req, accessToken, refreshToken, profile, done) => {
       try {
-        const logUser = await User.findOne({ googleId: profile.id });
-        if (logUser) {
+        if (req.body.isLogin) {
+          const logUser = await User.findOne({ googleId: profile.id });
+          if (!logUser) {
+            throw new NotFoundError("User couldn't found.");
+          }
           const user = {
             name: logUser.name,
             email: logUser.email,
