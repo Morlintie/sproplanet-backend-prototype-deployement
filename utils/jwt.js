@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { UnauthorizedError } = require("../errors");
 
-const createCookie = async (res, user, token) => {
+const createCookie = (res, user, token) => {
   const accessTokenJWT = jwt.sign({ user }, process.env.JWT_SECRET);
   const tokenJWT = jwt.sign({ user, token }, process.env.JWT_SECRET);
   const fifteenMinute = 1000 * 60 * 15;
@@ -22,7 +22,7 @@ const createCookie = async (res, user, token) => {
   });
 };
 
-const verifyCookie = async (req, res) => {
+const verifyCookie = (req, res) => {
   try {
     const { accessToken, refreshToken } = req.signedCookies;
     if (accessToken) {

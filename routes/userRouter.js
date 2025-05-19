@@ -1,12 +1,11 @@
 const express = require("express");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 const adminMiddleware = require("../middlewares/adminMiddleware");
+const passUserInfoMiddleware = require("../middlewares/passUserInfoMiddleware");
 const {
   getManyUser,
   getSingleUser,
   showUser,
-  getManyBannedUser,
-  getManyDeletedUser,
   getManyGoalkeeper,
   updateManyUser,
   updateSingleUser,
@@ -15,17 +14,30 @@ const {
   updateDeleteManyUser,
   deleteSingleUser,
   deleteManyUser,
+  getByGoogleId,
+  sendFriendRequest,
+  replyFriendRequest,
 } = require("../controllers/userController");
 const router = express.Router();
 
-router.get("/getMany", getManyUser); // no auth, index search
-router.get("/getSingle:id", getSingleUser); // no Auth
-router.get("/show:id", authenticationMiddleware, showUser); // auth admin
-router.get("/getManyGoalkeeper", getManyGoalkeeper); // no auth, index search
-router.get("/getManyBanned", adminMiddleware, getManyBannedUser); // admin only, query
-router.get("/getManyDeleted", adminMiddleware, getManyDeletedUser); // admin only, query
+router.get("/getMany", passUserInfoMiddleware, getManyUser); // no auth, index search
+router.get("/getSingle:id", passUserInfoMiddleware, getSingleUser); // no Auth
+router.get("/show", authenticationMiddleware, showUser); // auth admin
+router.get("/getManyGoalkeeper", passUserInfoMiddleware, getManyGoalkeeper); // no auth, index search
+router.get("/getGoogleUser:id", adminMiddleware, getByGoogleId); //admin only
+
+router.post(
+  "/sendFriendRequest:id",
+  authenticationMiddleware,
+  sendFriendRequest
+); //auth , admin
 
 router.patch("/updateMany", adminMiddleware, updateManyUser); // admin only, query
+router.patch(
+  "/replyFriendRequest:id",
+  authenticationMiddleware,
+  replyFriendRequest
+); // auth, admin
 router.patch("/updateSingle:id", authenticationMiddleware, updateSingleUser); // auth, admin
 router.patch(
   "/updatePassword:id",

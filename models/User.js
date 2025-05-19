@@ -94,6 +94,10 @@ const userSchema = new mongoose.Schema(
       type: [mongoose.Types.ObjectId],
       default: [],
     },
+
+    location: {
+      type: String,
+    },
     goalKeeper: {
       type: Boolean,
       required: [true, "Please provide a keeper status"],

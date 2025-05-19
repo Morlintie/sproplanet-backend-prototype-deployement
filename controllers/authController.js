@@ -20,7 +20,12 @@ const passport = require("passport");
 
 const register = async (req, res) => {
   const { name, email, password } = req.body;
-  const code = String(Math.ceil(Math.random() * 999999));
+  let code = 1;
+  while (code < 100000 || code > 999999) {
+    code = Math.ceil(Math.random() * 999999);
+  }
+
+  code = String(code);
 
   const validationExpirationDate = new Date(Date.now() + 1000 * 60 * 5);
   const user = await User.create({
@@ -68,6 +73,7 @@ const userVerification = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
+
   if (user) {
     if (user.role === "banned") {
       throw new ForbiddenError(
@@ -149,7 +155,13 @@ const forgot = async (req, res) => {
     if (!isUserValid) {
       throw new UnauthorizedError("Your account haven't been verified yet.");
     }
-    const code = String(Math.ceil(Math.random() * 999999));
+    let code = 1;
+    while (code < 100000 || code > 999999) {
+      code = Math.ceil(Math.random() * 999999);
+    }
+
+    code = String(code);
+
     const fiveMinutes = 1000 * 60 * 5;
     const passwordExpirationDate = new Date(Date.now() + fiveMinutes);
     await User.findOneAndUpdate(
@@ -256,12 +268,17 @@ const authenticateGoogleInfo = [
 
   async (req, res) => {
     if (req.user?.signGoogle) {
-      const code = String(Math.ceil(Math.random() * 999999));
+      let code = 1;
+      while (code < 100000 || code > 999999) {
+        code = Math.ceil(Math.random() * 999999);
+      }
+
+      code = String(code);
       const fiveMinutes = 1000 * 60 * 5;
       const validationExpirationDate = new Date(Date.now() + fiveMinutes);
       await User.findOneAndUpdate(
         { _id: req.user.userId },
-        { validationExpirationDate },
+        { validationExpirationDate, validationNumber: code },
         { new: true, runValidators: true }
       );
       await validationEmail(req.user.email, req.user.name, code);
