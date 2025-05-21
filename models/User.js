@@ -86,6 +86,11 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
 
+    selfFriendRequests: {
+      type: [mongoose.Types.ObjectId],
+      default: [],
+    },
+
     friendRequests: {
       type: [mongoose.Types.ObjectId],
       default: [],

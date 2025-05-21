@@ -246,6 +246,10 @@ const resetPassword = async (req, res) => {
   if (!(newPassword === newPasswordBackup)) {
     throw new BadRequestError("Both passwords have to match with each other.");
   }
+
+  if (user.comparePassword(newPassword)) {
+    throw new BadRequestError("New password cannot be same as old password.");
+  }
   await User.findOneAndUpdate(
     { _id: id },
     { password: newPassword },

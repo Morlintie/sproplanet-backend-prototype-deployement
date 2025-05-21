@@ -17,6 +17,10 @@ const {
   getByGoogleId,
   sendFriendRequest,
   replyFriendRequest,
+  requestPasswordChange,
+  checkPasswordCode,
+  resetPassword,
+  showPassword,
 } = require("../controllers/userController");
 const router = express.Router();
 
@@ -25,12 +29,21 @@ router.get("/getSingle:id", passUserInfoMiddleware, getSingleUser); // no Auth
 router.get("/show", authenticationMiddleware, showUser); // auth admin
 router.get("/getManyGoalkeeper", passUserInfoMiddleware, getManyGoalkeeper); // no auth, index search
 router.get("/getGoogleUser:id", adminMiddleware, getByGoogleId); //admin only
+router.get("/showPassword:id", showPassword); //auth, admin
 
 router.post(
   "/sendFriendRequest:id",
   authenticationMiddleware,
   sendFriendRequest
 ); //auth , admin
+router.post(
+  "/requestPassword",
+  authenticationMiddleware,
+  requestPasswordChange
+); // auth > email, admin
+router.post("/checkPassword", authenticationMiddleware, checkPasswordCode); // auth, admin
+
+router.patch("/resetPassword", authenticationMiddleware, resetPassword); // auth, admin
 
 router.patch("/updateMany", adminMiddleware, updateManyUser); // admin only, query
 router.patch(
@@ -39,11 +52,7 @@ router.patch(
   replyFriendRequest
 ); // auth, admin
 router.patch("/updateSingle:id", authenticationMiddleware, updateSingleUser); // auth, admin
-router.patch(
-  "/updatePassword:id",
-  authenticationMiddleware,
-  updatePasswordUser
-); // auth > email, admin
+router.patch("/updatePassword:id", adminMiddleware, updatePasswordUser); //  admin
 router.patch(
   "/deleteSingle:id",
   authenticationMiddleware,

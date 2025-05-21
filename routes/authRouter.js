@@ -19,7 +19,7 @@ router.post("/verify", userVerification);
 router.get("/logout", logout);
 router.post("/forgot", forgot);
 router.post("/check", checkPasswordCode);
-router.post("/reset/:id", resetPassword);
+router.patch("/reset/:id", resetPassword);
 router.get("/google", takeGoogleInfo);
 router.get("/google/callback", authenticateGoogleInfo);
 
