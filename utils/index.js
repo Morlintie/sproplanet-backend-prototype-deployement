@@ -1,5 +1,6 @@
 const resetPasswordEmail = require("./resetPasswordEmail");
 const validationEmail = require("./validationEmail");
+const deletionEmail = require("./deletionEmail");
 const { createCookie, verifyCookie } = require("./jwt");
 const {
   adminUserQuery,
@@ -17,4 +18,5 @@ module.exports = {
   adminUserQueryObject,
   adminUserUpdateQuery,
   adminUpdateQueryObject,
+  deletionEmail,
 };

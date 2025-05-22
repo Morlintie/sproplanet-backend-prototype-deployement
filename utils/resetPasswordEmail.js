@@ -1,7 +1,7 @@
 const sendEmail = require("./email");
 
 const resetPasswordEmail = async (to, name, code) => {
-  const subject = "Password reset";
+  const subject = "Password Reset";
   const text = `Hello ${name} 👋
   Here is your verification code ${code}`;
   const realCode = code.split("");

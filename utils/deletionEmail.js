@@ -1,7 +1,7 @@
 const sendEmail = require("./email");
 
-const validationEmail = async (to, name, code) => {
-  const subject = "Email Verification";
+const deletionEmail = async (to, name, code) => {
+  const subject = "Account Deletion";
   const text = `Hello ${name} 👋
   Here is your verification code ${code}`;
   const realCode = code.split("");
@@ -23,7 +23,7 @@ const validationEmail = async (to, name, code) => {
       justify-content: center;
     "
   >
-   <img
+    <img
       style="
         width: 200px;
 
@@ -33,8 +33,6 @@ const validationEmail = async (to, name, code) => {
       src="https://res.cloudinary.com/dppjlhdth/image/upload/v1745173480/20250416_1450_Green_Sports_Planet_remix_01jrz6wrsye9fbt932gj8vkhrs_kw090x.png"
       alt="logo"
     />
-
-  
     <h4>Here's your verification code. Please don't share with anyone</h4>
     <main
       style="
@@ -122,4 +120,4 @@ const validationEmail = async (to, name, code) => {
   return sendEmail(to, subject, text, html);
 };
 
-module.exports = validationEmail;
+module.exports = deletionEmail;

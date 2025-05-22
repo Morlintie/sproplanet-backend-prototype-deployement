@@ -4,8 +4,8 @@ const User = require("../models/User");
 const {
   adminUserQuery,
   adminUserUpdateQuery,
-  adminUpdateQueryObject,
   resetPasswordEmail,
+  deletionEmail,
 } = require("../utils");
 const {
   ForbiddenError,
@@ -149,7 +149,9 @@ const sendFriendRequest = async (req, res) => {
     throw new BadRequestError("Please provide user credentials.");
   }
 
-  const sendUser = await User.findOne({ _id: id }).select("-password");
+  const sendUser = await User.findOne({ _id: id, isDeleted: false }).select(
+    "-password"
+  );
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -183,38 +185,19 @@ const updateManyUser = async (req, res) => {
 };
 
 const updateSingleUser = async (req, res) => {
-  const { id } = req.params;
-  const { role } = req.user;
-  if (!id) {
-    throw new BadRequestError("Please provide user credentials.");
+  const { userId } = req.user;
+  const { name, email, school, age, profilePicture, location } = req.body;
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+  const newUser = await User.findOneAndUpdate(
+    { _id: userId },
+    { name, email, school, age, profilePicture, location },
+    { new: true, runValidators: true, timestamps: true }
+  ).select(userSelectedFields);
+  if (!newUser) {
+    throw new NotFoundError("User couldn't found.");
   }
-  if (role === "user" || role === "owner") {
-    const { userId } = req.user;
-    const { name, email, school, age, profilePicture, location } = req.body;
-    const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
-    const newUser = await User.findOneAndUpdate(
-      { _id: userId },
-      { name, email, school, age, profilePicture, location },
-      { new: true, runValidators: true, timestamps: true }
-    ).select(userSelectedFields);
-    if (!newUser) {
-      throw new NotFoundError("User couldn't found.");
-    }
-    res.status(StatusCodes.OK).json({ user: newUser });
-  }
-  if (role === "admin") {
-    const updateObject = adminUpdateQueryObject(req);
-    const newUser = await User.findOneAndUpdate({ _id: id }, updateObject, {
-      new: true,
-      runValidators: true,
-      timestamps: true,
-    }).select("-password");
-    if (!newUser) {
-      throw new NotFoundError("User couldn't found.");
-    }
-    res.status(StatusCodes.OK).json({ user: newUser });
-  }
+  res.status(StatusCodes.OK).json({ user: newUser });
 };
 
 const updatePasswordUser = async (req, res) => {
@@ -237,7 +220,7 @@ const updatePasswordUser = async (req, res) => {
   if (!user) {
     throw new NotFoundError("User couldn't found.");
   }
-  req.status(StatusCodes.OK).json({ user });
+  res.status(StatusCodes.OK).json({ user });
 };
 
 const requestPasswordChange = async (req, res) => {
@@ -269,7 +252,7 @@ const requestPasswordChange = async (req, res) => {
   await resetPasswordEmail(user.email, user.name, code);
   res
     .status(StatusCodes.OK)
-    .json({ msg: "Your verification email has been sent." });
+    .json({ msg: "Your reset password email has been sent." });
 };
 
 const checkPasswordCode = async (req, res) => {
@@ -314,7 +297,8 @@ const resetPassword = async (req, res) => {
     );
   }
   const user = await User.findOne({ _id: userId });
-  if (user.comparePassword(newPassword)) {
+  const isPasswordValid = await user.comparePassword(newPassword);
+  if (isPasswordValid) {
     throw new BadRequestError("New password cannot be same as old password.");
   }
 
@@ -329,35 +313,6 @@ const resetPassword = async (req, res) => {
     .json({ msg: "Your password has been updated successfully." });
 };
 
-const showPassword = async (req, res) => {
-  const { role } = req.user;
-  if (role === "user" || role === "owner") {
-    const { userId } = req.user;
-    const { password } = req.body;
-    const user = await User.findOne({ _id: userId });
-    if (!user) {
-      throw new NotFoundError("User couldn't found.");
-    }
-    if (!user.comparePassword(password)) {
-      throw new UnauthorizedError("Passwords are not match.");
-    }
-    const userPassword = await User.findOne({ _id: userId }).select("password");
-    res.status(StatusCodes.OK).json({ password: userPassword });
-  }
-
-  if (role === "admin") {
-    const { id } = req.params;
-    if (!id) {
-      throw new BadRequestError("Please provide user credentials.");
-    }
-    const userPassword = await User.findOne({ _id: id }).select("password");
-    if (!userPassword) {
-      throw new NotFoundError("User couldn't found.");
-    }
-    res.status(StatusCodes.OK).json({ password: userPassword });
-  }
-};
-
 const replyFriendRequest = async (req, res) => {
   const { id } = req.params;
   const { userId } = req.user;
@@ -366,7 +321,7 @@ const replyFriendRequest = async (req, res) => {
     throw new BadRequestError("Please provide required data.");
   }
 
-  const sendUser = await User.findOne({ _id: id });
+  const sendUser = await User.findOne({ _id: id, isDeleted: false });
   const currentUser = await User.findOne({ _id: id });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
@@ -389,7 +344,7 @@ const replyFriendRequest = async (req, res) => {
     "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
   if (accepted === "true") {
     await User.findOneAndUpdate(
-      { _id: id },
+      { _id: id, isDeleted: false },
       {
         $pull: { selfFriendRequests: new mongoose.Types.ObjectId(userId) },
         $addToSet: { friends: new mongoose.Types.ObjectId(userId) },
@@ -409,7 +364,7 @@ const replyFriendRequest = async (req, res) => {
 
   if (accepted === "false") {
     await User.findOneAndUpdate(
-      { _id: id },
+      { _id: id, isDeleted: false },
       { $pull: { selfFriendRequests: new mongoose.Types.ObjectId(userId) } },
       { new: true, runValidators: true, timestamps: false }
     );
@@ -432,7 +387,7 @@ const revokeSelfFriendRequest = async (req, res) => {
   if (!currentUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  const sendUser = await User.findOne({ _id: id });
+  const sendUser = await User.findOne({ _id: id, isDeleted: false });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -449,7 +404,7 @@ const revokeSelfFriendRequest = async (req, res) => {
   const userSelectedFields =
     "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
   await User.findOneAndUpdate(
-    { _id: id },
+    { _id: id, isDeleted: false },
     { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
     { new: true, runValidators: true }
   );
@@ -471,7 +426,7 @@ const removeFromFriends = async (req, res) => {
   if (!currentUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  const sendUser = await User.findOne({ _id: id });
+  const sendUser = await User.findOne({ _id: id, isDeleted: false });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -484,7 +439,7 @@ const removeFromFriends = async (req, res) => {
   const userSelectedFields =
     "name email role school age profilePicture friends goalKeeper location createdAt _id";
   await User.findOneAndUpdate(
-    { _id: id },
+    { _id: id, isDeleted: false },
     { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
     { new: true, runValidators: true }
   );
@@ -496,15 +451,88 @@ const removeFromFriends = async (req, res) => {
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
-const updateDeleteSingleUser = async (req, res) => {
-  const { id } = req.params;
-  if (!id) {
-    throw new BadRequestError("Please provide user credentials.");
+const updateDeleteUserRequest = async (req, res) => {
+  const { userId } = req.user;
+  const { password } = req.body;
+  const oldUser = await User.findOne({ _id: userId });
+  if (!oldUser) {
+    throw new NotFoundError("User couldn't found.");
   }
+  if (!oldUser.comparePassword(password)) {
+    throw new UnauthorizedError("Passwords are not match");
+  }
+  let code = 1;
+  while (code < 100000 || code > 999999) {
+    code = Math.ceil(Math.random() * 999999);
+  }
+
+  code = String(code);
+  const fiveMinutes = new Date(Date.now() + 1000 * 60 * 5);
+
+  const user = await User.findOneAndUpdate(
+    { _id: userId },
+    { deleteNumber: code, deleteExpirationDate: fiveMinutes },
+    { new: true, runValidators: true }
+  );
+  if (!user) {
+    throw new NotFoundError("User couldn't found.");
+  }
+
+  await deletionEmail(user.email, user.name, code);
+  res
+    .status(StatusCodes.OK)
+    .json({ msg: "Your deletion email has been sent." });
 };
 
-const updateDeleteManyUser = async (req, res) => {
-  res.send("updateDeleteManyUser");
+const checkDeletionCode = async (req, res) => {
+  const { code } = req.body;
+  const { userId } = req.user;
+  if (!code) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    throw new NotFoundError("User couldn't found.");
+  }
+  if (!(code === user.deleteNumber)) {
+    throw new BadRequestError("Code is invalid.");
+  }
+  if (new Date() > user.deleteExpirationDate) {
+    throw new BadRequestError(
+      "Expiration date has been reached, please get contact with our customer service."
+    );
+  }
+
+  await User.findOneAndUpdate(
+    { _id: userId },
+    { deleteNumber: "", deleteExpirationDate: null },
+    { new: true, runValidators: true }
+  );
+  res.status(StatusCodes.OK).json({ success: true });
+};
+
+const updateDeleteUser = async (req, res) => {
+  const { success } = req.body;
+  const { userId } = req.user;
+  if (!success) {
+    throw new UnauthorizedError(
+      "You are not authorized to perform that action."
+    );
+  }
+
+  if (!success) {
+    throw new UnauthorizedError(
+      "You are not authorized to perform that action."
+    );
+  }
+  await User.findOneAndUpdate(
+    { _id: userId },
+    { isDeleted: true, archived: true },
+    { new: true, runValidators: true, timestamps: true }
+  );
+  res
+    .status(StatusCodes.OK)
+    .json({ msg: "Account deletion has been successful." });
 };
 
 const deleteSingleUser = async (req, res) => {
@@ -523,8 +551,10 @@ module.exports = {
   updateManyUser,
   updateSingleUser,
   updatePasswordUser,
-  updateDeleteSingleUser,
-  updateDeleteManyUser,
+  updateDeleteUserRequest,
+  checkDeletionCode,
+  updateDeleteUser,
+
   deleteSingleUser,
   deleteManyUser,
   getByGoogleId,
@@ -533,7 +563,7 @@ module.exports = {
   requestPasswordChange,
   checkPasswordCode,
   resetPassword,
-  showPassword,
+
   revokeSelfFriendRequest,
   removeFromFriends,
 };

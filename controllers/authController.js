@@ -297,7 +297,7 @@ const authenticateGoogleInfo = [
         );
       }
 
-      if (user.idDeleted) {
+      if (user.isDeleted) {
         throw new NotFoundError("User couldn't found.");
       }
       const isUserValid = user.isValid;
