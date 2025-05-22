@@ -1,11 +1,15 @@
 const mongoose = require("mongoose");
 const { StatusCodes, METHOD_NOT_ALLOWED } = require("http-status-codes");
 const User = require("../models/User");
+const Token = require("../models/Token");
+const crypto = require("crypto");
 const {
   adminUserQuery,
   adminUserUpdateQuery,
+  adminUserQueryObject,
   resetPasswordEmail,
   deletionEmail,
+  createCookie,
 } = require("../utils");
 const {
   ForbiddenError,
@@ -30,7 +34,7 @@ const getManyUser = async (req, res) => {
     const userLimit = 100;
     const userSkip = (userPage - 1) * userLimit;
     const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id";
+      "name email role school age profilePicture friends goalKeeper location createdAt _id ";
     const users = await User.find({
       name: { $regex: userSearch, $options: "i" },
       isDeleted: false,
@@ -64,13 +68,20 @@ const getSingleUser = async (req, res) => {
   }
 
   if (role === "user" || role === "owner" || !role) {
+    const { userId } = req.user;
     const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+      "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
     const user = await User.findOne({ _id: id, isDeleted: false }).select(
       userSelectedFields
     );
     if (!user) {
       throw new NotFoundError("User couldn't found.");
+    }
+    if (!user.recentlySearched.includes(id)) {
+      await User.findOneAndUpdate(
+        { _id: userId },
+        { $pull: { recentlySearched: id, $slice: -10 } }
+      );
     }
     res.status(StatusCodes.OK).json({ user });
   }
@@ -163,7 +174,7 @@ const sendFriendRequest = async (req, res) => {
   }
 
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
 
   await User.findOneAndUpdate(
     { _id: id },
@@ -188,7 +199,7 @@ const updateSingleUser = async (req, res) => {
   const { userId } = req.user;
   const { name, email, school, age, profilePicture, location } = req.body;
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
   const newUser = await User.findOneAndUpdate(
     { _id: userId },
     { name, email, school, age, profilePicture, location },
@@ -197,6 +208,18 @@ const updateSingleUser = async (req, res) => {
   if (!newUser) {
     throw new NotFoundError("User couldn't found.");
   }
+  let refreshToken = await Token.findOne({ user: userId });
+  if (!refreshToken) {
+    const token = crypto.randomBytes(16).toString("hex");
+    refreshToken = await Token.create({ token, user: userId });
+  }
+  const cookieUser = {
+    name: newUser.name,
+    email: newUser.email,
+    role: newUser.role,
+    userId: newUser._id,
+  };
+  createCookie(res, cookieUser, refreshToken);
   res.status(StatusCodes.OK).json({ user: newUser });
 };
 
@@ -308,6 +331,19 @@ const resetPassword = async (req, res) => {
     { new: true, runValidators: true, timestamps: true }
   );
 
+  let refreshToken = await Token.findOne({ user: userId });
+  if (!refreshToken) {
+    const token = crypto.randomBytes(16).toString("hex");
+    refreshToken = await Token.create({ token, user: userId });
+  }
+  const cookieUser = {
+    name: newUser.name,
+    email: newUser.email,
+    role: newUser.role,
+    userId: newUser._id,
+  };
+  createCookie(res, cookieUser, refreshToken);
+
   res
     .status(StatusCodes.OK)
     .json({ msg: "Your password has been updated successfully." });
@@ -341,7 +377,7 @@ const replyFriendRequest = async (req, res) => {
     throw new BadRequestError("You have no friend request from that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
   if (accepted === "true") {
     await User.findOneAndUpdate(
       { _id: id, isDeleted: false },
@@ -402,7 +438,7 @@ const revokeSelfFriendRequest = async (req, res) => {
     );
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
@@ -437,7 +473,7 @@ const removeFromFriends = async (req, res) => {
     throw new BadRequestError("You are not friend with that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id recentlySearched selfFriendRequests friendRequests";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
@@ -520,27 +556,40 @@ const updateDeleteUser = async (req, res) => {
     );
   }
 
-  if (!success) {
-    throw new UnauthorizedError(
-      "You are not authorized to perform that action."
-    );
-  }
   await User.findOneAndUpdate(
     { _id: userId },
     { isDeleted: true, archived: true },
     { new: true, runValidators: true, timestamps: true }
   );
+  res.cookie("accessToken", "logout access token", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+    secure: process.env.NODE_ENV === "production",
+    signed: true,
+  });
+
+  res.cookie("refreshToken", "logout token", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+    secure: process.env.NODE_ENV === "production",
+    signed: true,
+  });
+
   res
-    .status(StatusCodes.OK)
+    .status(StatusCodes.NO_CONTENT)
     .json({ msg: "Account deletion has been successful." });
 };
 
-const deleteSingleUser = async (req, res) => {
-  res.send("deleteSingleUser");
-};
-
 const deleteManyUser = async (req, res) => {
-  res.send("deleteManyUser");
+  const queryOperator = adminUserQueryObject(req);
+  const users = await User.find(queryOperator);
+  if (!users) {
+    throw new NotFoundError("User couldn't found.");
+  }
+  await User.deleteMany(queryOperator);
+  res
+    .status(StatusCodes.NO_CONTENT)
+    .json({ msg: "Users successfully deleted." });
 };
 
 module.exports = {
@@ -554,8 +603,6 @@ module.exports = {
   updateDeleteUserRequest,
   checkDeletionCode,
   updateDeleteUser,
-
-  deleteSingleUser,
   deleteManyUser,
   getByGoogleId,
   sendFriendRequest,
@@ -563,7 +610,6 @@ module.exports = {
   requestPasswordChange,
   checkPasswordCode,
   resetPassword,
-
   revokeSelfFriendRequest,
   removeFromFriends,
 };

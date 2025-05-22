@@ -114,12 +114,6 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  const { refreshToken } = req.signedCookies;
-  if (!refreshToken) {
-    throw new UnauthorizedError(
-      "Your are not authorized to perform that action."
-    );
-  }
   res.cookie("accessToken", "logout access token", {
     httpOnly: true,
     expires: new Date(Date.now()),

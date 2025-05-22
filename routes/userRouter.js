@@ -13,8 +13,6 @@ const {
   updateDeleteUserRequest,
   checkDeletionCode,
   updateDeleteUser,
-
-  deleteSingleUser,
   deleteManyUser,
   getByGoogleId,
   sendFriendRequest,
@@ -22,7 +20,6 @@ const {
   requestPasswordChange,
   checkPasswordCode,
   resetPassword,
-
   revokeSelfFriendRequest,
   removeFromFriends,
 } = require("../controllers/userController");
@@ -66,8 +63,7 @@ router.patch("/updatePassword:id", adminMiddleware, updatePasswordUser); //  adm
 
 router.patch("/updateDeleteUser", authenticationMiddleware, updateDeleteUser);
 
-router.delete("/deleteMany", adminMiddleware, deleteManyUser); // admin only, query
-router.delete("/deleteSingle:id", adminMiddleware, deleteSingleUser); // admin only
+router.delete("/deleteMany", deleteManyUser);
 router.delete(
   "/revokeFriendRequest:id",
   authenticationMiddleware,

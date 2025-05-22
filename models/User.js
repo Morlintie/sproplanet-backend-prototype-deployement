@@ -99,6 +99,10 @@ const userSchema = new mongoose.Schema(
       type: [mongoose.Types.ObjectId],
       default: [],
     },
+    recentlySearched: {
+      type: [mongoose.Types.ObjectId],
+      default: [],
+    },
 
     location: {
       type: String,

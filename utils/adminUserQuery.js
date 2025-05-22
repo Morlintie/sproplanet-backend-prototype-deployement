@@ -81,6 +81,18 @@ const adminUserQuery = async (req) => {
     queryOperator.location = location;
   }
 
+  if (recentlySearched) {
+    if (recentlySearched.startsWith("exact")) {
+      const exactSearchArray = recentlySearched.split(",").filter((request) => {
+        return !(request === "exact");
+      });
+      queryOperator.recentlySearched = exactSearchArray;
+    } else {
+      const searchArray = recentlySearched.split(",");
+      queryOperator.recentlySearched = { $all: searchArray };
+    }
+  }
+
   if (friendRequests) {
     if (friendRequests.startsWith("exact")) {
       const exactSearchArray = friendRequests.split(",").filter((request) => {
@@ -177,6 +189,7 @@ const adminUserQueryObject = (req) => {
     school,
     age,
     profilePicture,
+    recentlySearched,
     friendRequests,
     friends,
     selfFriendRequests,
@@ -241,6 +254,18 @@ const adminUserQueryObject = (req) => {
     queryOperator.location = location;
   }
 
+  if (recentlySearched) {
+    if (recentlySearched.startsWith("exact")) {
+      const exactSearchArray = recentlySearched.split(",").filter((request) => {
+        return !(request === "exact");
+      });
+      queryOperator.recentlySearched = exactSearchArray;
+    } else {
+      const searchArray = recentlySearched.split(",");
+      queryOperator.recentlySearched = { $all: searchArray };
+    }
+  }
+
   if (friendRequests) {
     if (friendRequests.startsWith("exact")) {
       const exactSearchArray = friendRequests.split(",").filter((request) => {
@@ -300,10 +325,7 @@ const adminUserQueryObject = (req) => {
 };
 
 const adminUserUpdateQuery = async (req) => {
-  const { sort, select } = req.query;
   const {
-    name,
-    email,
     validationNumber,
     validationExpirationDate,
     isValid,
@@ -311,7 +333,7 @@ const adminUserUpdateQuery = async (req) => {
     passwordExpirationDate,
     deleteNumber,
     deleteExpirationDate,
-    role,
+    recentlySearched: importedRecentlySearched,
     archived,
     isDeleted,
     school,
@@ -374,6 +396,21 @@ const adminUserUpdateQuery = async (req) => {
   if (profilePicture) {
     queryUpdateOperator.profilePicture = profilePicture;
   }
+  if (importedRecentlySearched) {
+    if (importedRecentlySearched.remove) {
+      const objectRemove = importedRecentlySearched.remove.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryOperator.$pull = { recentlySearched: { $in: objectRemove } };
+    }
+    if (importedRecentlySearched.add) {
+      const objectAdd = importedRecentlySearched.add.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryOperator.$addToSet = { recentlySearched: { $each: objectAdd } };
+    }
+  }
+
   if (importedFriendRequests) {
     if (importedFriendRequests.remove) {
       const objectRemove = importedFriendRequests.remove.items.map((item) => {
@@ -427,30 +464,13 @@ const adminUserUpdateQuery = async (req) => {
   if (location) {
     queryUpdateOperator.location = location;
   }
-  let functionalSort;
-  let functionalSelect;
-  if (sort) {
-    functionalSort = sort.split(",").join(" ");
-  }
-
-  if (select) {
-    functionalSelect = sort.split(",").join(" ");
-  }
-
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 10;
-  const skipAdmin = (page - 1) * limit;
-  console.log(functionalSort);
 
   const newUsers = await User.updateMany(queryOperator, queryUpdateOperator, {
     new: true,
     runValidators: true,
     timestamps: true,
-  })
-    .sort(functionalSort)
-    .select(`-password ${functionalSelect}`)
-    .limit(limit)
-    .skip(skipAdmin);
+  });
+
   return newUsers;
 };
 
