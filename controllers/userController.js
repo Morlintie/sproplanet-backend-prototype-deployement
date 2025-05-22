@@ -65,7 +65,7 @@ const getSingleUser = async (req, res) => {
 
   if (role === "user" || role === "owner" || !role) {
     const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id";
+      "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
     const user = await User.findOne({ _id: id, isDeleted: false }).select(
       userSelectedFields
     );
@@ -160,6 +160,9 @@ const sendFriendRequest = async (req, res) => {
     );
   }
 
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+
   await User.findOneAndUpdate(
     { _id: id },
     { $addToSet: { friendRequests: new mongoose.Types.ObjectId(userId) } },
@@ -169,7 +172,7 @@ const sendFriendRequest = async (req, res) => {
     { _id: userId },
     { $addToSet: { selfFriendRequests: new mongoose.Types.ObjectId(id) } },
     { new: true, runValidators: true, timestamps: false }
-  ).select("selfFriendRequests");
+  ).select(userSelectedFields);
 
   res.status(StatusCodes.CREATED).json({ friendRequests: friendRequest });
 };
@@ -189,7 +192,7 @@ const updateSingleUser = async (req, res) => {
     const { userId } = req.user;
     const { name, email, school, age, profilePicture, location } = req.body;
     const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id";
+      "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
     const newUser = await User.findOneAndUpdate(
       { _id: userId },
       { name, email, school, age, profilePicture, location },
@@ -336,7 +339,7 @@ const showPassword = async (req, res) => {
       throw new NotFoundError("User couldn't found.");
     }
     if (!user.comparePassword(password)) {
-      throw new UnauthorizedError("Passwords are not match");
+      throw new UnauthorizedError("Passwords are not match.");
     }
     const userPassword = await User.findOne({ _id: userId }).select("password");
     res.status(StatusCodes.OK).json({ password: userPassword });
@@ -382,7 +385,9 @@ const replyFriendRequest = async (req, res) => {
   if (currentUser.friendRequests.includes(id)) {
     throw new BadRequestError("You have no friend request from that person.");
   }
-  if (accepted) {
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+  if (accepted === "true") {
     await User.findOneAndUpdate(
       { _id: id },
       {
@@ -398,11 +403,11 @@ const replyFriendRequest = async (req, res) => {
         $addToSet: { friends: new mongoose.Types.ObjectId(id) },
       },
       { new: true, runValidators: true, timestamps: false }
-    ).select("friends");
+    ).select(userSelectedFields);
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
   }
 
-  if (!accepted) {
+  if (accepted === "false") {
     await User.findOneAndUpdate(
       { _id: id },
       { $pull: { selfFriendRequests: new mongoose.Types.ObjectId(userId) } },
@@ -412,9 +417,83 @@ const replyFriendRequest = async (req, res) => {
       { _id: userId },
       { $pull: { friendRequests: new mongoose.Types.ObjectId(id) } },
       { new: true, runValidators: true, timestamps: false }
-    ).select("friends");
+    ).select(userSelectedFields);
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
   }
+};
+
+const revokeSelfFriendRequest = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new NotFoundError("Please provide required data.");
+  }
+  const currentUser = await User.findOne({ _id: userId });
+  if (!currentUser) {
+    throw new NotFoundError("User couldn't found.");
+  }
+  const sendUser = await User.findOne({ _id: id });
+  if (!sendUser) {
+    throw new NotFoundError("User couldn't found.");
+  }
+  if (!currentUser.selfFriendRequests.includes(id)) {
+    throw new BadRequestError(
+      "You have not sent friend request for that person."
+    );
+  }
+  if (!sendUser.friendRequests.includes(userId)) {
+    throw new BadRequestError(
+      "You have not sent friend request for that person."
+    );
+  }
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests";
+  await User.findOneAndUpdate(
+    { _id: id },
+    { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
+    { new: true, runValidators: true }
+  );
+  const newCurrentUser = await User.findOneAndUpdate(
+    { _id: userId },
+    { $pull: { selfFriendRequests: new mongoose.Types.ObjectId(id) } },
+    { new: true, runValidators: true }
+  ).select(userSelectedFields);
+  res.status(StatusCodes.OK).json({ user: newCurrentUser });
+};
+
+const removeFromFriends = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw BadRequestError("Please provide required data.");
+  }
+  const currentUser = await User.findOne({ _id: userId });
+  if (!currentUser) {
+    throw new NotFoundError("User couldn't found.");
+  }
+  const sendUser = await User.findOne({ _id: id });
+  if (!sendUser) {
+    throw new NotFoundError("User couldn't found.");
+  }
+  if (!currentUser.friends.includes(id)) {
+    throw new BadRequestError("You are not friends with that person.");
+  }
+  if (!sendUser.friends.includes(userId)) {
+    throw new BadRequestError("You are not friend with that person.");
+  }
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id";
+  await User.findOneAndUpdate(
+    { _id: id },
+    { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
+    { new: true, runValidators: true }
+  );
+  const newCurrentUser = await User.findOneAndUpdate(
+    { _id: userId },
+    { $pull: { friends: new mongoose.Types.ObjectId(id) } },
+    { new: true, runValidators: true }
+  ).select(userSelectedFields);
+  res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
 const updateDeleteSingleUser = async (req, res) => {
@@ -455,4 +534,6 @@ module.exports = {
   checkPasswordCode,
   resetPassword,
   showPassword,
+  revokeSelfFriendRequest,
+  removeFromFriends,
 };

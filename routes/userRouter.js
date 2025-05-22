@@ -21,6 +21,8 @@ const {
   checkPasswordCode,
   resetPassword,
   showPassword,
+  revokeSelfFriendRequest,
+  removeFromFriends,
 } = require("../controllers/userController");
 const router = express.Router();
 
@@ -29,13 +31,13 @@ router.get("/getSingle:id", passUserInfoMiddleware, getSingleUser); // no Auth
 router.get("/show", authenticationMiddleware, showUser); // auth admin
 router.get("/getManyGoalkeeper", passUserInfoMiddleware, getManyGoalkeeper); // no auth, index search
 router.get("/getGoogleUser:id", adminMiddleware, getByGoogleId); //admin only
-router.get("/showPassword:id", showPassword); //auth, admin
 
 router.post(
   "/sendFriendRequest:id",
   authenticationMiddleware,
   sendFriendRequest
 ); //auth , admin
+router.post("/showPassword:id", showPassword); //auth, admin
 router.post(
   "/requestPassword",
   authenticationMiddleware,
@@ -62,5 +64,15 @@ router.patch("/deleteMany", adminMiddleware, updateDeleteManyUser); // admin onl
 
 router.delete("/deleteMany", adminMiddleware, deleteManyUser); // admin only, query
 router.delete("/deleteSingle:id", adminMiddleware, deleteSingleUser); // admin only
+router.delete(
+  "/revokeFriendRequest:id",
+  authenticationMiddleware,
+  revokeSelfFriendRequest
+); //auth, admin
+router.delete(
+  "/removeFromFriends:id",
+  authenticationMiddleware,
+  removeFromFriends
+); // auth, admin
 
 module.exports = router;
