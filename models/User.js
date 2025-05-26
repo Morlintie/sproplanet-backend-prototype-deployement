@@ -1,6 +1,19 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
+const locationSchema = new mongoose.Schema({
+  city: {
+    type: String,
+    enum: {
+      values: ["İstanbul"],
+      message: "Please provide a valid city.",
+    },
+  },
+  district: {
+    type: String,
+  },
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -84,7 +97,7 @@ const userSchema = new mongoose.Schema(
 
     profilePicture: {
       type: String,
-    },
+    }, // design default PPs
 
     selfFriendRequests: {
       type: [mongoose.Types.ObjectId],
@@ -99,13 +112,13 @@ const userSchema = new mongoose.Schema(
       type: [mongoose.Types.ObjectId],
       default: [],
     },
-    recentlySearched: {
+    recentlySearchedUser: {
       type: [mongoose.Types.ObjectId],
       default: [],
     },
 
     location: {
-      type: String,
+      type: locationSchema,
     },
     goalKeeper: {
       type: Boolean,

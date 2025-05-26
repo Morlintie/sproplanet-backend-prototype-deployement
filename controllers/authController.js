@@ -89,9 +89,12 @@ const login = async (req, res) => {
     if (!isUserVerified) {
       throw new UnauthorizedError("Your account haven't been verified yet.");
     }
-    const isPasswordCorrect = await user.comparePassword(password);
-    if (!isPasswordCorrect) {
-      throw new UnauthorizedError("The password is not correct.");
+
+    if (!user.googleId) {
+      const isPasswordCorrect = await user.comparePassword(password);
+      if (!isPasswordCorrect) {
+        throw new UnauthorizedError("The password is not correct.");
+      }
     }
     const cookieUser = {
       name: user.name,

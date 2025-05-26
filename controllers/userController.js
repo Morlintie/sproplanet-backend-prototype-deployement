@@ -20,6 +20,7 @@ const {
 
 const getManyUser = async (req, res) => {
   const role = req?.user?.role;
+  const userId = req.user?.userId;
 
   if (role === "banned") {
     throw new ForbiddenError(
@@ -27,31 +28,25 @@ const getManyUser = async (req, res) => {
     );
   }
 
-  if (role === "user" || role === "owner" || !role) {
-    const userSearch = req.body.search;
-    const userPage = req.body.page;
+  const userSearch = req.body.search;
 
-    const userLimit = 100;
-    const userSkip = (userPage - 1) * userLimit;
-    const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id ";
-    const users = await User.find({
-      name: { $regex: userSearch, $options: "i" },
-      isDeleted: false,
-    })
-      .select(userSelectedFields)
-      .sort("name")
-      .limit(userLimit)
-      .skip(userSkip);
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id ";
+  const users = await User.find({
+    name: { $regex: userSearch, $options: "i" },
+    isDeleted: false,
+    _id: { $ne: userId },
+  })
+    .select(userSelectedFields)
+    .sort("name");
 
-    res.status(StatusCodes.OK).json({ users });
-  }
+  res.status(StatusCodes.OK).json({ users });
+};
 
-  if (role === "admin") {
-    const users = await adminUserQuery(req);
+const getAdmin = async (req, res) => {
+  const users = await adminUserQuery(req);
 
-    res.status(StatusCodes.OK).json({ users: users });
-  }
+  res.status(StatusCodes.OK).json({ users: users });
 };
 
 const getSingleUser = async (req, res) => {
@@ -67,32 +62,57 @@ const getSingleUser = async (req, res) => {
     throw new BadRequestError("Please provide user credentials.");
   }
 
-  if (role === "user" || role === "owner" || !role) {
-    const { userId } = req.user;
-    const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
-    const user = await User.findOne({ _id: id, isDeleted: false }).select(
-      userSelectedFields
-    );
-    if (!user) {
-      throw new NotFoundError("User couldn't found.");
-    }
-    if (!user.recentlySearched.includes(id)) {
+  let userId;
+  if (req.user) {
+    userId = req.user.userId;
+  }
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
+  const user = await User.findOne({ _id: id, isDeleted: false }).select(
+    userSelectedFields
+  );
+  if (!user) {
+    throw new NotFoundError("User couldn't found.");
+  }
+
+  if (userId) {
+    const currentUser = await User.findOne({ _id: userId });
+
+    if (
+      !currentUser.recentlySearchedUser.includes(id) &&
+      currentUser.recentlySearchedUser.length < 10
+    ) {
       await User.findOneAndUpdate(
         { _id: userId },
-        { $pull: { recentlySearched: id, $slice: -10 } }
+        { $push: { recentlySearchedUser: id } }
       );
     }
-    res.status(StatusCodes.OK).json({ user });
-  }
-  if (role === "admin") {
-    console.log(id);
-    const user = await User.findOne({ _id: id }).select("-password");
-    if (!user) {
-      throw new NotFoundError("User couldn't found.");
+    if (
+      !currentUser.recentlySearchedUser.includes(id) &&
+      currentUser.recentlySearchedUser.length >= 10
+    ) {
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $pull: {
+            recentlySearchedUser:
+              currentUser.recentlySearchedUser[
+                currentUser.recentlySearchedUser.length - 1
+              ],
+          },
+        }
+      );
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $push: {
+            recentlySearchedUser: id,
+          },
+        }
+      );
     }
-    res.status(StatusCodes.OK).json({ user });
   }
+  res.status(StatusCodes.OK).json({ user });
 };
 
 const showUser = async (req, res) => {
@@ -100,6 +120,7 @@ const showUser = async (req, res) => {
   const user = await User.findOne({ _id: userId, isDeleted: false }).select(
     "-password"
   );
+
   if (!user) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -116,26 +137,24 @@ const getManyGoalkeeper = async (req, res) => {
     );
   }
 
-  if (role === "user" || role === "owner" || !role) {
-    const userSearch = req.body.search;
-    const userPage = req.body.page;
+  const userSearch = req.body.search;
+  const userPage = req.body.page;
 
-    const userLimit = 100;
-    const userSkip = (userPage - 1) * userLimit;
-    const userSelectedFields =
-      "name email role school age profilePicture friends goalKeeper location createdAt _id";
-    const users = await User.find({
-      user: { $regex: userSearch },
-      isDeleted: false,
-      goalKeeper: true,
-    })
-      .select(userSelectedFields)
-      .sort("name")
-      .limit(userLimit)
-      .skip(userSkip);
+  const userLimit = 30;
+  const userSkip = (userPage - 1) * userLimit;
+  const userSelectedFields =
+    "name email role school age profilePicture friends goalKeeper location createdAt _id";
+  const users = await User.find({
+    name: { $regex: userSearch },
+    isDeleted: false,
+    goalKeeper: true,
+  })
+    .select(userSelectedFields)
+    .sort("name")
+    .limit(userLimit)
+    .skip(userSkip);
 
-    res.status(StatusCodes.OK).json({ users });
-  }
+  res.status(StatusCodes.OK).json({ users });
 };
 
 const getByGoogleId = async (req, res) => {
@@ -147,7 +166,7 @@ const getByGoogleId = async (req, res) => {
   const user = await User.findOne({ googleId: id }).select("-password");
 
   if (!user) {
-    throw NotFoundError("User couldn't found.");
+    throw new NotFoundError("User couldn't found.");
   }
 
   res.status(StatusCodes.OK).json({ user });
@@ -163,8 +182,23 @@ const sendFriendRequest = async (req, res) => {
   const sendUser = await User.findOne({ _id: id, isDeleted: false }).select(
     "-password"
   );
+  const currentUser = await User.findOne({ _id: userId });
+
+  if (!currentUser) {
+    throw new NotFoundError("User couldn't found.");
+  }
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
+  }
+
+  if (sendUser.role === "banned") {
+    throw new BadRequestError("This user has been banned.");
+  }
+
+  if (id === userId) {
+    throw new BadRequestError(
+      "Users cannot send friend requests for themselves."
+    );
   }
 
   if (sendUser.friendRequests.includes(userId)) {
@@ -173,8 +207,34 @@ const sendFriendRequest = async (req, res) => {
     );
   }
 
+  if (sendUser.selfFriendRequests.includes(userId)) {
+    throw new BadRequestError(
+      "This person has already sent a friend request for you."
+    );
+  }
+
+  if (sendUser.friends.includes(userId)) {
+    throw new BadRequestError("You are already friends with that person.");
+  }
+
+  if (currentUser.friendRequests.includes(id)) {
+    throw new BadRequestError(
+      "This person has already sent a friend request for you."
+    );
+  }
+
+  if (currentUser.selfFriendRequests.includes(id)) {
+    throw new BadRequestError(
+      "You have already sent friend request for that person."
+    );
+  }
+
+  if (currentUser.friends.includes(id)) {
+    throw new BadRequestError("You are already friends with that person.");
+  }
+
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
 
   await User.findOneAndUpdate(
     { _id: id },
@@ -187,7 +247,7 @@ const sendFriendRequest = async (req, res) => {
     { new: true, runValidators: true, timestamps: false }
   ).select(userSelectedFields);
 
-  res.status(StatusCodes.CREATED).json({ friendRequests: friendRequest });
+  res.status(StatusCodes.CREATED).json({ user: friendRequest });
 };
 
 const updateManyUser = async (req, res) => {
@@ -199,7 +259,7 @@ const updateSingleUser = async (req, res) => {
   const { userId } = req.user;
   const { name, email, school, age, profilePicture, location } = req.body;
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
   const newUser = await User.findOneAndUpdate(
     { _id: userId },
     { name, email, school, age, profilePicture, location },
@@ -249,11 +309,15 @@ const updatePasswordUser = async (req, res) => {
 const requestPasswordChange = async (req, res) => {
   const { userId } = req.user;
   const { password } = req.body;
+  if (!password) {
+    throw new BadRequestError("Please provide requested data.");
+  }
   const oldUser = await User.findOne({ _id: userId });
   if (!oldUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  if (!oldUser.comparePassword(password)) {
+  const isPasswordValid = await oldUser.comparePassword(password);
+  if (!isPasswordValid) {
     throw new UnauthorizedError("Passwords are not match");
   }
   let code = 1;
@@ -325,7 +389,7 @@ const resetPassword = async (req, res) => {
     throw new BadRequestError("New password cannot be same as old password.");
   }
 
-  await User.findOneAndUpdate(
+  const newUser = await User.findOneAndUpdate(
     { _id: userId },
     { password: newPassword },
     { new: true, runValidators: true, timestamps: true }
@@ -358,7 +422,7 @@ const replyFriendRequest = async (req, res) => {
   }
 
   const sendUser = await User.findOne({ _id: id, isDeleted: false });
-  const currentUser = await User.findOne({ _id: id });
+  const currentUser = await User.findOne({ _id: userId });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -373,11 +437,11 @@ const replyFriendRequest = async (req, res) => {
     throw new NotFoundError("User couldn't found.");
   }
 
-  if (currentUser.friendRequests.includes(id)) {
+  if (!currentUser.friendRequests.includes(id)) {
     throw new BadRequestError("You have no friend request from that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
   if (accepted === "true") {
     await User.findOneAndUpdate(
       { _id: id, isDeleted: false },
@@ -417,7 +481,7 @@ const revokeSelfFriendRequest = async (req, res) => {
   const { userId } = req.user;
   const { id } = req.params;
   if (!id) {
-    throw new NotFoundError("Please provide required data.");
+    throw new BadRequestError("Please provide required data.");
   }
   const currentUser = await User.findOne({ _id: userId });
   if (!currentUser) {
@@ -438,7 +502,7 @@ const revokeSelfFriendRequest = async (req, res) => {
     );
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearched";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
@@ -470,10 +534,10 @@ const removeFromFriends = async (req, res) => {
     throw new BadRequestError("You are not friends with that person.");
   }
   if (!sendUser.friends.includes(userId)) {
-    throw new BadRequestError("You are not friend with that person.");
+    throw new BadRequestError("You are not friends with that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id recentlySearched selfFriendRequests friendRequests";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id recentlySearchedUser selfFriendRequests friendRequests";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
@@ -490,11 +554,15 @@ const removeFromFriends = async (req, res) => {
 const updateDeleteUserRequest = async (req, res) => {
   const { userId } = req.user;
   const { password } = req.body;
+  if (!password) {
+    throw new BadRequestError("Please provide required data.");
+  }
   const oldUser = await User.findOne({ _id: userId });
   if (!oldUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  if (!oldUser.comparePassword(password)) {
+  const isPasswordValid = await oldUser.comparePassword(password);
+  if (!isPasswordValid) {
     throw new UnauthorizedError("Passwords are not match");
   }
   let code = 1;
@@ -575,18 +643,20 @@ const updateDeleteUser = async (req, res) => {
     signed: true,
   });
 
-  res
-    .status(StatusCodes.NO_CONTENT)
-    .json({ msg: "Account deletion has been successful." });
+  res.status(StatusCodes.NO_CONTENT);
 };
 
 const deleteManyUser = async (req, res) => {
   const queryOperator = adminUserQueryObject(req);
   const users = await User.find(queryOperator);
+  const usersId = users.reduce((acc, user) => {
+    return (acc = [...acc, user._id]);
+  }, []);
   if (!users) {
     throw new NotFoundError("User couldn't found.");
   }
   await User.deleteMany(queryOperator);
+  await Token.deleteMany({ user: { $in: usersId } });
   res
     .status(StatusCodes.NO_CONTENT)
     .json({ msg: "Users successfully deleted." });
@@ -612,4 +682,5 @@ module.exports = {
   resetPassword,
   revokeSelfFriendRequest,
   removeFromFriends,
+  getAdmin,
 };

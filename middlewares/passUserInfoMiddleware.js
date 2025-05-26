@@ -8,12 +8,14 @@ const passUserInfoMiddleware = async (req, res, next) => {
 
     if (accessToken) {
       const { user } = jwt.verify(accessToken, process.env.JWT_SECRET);
+
       req.user = {
         name: user.name,
         role: user.role,
-        userId: user._id,
+        userId: user.userId,
         email: user.email,
       };
+
       return next();
     }
     if (refreshToken) {
@@ -21,9 +23,10 @@ const passUserInfoMiddleware = async (req, res, next) => {
       req.user = {
         name: user.name,
         role: user.role,
-        userId: user._id,
+        userId: user.userId,
         email: user.email,
       };
+      console.log(req.user);
       createCookie(res, user, token);
       return next();
     }

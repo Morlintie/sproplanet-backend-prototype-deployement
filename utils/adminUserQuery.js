@@ -28,6 +28,7 @@ const adminUserQuery = async (req) => {
     deleteExpirationDate,
     passwordExpirationDate,
     id,
+    recentlySearchedUser,
   } = req.query;
 
   const queryOperator = {};
@@ -35,9 +36,11 @@ const adminUserQuery = async (req) => {
   if (id) {
     queryOperator._id = id;
   }
+
   if (name) {
     queryOperator.name = { $regex: name, $options: "i" };
   }
+
   if (email) {
     queryOperator.email = { $regex: email, $options: "i" };
   }
@@ -78,18 +81,28 @@ const adminUserQuery = async (req) => {
   }
 
   if (location) {
-    queryOperator.location = location;
+    const locationArray = location.split(",");
+    if (locationArray.length > 1) {
+      queryOperator["location.city"] = locationArray[0];
+      queryOperator["location.district"] = locationArray[1];
+    } else {
+      queryOperator["location.city"] = locationArray[0];
+    }
   }
 
-  if (recentlySearched) {
-    if (recentlySearched.startsWith("exact")) {
-      const exactSearchArray = recentlySearched.split(",").filter((request) => {
-        return !(request === "exact");
-      });
-      queryOperator.recentlySearched = exactSearchArray;
+  if (recentlySearchedUser) {
+    if (recentlySearchedUser.startsWith("exact")) {
+      const exactSearchArray = recentlySearchedUser
+        .split(",")
+        .filter((request) => {
+          return !(request === "exact");
+        });
+
+      queryOperator.recentlySearchedUser = exactSearchArray;
     } else {
-      const searchArray = recentlySearched.split(",");
-      queryOperator.recentlySearched = { $all: searchArray };
+      const searchArray = recentlySearchedUser.split(",");
+
+      queryOperator.recentlySearchedUser = { $all: searchArray };
     }
   }
 
@@ -118,9 +131,12 @@ const adminUserQuery = async (req) => {
 
   if (selfFriendRequests) {
     if (selfFriendRequests.startsWith("exact")) {
-      const exactSearchArray = friends.split(",").filter((request) => {
-        return !(request === "exact");
-      });
+      const exactSearchArray = selfFriendRequests
+        .split(",")
+        .filter((request) => {
+          return !(request === "exact");
+        });
+
       queryOperator.selfFriendRequests = exactSearchArray;
     } else {
       const searchArray = selfFriendRequests.split(",");
@@ -162,7 +178,7 @@ const adminUserQuery = async (req) => {
         return !(select === "password");
       })
       .join(" ");
-    result = result.select(`-password ${functionalSelect}`);
+    result = result.select(functionalSelect);
   }
 
   const limit = req.query.limit || 10;
@@ -189,7 +205,7 @@ const adminUserQueryObject = (req) => {
     school,
     age,
     profilePicture,
-    recentlySearched,
+    recentlySearchedUser,
     friendRequests,
     friends,
     selfFriendRequests,
@@ -251,18 +267,28 @@ const adminUserQueryObject = (req) => {
   }
 
   if (location) {
-    queryOperator.location = location;
+    const locationArray = location.split(",");
+    if (locationArray.length > 1) {
+      queryOperator["location.city"] = locationArray[0];
+      queryOperator["location.district"] = locationArray[1];
+    } else {
+      queryOperator["location.city"] = locationArray[0];
+    }
   }
 
-  if (recentlySearched) {
-    if (recentlySearched.startsWith("exact")) {
-      const exactSearchArray = recentlySearched.split(",").filter((request) => {
-        return !(request === "exact");
-      });
-      queryOperator.recentlySearched = exactSearchArray;
+  if (recentlySearchedUser) {
+    if (recentlySearchedUser.startsWith("exact")) {
+      const exactSearchArray = recentlySearchedUser
+        .split(",")
+        .filter((request) => {
+          return !(request === "exact");
+        });
+
+      queryOperator.recentlySearchedUser = exactSearchArray;
     } else {
-      const searchArray = recentlySearched.split(",");
-      queryOperator.recentlySearched = { $all: searchArray };
+      const searchArray = recentlySearchedUser.split(",");
+
+      queryOperator.recentlySearchedUser = { $all: searchArray };
     }
   }
 
@@ -348,12 +374,7 @@ const adminUserUpdateQuery = async (req) => {
 
   const queryOperator = adminUserQueryObject(req);
   const queryUpdateOperator = {};
-  if (name) {
-    queryUpdateOperator.name = name;
-  }
-  if (email) {
-    queryUpdateOperator.email = email;
-  }
+
   if (validationNumber) {
     queryUpdateOperator.validationNumber = validationNumber;
   }
@@ -378,9 +399,7 @@ const adminUserUpdateQuery = async (req) => {
   if (deleteExpirationDate) {
     queryUpdateOperator.deleteExpirationDate = deleteExpirationDate;
   }
-  if (role) {
-    queryUpdateOperator.role = role;
-  }
+
   if (archived) {
     queryUpdateOperator.archived = archived;
   }
@@ -436,7 +455,7 @@ const adminUserUpdateQuery = async (req) => {
       const objectAdd = importedFriends.add.items.map((item) => {
         return new mongoose.Types.ObjectId(item);
       });
-      console.log(objectAdd);
+
       queryUpdateOperator.$addToSet = { friends: { $each: objectAdd } };
     }
   }

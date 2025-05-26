@@ -1,6 +1,6 @@
 const express = require("express");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
-const adminMiddleware = require("../middlewares/adminMiddleware");
+const roleMiddleware = require("../middlewares/roleMiddleware");
 const passUserInfoMiddleware = require("../middlewares/passUserInfoMiddleware");
 const {
   getManyUser,
@@ -22,14 +22,28 @@ const {
   resetPassword,
   revokeSelfFriendRequest,
   removeFromFriends,
+  getAdmin,
 } = require("../controllers/userController");
 const router = express.Router();
 
 router.get("/getMany", passUserInfoMiddleware, getManyUser); // no auth, index search
+router.get(
+  "/getAdmin",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  getAdmin
+);
 router.get("/getSingle:id", passUserInfoMiddleware, getSingleUser); // no Auth
 router.get("/show", authenticationMiddleware, showUser); // auth admin
 router.get("/getManyGoalkeeper", passUserInfoMiddleware, getManyGoalkeeper); // no auth, index search
-router.get("/getGoogleUser:id", adminMiddleware, getByGoogleId); //admin only
+router.get(
+  "/getGoogleUser:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  getByGoogleId
+); //admin only
 
 router.post(
   "/sendFriendRequest:id",
@@ -52,18 +66,36 @@ router.post("/checkDeletion", authenticationMiddleware, checkDeletionCode);
 
 router.patch("/resetPassword", authenticationMiddleware, resetPassword); // auth, admin
 
-router.patch("/updateMany", adminMiddleware, updateManyUser); // admin only, query
+router.patch(
+  "/updateMany",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  updateManyUser
+); // admin only, query
 router.patch(
   "/replyFriendRequest:id",
   authenticationMiddleware,
   replyFriendRequest
 ); // auth, admin
 router.patch("/updateSingle", authenticationMiddleware, updateSingleUser); // auth, admin
-router.patch("/updatePassword:id", adminMiddleware, updatePasswordUser); //  admin
+router.patch(
+  "/updatePassword:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  updatePasswordUser
+); //  admin
 
 router.patch("/updateDeleteUser", authenticationMiddleware, updateDeleteUser);
 
-router.delete("/deleteMany", deleteManyUser);
+router.delete(
+  "/deleteMany",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteManyUser
+);
 router.delete(
   "/revokeFriendRequest:id",
   authenticationMiddleware,
