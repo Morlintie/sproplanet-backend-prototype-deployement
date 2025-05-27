@@ -75,6 +75,15 @@ const userSchema = new mongoose.Schema(
       required: [true, "Please provide a role"],
       default: "user",
     },
+    phoneNumber: {
+      type: Number,
+      match: /^\+?[\d\s\-().]{7,20}$/,
+      unique: [true, "This phone number has already been taken."],
+    },
+
+    description: {
+      type: String,
+    },
 
     archived: {
       type: Boolean,

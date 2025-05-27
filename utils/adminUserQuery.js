@@ -29,6 +29,8 @@ const adminUserQuery = async (req) => {
     passwordExpirationDate,
     id,
     recentlySearchedUser,
+    phoneNumber,
+    description,
   } = req.query;
 
   const queryOperator = {};
@@ -163,6 +165,12 @@ const adminUserQuery = async (req) => {
   if (deleteExpirationDate) {
     queryOperator.deleteExpirationDate = deleteExpirationDate;
   }
+  if (phoneNumber) {
+    queryOperator.phoneNumber = phoneNumber;
+  }
+  if (description) {
+    queryOperator.description = { $regex: description, $options: "i" };
+  }
 
   let result = User.find(queryOperator);
 
@@ -217,6 +225,8 @@ const adminUserQueryObject = (req) => {
     deleteExpirationDate,
     passwordExpirationDate,
     id,
+    phoneNumber,
+    description,
   } = req.query;
 
   const queryOperator = {};
@@ -346,6 +356,12 @@ const adminUserQueryObject = (req) => {
   if (deleteExpirationDate) {
     queryOperator.deleteExpirationDate = deleteExpirationDate;
   }
+  if (phoneNumber) {
+    queryOperator.phoneNumber = phoneNumber;
+  }
+  if (description) {
+    queryOperator.description = { $regex: description, $options: "i" };
+  }
 
   return queryOperator;
 };
@@ -370,6 +386,8 @@ const adminUserUpdateQuery = async (req) => {
     goalKeeper,
     location,
     selfFriendRequests: importedSelfFriendRequests,
+    phoneNumber,
+    description,
   } = req.body;
 
   const queryOperator = adminUserQueryObject(req);
@@ -483,6 +501,12 @@ const adminUserUpdateQuery = async (req) => {
   if (location) {
     queryUpdateOperator.location = location;
   }
+  if (phoneNumber) {
+    queryUpdateOperator.phoneNumber = phoneNumber;
+  }
+  if (description) {
+    queryUpdateOperator.description = description;
+  }
 
   const newUsers = await User.updateMany(queryOperator, queryUpdateOperator, {
     new: true,
@@ -495,8 +519,6 @@ const adminUserUpdateQuery = async (req) => {
 
 const adminUpdateQueryObject = (req) => {
   const {
-    name,
-    email,
     validationNumber,
     validationExpirationDate,
     isValid,
@@ -504,26 +526,23 @@ const adminUpdateQueryObject = (req) => {
     passwordExpirationDate,
     deleteNumber,
     deleteExpirationDate,
-    role,
+    recentlySearched: importedRecentlySearched,
     archived,
     isDeleted,
     school,
     age,
     profilePicture,
-    friendRequests,
-    friends,
+    friendRequests: importedFriendRequests,
+    friends: importedFriends,
     goalKeeper,
     location,
-    selfFriendRequests,
+    selfFriendRequests: importedSelfFriendRequests,
+    phoneNumber,
+    description,
   } = req.body;
 
   const queryUpdateOperator = {};
-  if (name) {
-    queryUpdateOperator.name = name;
-  }
-  if (email) {
-    queryUpdateOperator.email = email;
-  }
+
   if (validationNumber) {
     queryUpdateOperator.validationNumber = validationNumber;
   }
@@ -548,9 +567,7 @@ const adminUpdateQueryObject = (req) => {
   if (deleteExpirationDate) {
     queryUpdateOperator.deleteExpirationDate = deleteExpirationDate;
   }
-  if (role) {
-    queryUpdateOperator.role = role;
-  }
+
   if (archived) {
     queryUpdateOperator.archived = archived;
   }
@@ -566,35 +583,65 @@ const adminUpdateQueryObject = (req) => {
   if (profilePicture) {
     queryUpdateOperator.profilePicture = profilePicture;
   }
-  if (friendRequests) {
-    if (friendRequests.remove) {
-      queryUpdateOperator.friendRequests = {
-        $pull: { $in: friendRequests.remove.items },
-      };
+  if (importedRecentlySearched) {
+    if (importedRecentlySearched.remove) {
+      const objectRemove = importedRecentlySearched.remove.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryOperator.$pull = { recentlySearched: { $in: objectRemove } };
     }
-    if (friendRequests.add) {
-      queryUpdateOperator.friendRequests = {
-        $addToSet: { $each: friendRequests.add.items },
-      };
-    }
-  }
-  if (friends) {
-    if (friends.remove) {
-      queryUpdateOperator.friends = { $pull: { $in: friends.remove.items } };
-    }
-    if (friends.add) {
-      queryUpdateOperator.friends = { $addToSet: { $each: friends.add.items } };
+    if (importedRecentlySearched.add) {
+      const objectAdd = importedRecentlySearched.add.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryOperator.$addToSet = { recentlySearched: { $each: objectAdd } };
     }
   }
-  if (selfFriendRequests) {
-    if (selfFriendRequests.remove) {
-      queryUpdateOperator.selfFriendRequests = {
-        $pull: { $in: selfFriendRequests.remove.items },
-      };
+
+  if (importedFriendRequests) {
+    if (importedFriendRequests.remove) {
+      const objectRemove = importedFriendRequests.remove.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryUpdateOperator.$pull = { friendRequests: { $in: objectRemove } };
     }
-    if (selfFriendRequests.add) {
-      queryUpdateOperator.selfFriendRequests = {
-        $addToSet: { $each: selfFriendRequests.add.items },
+    if (importedFriendRequests.add) {
+      const objectAdd = importedFriendRequests.add.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryUpdateOperator.$addToSet = { friendRequests: { $each: objectAdd } };
+    }
+  }
+  if (importedFriends) {
+    if (importedFriends.remove) {
+      const objectRemove = importedFriends.remove.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryUpdateOperator.$pull = { friends: { $in: objectRemove } };
+    }
+    if (importedFriends.add) {
+      const objectAdd = importedFriends.add.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+
+      queryUpdateOperator.$addToSet = { friends: { $each: objectAdd } };
+    }
+  }
+  if (importedSelfFriendRequests) {
+    if (importedSelfFriendRequests.remove) {
+      const objectRemove = importedSelfFriendRequests.remove.items.map(
+        (item) => {
+          return new mongoose.Types.ObjectId(item);
+        }
+      );
+      queryUpdateOperator.$pull = { selfFriendRequests: { $in: objectRemove } };
+    }
+    if (importedSelfFriendRequests.add) {
+      const objectAdd = importedSelfFriendRequests.add.items.map((item) => {
+        return new mongoose.Types.ObjectId(item);
+      });
+      queryUpdateOperator.$addToSet = {
+        selfFriendRequests: { $each: objectAdd },
       };
     }
   }
@@ -603,6 +650,12 @@ const adminUpdateQueryObject = (req) => {
   }
   if (location) {
     queryUpdateOperator.location = location;
+  }
+  if (phoneNumber) {
+    queryUpdateOperator.phoneNumber = phoneNumber;
+  }
+  if (description) {
+    queryUpdateOperator.description = description;
   }
 
   return queryUpdateOperator;

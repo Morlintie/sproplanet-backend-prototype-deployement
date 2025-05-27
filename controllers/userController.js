@@ -67,7 +67,7 @@ const getSingleUser = async (req, res) => {
     userId = req.user.userId;
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
   const user = await User.findOne({ _id: id, isDeleted: false }).select(
     userSelectedFields
   );
@@ -234,7 +234,7 @@ const sendFriendRequest = async (req, res) => {
   }
 
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
 
   await User.findOneAndUpdate(
     { _id: id },
@@ -259,7 +259,7 @@ const updateSingleUser = async (req, res) => {
   const { userId } = req.user;
   const { name, email, school, age, profilePicture, location } = req.body;
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
   const newUser = await User.findOneAndUpdate(
     { _id: userId },
     { name, email, school, age, profilePicture, location },
@@ -441,7 +441,7 @@ const replyFriendRequest = async (req, res) => {
     throw new BadRequestError("You have no friend request from that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
   if (accepted === "true") {
     await User.findOneAndUpdate(
       { _id: id, isDeleted: false },
@@ -502,7 +502,7 @@ const revokeSelfFriendRequest = async (req, res) => {
     );
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
@@ -537,7 +537,7 @@ const removeFromFriends = async (req, res) => {
     throw new BadRequestError("You are not friends with that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id recentlySearchedUser selfFriendRequests friendRequests";
+    "name email role school age profilePicture friends goalKeeper location createdAt _id recentlySearchedUser selfFriendRequests friendRequests phoneNumber description";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
