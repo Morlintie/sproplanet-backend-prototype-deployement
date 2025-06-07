@@ -11,11 +11,16 @@ const passport = require("passport");
 //routers
 const authRouter = require("./routes/authRouter");
 const userRouter = require("./routes/userRouter");
+const companyRouter = require("./routes/companyRouter");
+//security
+const cors = require("cors");
 //others
 const morgan = require("morgan");
 
 const PORT = process.env.PORT;
 const app = express();
+
+app.use(cors({ origin: process.env.ORIGIN_FRONTEND, credentials: true }));
 
 app.use(express.json());
 app.use(morgan("tiny"));
@@ -24,6 +29,7 @@ app.use(passport.initialize());
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/company", companyRouter);
 
 app.get("/", (req, res) => {
   res.send(

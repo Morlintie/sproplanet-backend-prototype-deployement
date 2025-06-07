@@ -8,6 +8,9 @@ const {
   adminUserUpdateQuery,
   adminUpdateQueryObject,
 } = require("./adminUserQuery");
+const adminCompanyQuery = require("./adminCompanyQuery");
+const updateCompanyEmail = require("./updateCompanyEmail");
+const resetCompanyPasswordEmail = require("./resetCompanyPasswordEmail");
 
 module.exports = {
   resetPasswordEmail,
@@ -19,4 +22,7 @@ module.exports = {
   adminUserUpdateQuery,
   adminUpdateQueryObject,
   deletionEmail,
+  adminCompanyQuery,
+  updateCompanyEmail,
+  resetCompanyPasswordEmail,
 };

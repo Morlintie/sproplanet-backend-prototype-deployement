@@ -28,6 +28,18 @@ const verifyCookie = (req, res) => {
     if (accessToken) {
       const { user } = jwt.verify(accessToken, process.env.JWT_SECRET);
 
+      if (user.companyId) {
+        return {
+          name: user.name,
+          email: user.email,
+          companyId: user.companyId,
+          owner: user.owner,
+          phone: user.phone,
+          website: user.website,
+          role: user.role,
+        };
+      }
+
       return {
         name: user.name,
         email: user.email,
@@ -40,6 +52,17 @@ const verifyCookie = (req, res) => {
       const { user, token } = jwt.verify(refreshToken, process.env.JWT_SECRET);
 
       createCookie(res, user, token);
+      if (user.companyId) {
+        return {
+          name: user.name,
+          email: user.email,
+          companyId: user.companyId,
+          owner: user.owner,
+          phone: user.phone,
+          website: user.website,
+          role: user.role,
+        };
+      }
       return {
         name: user.name,
         email: user.email,

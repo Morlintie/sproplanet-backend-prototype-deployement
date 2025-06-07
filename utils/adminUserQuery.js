@@ -150,11 +150,27 @@ const adminUserQuery = async (req) => {
   }
 
   if (createdAt) {
-    queryOperator.createdAt = createdAt;
+    const lowerDate = new Date(createdAt);
+    const upperDateArray = createdAt.split("-");
+    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
+    const upperDate = new Date(upperDateArray.join("-"));
+
+    queryObject.createdAt = {
+      $gte: lowerDate,
+      $lt: upperDate,
+    };
   }
 
   if (updatedAt) {
-    queryOperator.updatedAt = updatedAt;
+    const lowerDate = new Date(updatedAt);
+    const upperDateArray = updatedAt.split("-");
+    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
+    const upperDate = new Date(upperDateArray.join("-"));
+
+    queryObject.updatedAt = {
+      $gte: lowerDate,
+      $lt: upperDate,
+    };
   }
   if (validationExpirationDate) {
     queryOperator.validationExpirationDate = validationExpirationDate;
@@ -341,11 +357,27 @@ const adminUserQueryObject = (req) => {
   }
 
   if (createdAt) {
-    queryOperator.createdAt = createdAt;
+    const lowerDate = new Date(createdAt);
+    const upperDateArray = createdAt.split("-");
+    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
+    const upperDate = new Date(upperDateArray.join("-"));
+
+    queryObject.createdAt = {
+      $gte: lowerDate,
+      $lt: upperDate,
+    };
   }
 
   if (updatedAt) {
-    queryOperator.updatedAt = updatedAt;
+    const lowerDate = new Date(updatedAt);
+    const upperDateArray = updatedAt.split("-");
+    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
+    const upperDate = new Date(upperDateArray.join("-"));
+
+    queryObject.updatedAt = {
+      $gte: lowerDate,
+      $lt: upperDate,
+    };
   }
   if (validationExpirationDate) {
     queryOperator.validationExpirationDate = validationExpirationDate;

@@ -270,7 +270,8 @@ const updateSingleUser = async (req, res) => {
   }
   let refreshToken = await Token.findOne({ user: userId });
   if (!refreshToken) {
-    const token = crypto.randomBytes(16).toString("hex");
+    const prevToken = crypto.randomBytes(16).toString("hex");
+    const token = crypto.createHash("sha256").update(prevToken).digest("hex");
     refreshToken = await Token.create({ token, user: userId });
   }
   const cookieUser = {
@@ -397,7 +398,8 @@ const resetPassword = async (req, res) => {
 
   let refreshToken = await Token.findOne({ user: userId });
   if (!refreshToken) {
-    const token = crypto.randomBytes(16).toString("hex");
+    const prevToken = crypto.randomBytes(16).toString("hex");
+    const token = crypto.createHash("sha256").update(prevToken).digest("hex");
     refreshToken = await Token.create({ token, user: userId });
   }
   const cookieUser = {

@@ -9,7 +9,9 @@ const {
   userVerification,
   resetPassword,
   checkPasswordCode,
-
+  setGoogleCookie,
+  registerCompany,
+  loginCompany,
   takeGoogleInfo,
   authenticateGoogleInfo,
 } = require("../controllers/authController");
@@ -23,5 +25,9 @@ router.post("/check", checkPasswordCode);
 router.patch("/reset/:id", resetPassword);
 router.get("/google", takeGoogleInfo);
 router.get("/google/callback", authenticateGoogleInfo);
+router.get("/google/cookie", setGoogleCookie);
+
+router.post("/register/company", registerCompany),
+  router.post("/login/company", loginCompany);
 
 module.exports = router;

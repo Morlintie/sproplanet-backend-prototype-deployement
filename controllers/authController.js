@@ -1,6 +1,7 @@
 require("../utils/config/oauthConfig");
 const User = require("../models/User");
 const Token = require("../models/Token");
+const Company = require("../models/Company");
 const { StatusCodes } = require("http-status-codes");
 const {
   validationEmail,
@@ -19,7 +20,10 @@ const crypto = require("crypto");
 const passport = require("passport");
 
 const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, backupPassword } = req.body;
+  if (password !== backupPassword) {
+    throw new BadRequestError("Both password have to match with each other.");
+  }
   let code = 1;
   while (code < 100000 || code > 999999) {
     code = Math.ceil(Math.random() * 999999);
@@ -106,7 +110,8 @@ const login = async (req, res) => {
     let refreshToken = await Token.findOne({ user: user._id });
 
     if (!refreshToken) {
-      const token = crypto.randomBytes(16).toString("hex");
+      const prevToken = crypto.randomBytes(16).toString("hex");
+      const token = crypto.createHash("sha256").update(prevToken).digest("hex");
       refreshToken = await Token.create({ token, user: user._id });
     }
 
@@ -130,6 +135,8 @@ const logout = async (req, res) => {
     secure: process.env.NODE_ENV === "production",
     signed: true,
   });
+
+  await Token.findOneAndDelete({ user: req.user.userId });
 
   res.status(StatusCodes.OK).json({ msg: "Logout successful." });
 };
@@ -219,39 +226,47 @@ const checkPasswordCode = async (req, res) => {
 const resetPassword = async (req, res) => {
   const { newPassword, newPasswordBackup } = req.body;
   const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
 
   const user = await User.findOne({ _id: id });
-  if (user.role === "banned") {
-    throw new ForbiddenError(
-      "You have been banned, please get contact with our customer service."
+
+  if (user) {
+    if (user.role === "banned") {
+      throw new ForbiddenError(
+        "You have been banned, please get contact with our customer service."
+      );
+    }
+
+    if (user.isDeleted) {
+      throw new NotFoundError("User couldn't found.");
+    }
+
+    const isUserValid = user.isValid;
+    if (!isUserValid) {
+      throw new UnauthorizedError("Your account haven't been verified yet.");
+    }
+
+    if (!newPassword || !newPasswordBackup) {
+      throw new BadRequestError("Please provide all requested data.");
+    }
+
+    if (!(newPassword === newPasswordBackup)) {
+      throw new BadRequestError(
+        "Both passwords have to match with each other."
+      );
+    }
+    const isPasswordMatch = await user.comparePassword(newPassword);
+    if (isPasswordMatch) {
+      throw new BadRequestError("New password cannot be same as old password.");
+    }
+    await User.findOneAndUpdate(
+      { _id: id },
+      { password: newPassword },
+      { new: true, runValidators: true, timestamps: true }
     );
   }
-
-  if (user.isDeleted) {
-    throw new NotFoundError("User couldn't found.");
-  }
-
-  const isUserValid = user.isValid;
-  if (!isUserValid) {
-    throw new UnauthorizedError("Your account haven't been verified yet.");
-  }
-
-  if (!newPassword || !newPasswordBackup) {
-    throw new BadRequestError("Please provide all requested data.");
-  }
-
-  if (!(newPassword === newPasswordBackup)) {
-    throw new BadRequestError("Both passwords have to match with each other.");
-  }
-
-  if (user.comparePassword(newPassword)) {
-    throw new BadRequestError("New password cannot be same as old password.");
-  }
-  await User.findOneAndUpdate(
-    { _id: id },
-    { password: newPassword },
-    { new: true, runValidators: true, timestamps: true }
-  );
   res
     .status(StatusCodes.OK)
     .json({ msg: "Your password has been successfully changed" });
@@ -260,14 +275,23 @@ const resetPassword = async (req, res) => {
 const takeGoogleInfo = passport.authenticate("google", {
   scope: ["email", "profile"],
 });
-
 const authenticateGoogleInfo = [
   passport.authenticate("google", {
-    failureRedirect: "/failure",
+    failureRedirect: `${process.env.ORIGIN_FRONTEND}/auth/googleFailure`,
     session: false,
   }),
 
   async (req, res) => {
+    if (req.user?.cause?.code === 11000) {
+      res.redirect(
+        `${process.env.ORIGIN_FRONTEND}/auth/signup?statusCode=409&message=${req.user.message}`
+      );
+    }
+    if (req.user?.statusCode === 404) {
+      res.redirect(
+        `${process.env.ORIGIN_FRONTEND}/auth/login?statusCode=404&message=${req.user.message}`
+      );
+    }
     if (req.user?.signGoogle) {
       let code = 1;
       while (code < 100000 || code > 999999) {
@@ -283,43 +307,148 @@ const authenticateGoogleInfo = [
         { new: true, runValidators: true }
       );
       await validationEmail(req.user.email, req.user.name, code);
-      res.status(StatusCodes.OK).json({ userId: req.user.userId });
+      res.redirect(
+        `${process.env.ORIGIN_FRONTEND}/auth/signup?userId=${req.user.userId}`
+      );
     }
 
     const user = await User.findOne({ _id: req.user.userId });
     if (user) {
       if (user.role === "banned") {
-        throw new ForbiddenError(
-          "You have been banned, please get contact with our customer service."
+        res.redirect(
+          `${process.env.ORIGIN_FRONTEND}/auth/login?statusCode=403&message=You have been banned, please get contact with your customer service.`
         );
       }
 
       if (user.isDeleted) {
-        throw new NotFoundError("User couldn't found.");
+        res.redirect(
+          `${process.env.ORIGIN_FRONTEND}/auth/login?statusCode=404&message=User couldn't found.`
+        );
       }
       const isUserValid = user.isValid;
       if (!isUserValid) {
-        throw new UnauthorizedError("Your account has been not verified yet.");
-      }
-      const cookieUser = {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        userId: user._id,
-      };
-
-      let refreshToken = await Token.findOne({ user: user._id });
-      if (!refreshToken) {
-        const token = crypto.randomBytes(16).toString("hex");
-        refreshToken = await Token.create({ token, user: user._id });
+        res.redirect(
+          `${process.env.ORIGIN_FRONTEND}/auth/login?statusCode=401&message=Your account haven't been verified yet.`
+        );
       }
 
-      createCookie(res, cookieUser, refreshToken);
+      res.redirect(
+        `${process.env.ORIGIN_FRONTEND}/auth/login?userId=${user._id}`
+      ); //Change this to frontend's home page when set up.
     }
-
-    res.redirect("/home");
   },
 ];
+
+const setGoogleCookie = async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const user = await User.findOne({ _id: userId });
+  const cookieUser = {
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    userId: user._id,
+  };
+
+  let refreshToken = await Token.findOne({ user: user._id });
+
+  if (!refreshToken) {
+    const prevToken = crypto.randomBytes(16).toString("hex");
+    const token = crypto.createHash("sha256").update(prevToken).digest("hex");
+    refreshToken = await Token.create({ token, user: user._id });
+  }
+
+  createCookie(res, cookieUser, refreshToken);
+  res.status(StatusCodes.OK).json({ msg: "Login successful." });
+};
+
+registerCompany = async (req, res) => {
+  const {
+    name,
+    email,
+    phone,
+    address,
+    description,
+    owner,
+    ip,
+    password,
+    backupPassword,
+
+    taxLocation,
+    VKN_TCKN,
+    type,
+    postalCode,
+  } = req.body;
+  let { website, logo } = req.body;
+  if (!website) {
+    website = null;
+  }
+  if (!logo) {
+    logo = null;
+  }
+
+  if (password !== backupPassword) {
+    throw new BadRequestError("Both password have to match with each other.");
+  }
+  const company = await Company.create({
+    name,
+    email,
+    phone,
+    address,
+    website,
+    description,
+    logo,
+    owner,
+    ip,
+    password,
+
+    taxLocation,
+    VKN_TCKN,
+    type,
+    postalCode,
+  });
+
+  res.status(StatusCodes.CREATED).json({ company });
+};
+const loginCompany = async (req, res) => {
+  const { email, password } = req.body;
+  const ip = req.ip;
+  console.log(ip);
+  if (!email || !password) {
+    throw new BadRequestError("Please provide all required data.");
+  }
+  const company = await Company.findOne({ email });
+
+  if (!company) {
+    throw new NotFoundError("Company not found.");
+  }
+
+  const isPasswordCorrect = await company.comparePassword(password);
+  if (!isPasswordCorrect) {
+    throw new UnauthorizedError("The password is not correct.");
+  }
+  if (company.ip !== ip) {
+    throw new UnauthorizedError(
+      "You are not authorized to perform that action from this IP address."
+    );
+  }
+  const cookieCompany = {
+    name: company.name,
+    email: company.email,
+    companyId: company._id,
+    owner: company.owner,
+    phone: company.phone,
+    website: company.website,
+    role: company.role,
+  };
+  const token = crypto.randomBytes(16).toString("hex");
+  const refreshToken = crypto.createHash("sha256").update(token).digest("hex");
+  createCookie(res, cookieCompany, refreshToken);
+
+  res.status(StatusCodes.OK).json({ msg: "Login successful." });
+};
 module.exports = {
   register,
   login,
@@ -328,7 +457,9 @@ module.exports = {
   userVerification,
   checkPasswordCode,
   resetPassword,
-
+  setGoogleCookie,
+  registerCompany,
+  loginCompany,
   takeGoogleInfo,
   authenticateGoogleInfo,
 };

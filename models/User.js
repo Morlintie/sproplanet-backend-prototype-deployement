@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { BadRequestError } = require("../errors");
 
 const locationSchema = new mongoose.Schema({
   city: {
@@ -19,6 +20,7 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Please provide username"],
+      unique: [true, "This username has already been taken."],
     },
     email: {
       type: String,
@@ -77,7 +79,7 @@ const userSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: Number,
-      match: /^\+?[\d\s\-().]{7,20}$/,
+      match: [/^\+?[\d\s\-().]{7,20}$/, "Please provide a valid phone number."],
       unique: [true, "This phone number has already been taken."],
     },
 
@@ -140,27 +142,45 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ name: "text" }, { default_language: "turkish" });
 
-userSchema.pre("save", async function () {
-  if (this.isModified("password")) {
-    const salt = await bcrypt.genSalt(10);
+userSchema.pre("save", async function (next) {
+  try {
+    if (this.isModified("password")) {
+      const salt = await bcrypt.genSalt(10);
 
-    this.password = await bcrypt.hash(this.password, salt);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
   }
 });
 
-userSchema.pre("findOneAndUpdate", async function () {
-  if (this.getUpdate().password) {
-    const salt = await bcrypt.genSalt(10);
-    this.getUpdate().password = await bcrypt.hash(
-      this.getUpdate().password,
-      salt
-    );
+userSchema.pre("findOneAndUpdate", async function (next) {
+  try {
+    if (this.getUpdate().password) {
+      const salt = await bcrypt.genSalt(10);
+      this.getUpdate().password = await bcrypt.hash(
+        this.getUpdate().password,
+        salt
+      );
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
   }
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  const passwordValid = await bcrypt.compare(candidatePassword, this.password);
-  return passwordValid;
+  try {
+    const passwordValid = await bcrypt.compare(
+      candidatePassword,
+      this.password
+    );
+    return passwordValid;
+  } catch (err) {
+    console.log(err);
+    throw new BadRequestError("Password comparison failed.");
+  }
 };
 
 const User = mongoose.model("User", userSchema);
