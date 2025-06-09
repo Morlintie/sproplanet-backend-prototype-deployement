@@ -2,19 +2,6 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { BadRequestError } = require("../errors");
 
-const locationSchema = new mongoose.Schema({
-  city: {
-    type: String,
-    enum: {
-      values: ["İstanbul"],
-      message: "Please provide a valid city.",
-    },
-  },
-  district: {
-    type: String,
-  },
-});
-
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -129,7 +116,16 @@ const userSchema = new mongoose.Schema(
     },
 
     location: {
-      type: locationSchema,
+      city: {
+        type: String,
+        enum: {
+          values: ["İstanbul"],
+          message: "Please provide a valid city.",
+        },
+      },
+      district: {
+        type: String,
+      },
     },
     goalKeeper: {
       type: Boolean,
