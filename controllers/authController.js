@@ -2,11 +2,13 @@ require("../utils/config/oauthConfig");
 const User = require("../models/User");
 const Token = require("../models/Token");
 const Company = require("../models/Company");
+
 const { StatusCodes } = require("http-status-codes");
 const {
   validationEmail,
   resetPasswordEmail,
   createCookie,
+  resetCompanyPasswordEmail,
 } = require("../utils");
 const {
   BadRequestError,
@@ -282,16 +284,6 @@ const authenticateGoogleInfo = [
   }),
 
   async (req, res) => {
-    if (req.user?.cause?.code === 11000) {
-      res.redirect(
-        `${process.env.ORIGIN_FRONTEND}/auth/signup?statusCode=409&message=${req.user.message}`
-      );
-    }
-    if (req.user?.statusCode === 404) {
-      res.redirect(
-        `${process.env.ORIGIN_FRONTEND}/auth/login?statusCode=404&message=${req.user.message}`
-      );
-    }
     if (req.user?.signGoogle) {
       let code = 1;
       while (code < 100000 || code > 999999) {
@@ -364,7 +356,7 @@ const setGoogleCookie = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: "Login successful." });
 };
 
-registerCompany = async (req, res) => {
+const registerCompany = async (req, res) => {
   const {
     name,
     email,
@@ -392,6 +384,17 @@ registerCompany = async (req, res) => {
   if (password !== backupPassword) {
     throw new BadRequestError("Both password have to match with each other.");
   }
+
+  const ownerUser = await User.findOne({ _id: owner });
+  if (!ownerUser) {
+    throw new NotFoundError("Owner not found.");
+  }
+
+  if (owner !== String(ownerUser._id)) {
+    throw new BadRequestError(
+      "Owner ID does not match with the owner of the company."
+    );
+  }
   const company = await Company.create({
     name,
     email,
@@ -415,7 +418,7 @@ registerCompany = async (req, res) => {
 const loginCompany = async (req, res) => {
   const { email, password } = req.body;
   const ip = req.ip;
-  console.log(ip);
+
   if (!email || !password) {
     throw new BadRequestError("Please provide all required data.");
   }
@@ -443,11 +446,31 @@ const loginCompany = async (req, res) => {
     website: company.website,
     role: company.role,
   };
-  const token = crypto.randomBytes(16).toString("hex");
-  const refreshToken = crypto.createHash("sha256").update(token).digest("hex");
+  let refreshToken = await Token.findOne({ user: company._id });
+  if (!refreshToken) {
+    const prevToken = crypto.randomBytes(16).toString("hex");
+    const token = crypto.createHash("sha256").update(prevToken).digest("hex");
+    refreshToken = await Token.create({ token, user: company._id });
+  }
+
   createCookie(res, cookieCompany, refreshToken);
 
   res.status(StatusCodes.OK).json({ msg: "Login successful." });
+};
+
+const forgotCompanyPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const company = await Company.findOne({ email });
+  if (!company) {
+    throw new NotFoundError("Company not found.");
+  }
+  await resetCompanyPasswordEmail(company.email, company.phone, company.name);
+  res
+    .status(StatusCodes.OK)
+    .json({ msg: "Your verification email has been sent." });
 };
 module.exports = {
   register,
@@ -462,4 +485,5 @@ module.exports = {
   loginCompany,
   takeGoogleInfo,
   authenticateGoogleInfo,
+  forgotCompanyPassword,
 };

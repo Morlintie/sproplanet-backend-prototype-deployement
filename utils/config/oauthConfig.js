@@ -42,7 +42,7 @@ passport.use(
         return done(null, user);
       } catch (err) {
         console.log(err);
-        done(null, err);
+        done(err, null);
       }
     }
   )

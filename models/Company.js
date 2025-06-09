@@ -46,6 +46,7 @@ const companySchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please provide VKN_TCKN number."],
       match: [/\b\d{10,11}\b/g, "Please provide a valid VKN_TCKN number."],
+      unique: [true, "VKN_TCKN number must be unique."],
     },
     type: {
       type: String,
@@ -61,7 +62,7 @@ const companySchema = new mongoose.Schema(
         /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}(:\d+)?(\/[^\s]*)?$/,
         "Please provide a valid website URL.",
       ],
-      unique: [true, "This company website has already been taken."],
+      default: "",
     },
 
     ip: {
