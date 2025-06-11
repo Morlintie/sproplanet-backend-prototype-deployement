@@ -12,6 +12,7 @@ const passport = require("passport");
 const authRouter = require("./routes/authRouter");
 const userRouter = require("./routes/userRouter");
 const companyRouter = require("./routes/companyRouter");
+const pitchRouter = require("./routes/pitchRouter");
 //security
 const cors = require("cors");
 //others
@@ -30,6 +31,7 @@ app.use(passport.initialize());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/company", companyRouter);
+app.use("/api/v1/pitch", pitchRouter);
 
 app.get("/", (req, res) => {
   res.send(
