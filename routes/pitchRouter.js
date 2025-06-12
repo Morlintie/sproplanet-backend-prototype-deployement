@@ -37,7 +37,13 @@ router.get("/companyUser", getCompanyUserPitches);
 
 router.get("/companyUser:id", getCompanyUserPitch);
 
-router.get("/companyUser/delete:id", deletionRequest);
+router.get(
+  "/companyUser/delete:id",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  deletionRequest
+);
 router.get("/:id", passUserInfoMiddleware, getSinglePitch);
 
 router.patch("/admin/update:id", updateAdminPitch);

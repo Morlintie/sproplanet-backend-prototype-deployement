@@ -1,7 +1,9 @@
 const Pitch = require("../models/Pitch");
 const User = require("../models/User");
+const Company = require("../models/Company");
 const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../errors");
+const { pitchDeletionRequestEmail } = require("../utils");
 
 const createPitch = async (req, res) => {
   const {
@@ -254,7 +256,27 @@ const getCompanyUserPitch = async (req, res) => {
 };
 
 const deletionRequest = async (req, res) => {
-  res.send("Pitch deletion request for company user");
+  const { companyId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOne({ _id: id });
+  const company = await Company.findOne({ _id: companyId });
+  if (!pitch) {
+    throw new NotFoundError("No pitch found.");
+  }
+  if (!company) {
+    throw new NotFoundError("No company found.");
+  }
+  if (pitch.company.toString() !== companyId) {
+    throw new ForbiddenError("You are not authorized to perform that action.");
+  }
+  await pitchDeletionRequestEmail(company.email, company.phone, company.name);
+  res.status(StatusCodes.OK).json({
+    message:
+      "Deletion request has been sent successfully. We will contact you soon.",
+  });
 };
 
 const updateAdminPitch = async (req, res) => {

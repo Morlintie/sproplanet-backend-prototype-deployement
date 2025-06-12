@@ -11,6 +11,7 @@ const {
 const adminCompanyQuery = require("./adminCompanyQuery");
 const updateCompanyEmail = require("./updateCompanyEmail");
 const resetCompanyPasswordEmail = require("./resetCompanyPasswordEmail");
+const pitchDeletionRequestEmail = require("./pitchDeletionRequestEmail");
 
 module.exports = {
   resetPasswordEmail,
@@ -25,4 +26,5 @@ module.exports = {
   adminCompanyQuery,
   updateCompanyEmail,
   resetCompanyPasswordEmail,
+  pitchDeletionRequestEmail,
 };

@@ -18,7 +18,7 @@ const authenticationMiddleware = async (req, res, next) => {
     next();
   } catch (err) {
     next(
-      new UnauthorizedError("You are not authorized to perform that action.")
+      new UnauthorizedError("Your session has expired, please login again.")
     );
   }
 };

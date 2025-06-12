@@ -15,7 +15,7 @@ const roleMiddleware = async (req, res, next, ...role) => {
     next(new ForbiddenError("You are forbidden to perform that action."));
   } catch (err) {
     next(
-      new UnauthorizedError("You are not authorized to perform that action.")
+      new UnauthorizedError("Your session has expired, please login again.")
     );
   }
 };
