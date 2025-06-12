@@ -23,6 +23,8 @@ const {
   revokeSelfFriendRequest,
   removeFromFriends,
   getAdmin,
+  deleteRecentlySearchedUser,
+  deleteRecentlySearchedPitch,
 } = require("../controllers/userController");
 const router = express.Router();
 
@@ -106,5 +108,15 @@ router.delete(
   authenticationMiddleware,
   removeFromFriends
 ); // auth, admin
+router.delete(
+  "/deleteRecentlySearchedUser:id",
+  authenticationMiddleware,
+  deleteRecentlySearchedUser
+);
+router.delete(
+  "/deleteRecentlySearchedPitch:id",
+  authenticationMiddleware,
+  deleteRecentlySearchedPitch
+);
 
 module.exports = router;

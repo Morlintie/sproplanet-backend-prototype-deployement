@@ -29,6 +29,7 @@ const adminUserQuery = async (req) => {
     passwordExpirationDate,
     id,
     recentlySearchedUser,
+    recentlySearchedPitch,
     phoneNumber,
     description,
   } = req.query;
@@ -105,6 +106,20 @@ const adminUserQuery = async (req) => {
       const searchArray = recentlySearchedUser.split(",");
 
       queryOperator.recentlySearchedUser = { $all: searchArray };
+    }
+  }
+
+  if (recentlySearchedPitch) {
+    if (recentlySearchedPitch.startsWith("exact")) {
+      const exactSearchArray = recentlySearchedPitch
+        .split(",")
+        .filter((request) => {
+          return !(request === "exact");
+        });
+      queryOperator.recentlySearchedPitch = exactSearchArray;
+    } else {
+      const searchArray = recentlySearchedPitch.split(",");
+      queryOperator.recentlySearchedPitch = { $all: searchArray };
     }
   }
 
@@ -230,6 +245,7 @@ const adminUserQueryObject = (req) => {
     age,
     profilePicture,
     recentlySearchedUser,
+    recentlySearchedPitch,
     friendRequests,
     friends,
     selfFriendRequests,
@@ -315,6 +331,19 @@ const adminUserQueryObject = (req) => {
       const searchArray = recentlySearchedUser.split(",");
 
       queryOperator.recentlySearchedUser = { $all: searchArray };
+    }
+  }
+  if (recentlySearchedPitch) {
+    if (recentlySearchedPitch.startsWith("exact")) {
+      const exactSearchArray = recentlySearchedPitch
+        .split(",")
+        .filter((request) => {
+          return !(request === "exact");
+        });
+      queryOperator.recentlySearchedPitch = exactSearchArray;
+    } else {
+      const searchArray = recentlySearchedPitch.split(",");
+      queryOperator.recentlySearchedPitch = { $all: searchArray };
     }
   }
 

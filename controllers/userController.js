@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { StatusCodes, METHOD_NOT_ALLOWED } = require("http-status-codes");
 const User = require("../models/User");
+const Pitch = require("../models/Pitch");
 const Token = require("../models/Token");
 const crypto = require("crypto");
 const {
@@ -635,6 +636,65 @@ const deleteManyUser = async (req, res) => {
     .json({ msg: "Users successfully deleted." });
 };
 
+const deleteRecentlySearchedUser = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const currentUser = await User.findOne({ _id: userId });
+  const user = await User.findOne({ _id: id, isDeleted: false });
+  if (!currentUser || !user) {
+    throw new NotFoundError("User not found.");
+  }
+  if (!currentUser.recentlySearchedUser.includes(id)) {
+    throw new BadRequestError(
+      "This user is not in your recently searched users."
+    );
+  }
+  const userSelectedFields =
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
+  const newCurrentUser = await User.findOneAndUpdate(
+    {
+      _id: userId,
+    },
+    { $pull: { recentlySearchedUser: id } },
+    { new: true, runValidators: true }
+  ).select(userSelectedFields);
+  res.status(StatusCodes.OK).json({ user: newCurrentUser });
+};
+
+const deleteRecentlySearchedPitch = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const currentUser = await User.findOne({ _id: userId });
+  const pitch = await Pitch.findOne({ _id: id });
+  if (!currentUser) {
+    throw new NotFoundError("User not found.");
+  }
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  if (!currentUser.recentlySearchedPitch.includes(id)) {
+    throw new BadRequestError(
+      "This pitch is not in your recently searched pitches."
+    );
+  }
+  const userSelectedFields =
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
+  const newCurrentUser = await User.findOneAndUpdate(
+    {
+      _id: userId,
+    },
+    { $pull: { recentlySearchedPitch: id } },
+    { new: true, runValidators: true }
+  ).select(userSelectedFields);
+  res.status(StatusCodes.OK).json({ user: newCurrentUser });
+};
+
 module.exports = {
   getManyUser,
   getSingleUser,
@@ -656,4 +716,6 @@ module.exports = {
   revokeSelfFriendRequest,
   removeFromFriends,
   getAdmin,
+  deleteRecentlySearchedUser,
+  deleteRecentlySearchedPitch,
 };
