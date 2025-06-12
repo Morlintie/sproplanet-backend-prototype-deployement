@@ -115,6 +115,11 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    recentlySearchedPitch: {
+      type: [mongoose.Types.ObjectId],
+      default: [],
+    },
+
     location: {
       city: {
         type: String,

@@ -55,12 +55,6 @@ const pitchSchema = new mongoose.Schema(
       required: [true, "Please provide company ID."],
     },
 
-    owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "Please provide owner ID."],
-    },
-
     specifications: {
       dimensions: {
         length: { type: Number },
@@ -83,19 +77,20 @@ const pitchSchema = new mongoose.Schema(
         players: {
           type: Number,
           required: [true, "Please provide recommended player number."],
+          default: 14,
         },
         spectators: { type: Number, default: 0 },
       },
     },
 
     facilities: {
-      changingRooms: { type: Number, default: 0 },
-      showers: { type: Number, default: 0 },
+      changingRooms: { type: Boolean, default: true },
+      showers: { type: Boolean, default: false },
       parking: {
         type: Boolean,
         default: false,
       },
-      shooRenting: { type: Boolean, default: false },
+      shoeRenting: { type: Boolean, default: false },
       otherAmenities: [String], // cafe, wifi, etc.
     },
 

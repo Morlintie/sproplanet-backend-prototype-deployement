@@ -15,9 +15,19 @@ const {
   deletePitch,
 } = require("../controllers/pitchController");
 
-router.post("/", createPitch);
+const roleMiddleware = require("../middlewares/roleMiddleware");
+const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
+const passUserInfoMiddleware = require("../middlewares/passUserInfoMiddleware");
 
-router.get("/", getAllPitches);
+router.post(
+  "/",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  createPitch
+);
+
+router.get("/", passUserInfoMiddleware, getAllPitches);
 
 router.get("/surrounding", getAllVicinityPitches);
 
@@ -28,7 +38,7 @@ router.get("/companyUser", getCompanyUserPitches);
 router.get("/companyUser:id", getCompanyUserPitch);
 
 router.get("/companyUser/delete:id", deletionRequest);
-router.get("/:id", getSinglePitch);
+router.get("/:id", passUserInfoMiddleware, getSinglePitch);
 
 router.patch("/admin/update:id", updateAdminPitch);
 
