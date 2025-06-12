@@ -29,7 +29,7 @@ router.post(
 
 router.get("/", passUserInfoMiddleware, getAllPitches);
 
-router.get("/surrounding", getAllVicinityPitches);
+router.get("/surrounding", passUserInfoMiddleware, getAllVicinityPitches);
 
 router.get("/admin", getAdminPitches);
 

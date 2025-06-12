@@ -1,4 +1,5 @@
 const Pitch = require("../models/Pitch");
+const User = require("../models/User");
 const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../errors");
 
@@ -115,7 +116,7 @@ const getAllPitches = async (req, res) => {
   if (pricing) {
     const upperLimit = pricing.upperLimit
       ? parseFloat(pricing.upperLimit)
-      : 1000000;
+      : 100000000;
     const lowerLimit = pricing.lowerLimit ? parseFloat(pricing.lowerLimit) : 0;
     if (isNaN(upperLimit) || isNaN(lowerLimit)) {
       throw new BadRequestError("Please provide valid pricing limits");
@@ -168,7 +169,7 @@ const getAllPitches = async (req, res) => {
     .sort(sortBy);
   const countDocuments = await Pitch.countDocuments({});
 
-  if (!pitches) {
+  if (!pitches || pitches.length === 0) {
     throw new NotFoundError("No pitch found.");
   }
   res
@@ -177,19 +178,60 @@ const getAllPitches = async (req, res) => {
 };
 
 const getAllVicinityPitches = async (req, res) => {
-  res.send("Get all pitches that are at the vicinity of the user");
+  const { coordinates } = req.body;
+  if (!coordinates) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  //[langitude, latitude]
+  const userSelectedFields = "-status -__v -totalBookings -totalRevenue";
+  const pitches = await Pitch.find({
+    location: {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: coordinates,
+        },
+        $maxDistance: 7000,
+      },
+    },
+  }).select(userSelectedFields);
+  const countDocuments = await Pitch.countDocuments({});
+  if (!pitches || pitches.length === 0) {
+    throw new NotFoundError("No pitch found.");
+  }
+  res
+    .status(StatusCodes.OK)
+    .json({ pitches, count: pitches.length, totalCount: countDocuments });
 };
 
 const getSinglePitch = async (req, res) => {
+  const role = req?.user?.role;
+  const userId = req?.user?.userId;
   const { id } = req.params;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
-  const pitch = await Pitch.findOne({ _id: id }).select(
-    "-status -__v -totalBookings -totalRevenue"
-  );
+  if (role === "banned") {
+    throw new ForbiddenError(
+      "You have been banned, please get contact with our customer service."
+    );
+  }
+  const userSelectedFields = "-status -__v -totalBookings -totalRevenue";
+  const pitch = await Pitch.findOne({ _id: id }).select(userSelectedFields);
   if (!pitch) {
-    throw new NotFoundError("Pitch not found.");
+    throw new NotFoundError("No pitch found.");
+  }
+  if (userId) {
+    const user = await User.findOne({ _id: userId });
+    if (!user.recentlySearchedPitch.includes(pitch._id)) {
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $push: { recentlySearchedPitch: { $each: [pitch._id], $slice: -10 } },
+        },
+        { new: true, runValidators: true }
+      );
+    }
   }
   res.status(StatusCodes.OK).json({ pitch });
 };

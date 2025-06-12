@@ -51,6 +51,7 @@ const getAdmin = async (req, res) => {
 
 const getSingleUser = async (req, res) => {
   const role = req?.user?.role;
+  const userId = req?.user?.userId;
   if (role === "banned") {
     throw new ForbiddenError(
       "You have been banned, please get contact with our customer service."
@@ -62,12 +63,8 @@ const getSingleUser = async (req, res) => {
     throw new BadRequestError("Please provide user credentials.");
   }
 
-  let userId;
-  if (req.user) {
-    userId = req.user.userId;
-  }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   const user = await User.findOne({ _id: id, isDeleted: false }).select(
     userSelectedFields
   );
@@ -78,37 +75,11 @@ const getSingleUser = async (req, res) => {
   if (userId) {
     const currentUser = await User.findOne({ _id: userId });
 
-    if (
-      !currentUser.recentlySearchedUser.includes(id) &&
-      currentUser.recentlySearchedUser.length < 10
-    ) {
+    if (!currentUser.recentlySearchedUser.includes(id)) {
       await User.findOneAndUpdate(
         { _id: userId },
-        { $push: { recentlySearchedUser: id } }
-      );
-    }
-    if (
-      !currentUser.recentlySearchedUser.includes(id) &&
-      currentUser.recentlySearchedUser.length >= 10
-    ) {
-      await User.findOneAndUpdate(
-        { _id: userId },
-        {
-          $pull: {
-            recentlySearchedUser:
-              currentUser.recentlySearchedUser[
-                currentUser.recentlySearchedUser.length - 1
-              ],
-          },
-        }
-      );
-      await User.findOneAndUpdate(
-        { _id: userId },
-        {
-          $push: {
-            recentlySearchedUser: id,
-          },
-        }
+        { $push: { recentlySearchedUser: { $each: [id], $slice: -10 } } },
+        { new: true, runValidators: true }
       );
     }
   }
@@ -234,7 +205,7 @@ const sendFriendRequest = async (req, res) => {
   }
 
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
 
   await User.findOneAndUpdate(
     { _id: id },
@@ -259,7 +230,7 @@ const updateSingleUser = async (req, res) => {
   const { userId } = req.user;
   const { name, email, school, age, profilePicture, location } = req.body;
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   const newUser = await User.findOneAndUpdate(
     { _id: userId },
     { name, email, school, age, profilePicture, location },
@@ -443,7 +414,7 @@ const replyFriendRequest = async (req, res) => {
     throw new BadRequestError("You have no friend request from that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   if (accepted === "true") {
     await User.findOneAndUpdate(
       { _id: id, isDeleted: false },
@@ -504,7 +475,7 @@ const revokeSelfFriendRequest = async (req, res) => {
     );
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id selfFriendRequests friendRequests recentlySearchedUser phoneNumber description";
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
@@ -539,7 +510,7 @@ const removeFromFriends = async (req, res) => {
     throw new BadRequestError("You are not friends with that person.");
   }
   const userSelectedFields =
-    "name email role school age profilePicture friends goalKeeper location createdAt _id recentlySearchedUser selfFriendRequests friendRequests phoneNumber description";
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
