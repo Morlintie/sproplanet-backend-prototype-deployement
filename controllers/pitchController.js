@@ -229,7 +229,14 @@ const getSinglePitch = async (req, res) => {
       await User.findOneAndUpdate(
         { _id: userId },
         {
-          $push: { recentlySearchedPitch: { $each: [pitch._id], $slice: -10 } },
+          $push: {
+            recentlySearchedPitch: {
+              $each: [
+                { pitchId: pitch._id, name: pitch.name, rating: pitch.rating },
+              ],
+              $slice: -10,
+            },
+          },
         },
         { new: true, runValidators: true }
       );

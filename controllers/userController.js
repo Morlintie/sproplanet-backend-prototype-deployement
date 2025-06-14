@@ -79,7 +79,23 @@ const getSingleUser = async (req, res) => {
     if (!currentUser.recentlySearchedUser.includes(id)) {
       await User.findOneAndUpdate(
         { _id: userId },
-        { $push: { recentlySearchedUser: { $each: [id], $slice: -10 } } },
+        {
+          $push: {
+            recentlySearchedUser: {
+              $each: [
+                {
+                  userId: user._id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  profilePicture: user.profilePicture,
+                  goalKeeper: user.goalKeeper,
+                },
+              ],
+              $slice: -10,
+            },
+          },
+        },
         { new: true, runValidators: true }
       );
     }
@@ -172,37 +188,54 @@ const sendFriendRequest = async (req, res) => {
       "Users cannot send friend requests for themselves."
     );
   }
+  sendUser.friendRequests.forEach((friendRequest) => {
+    if (friendRequest.userId.toString() === userId) {
+      throw new BadRequestError(
+        "You have already sent a friend request for this user."
+      );
+    }
+  });
 
-  if (sendUser.friendRequests.includes(userId)) {
-    throw new BadRequestError(
-      "You have already sent friend request for that person."
-    );
+  currentUser.selfFriendRequests.forEach((friendRequest) => {
+    if (friendRequest.toString() === id) {
+      throw new BadRequestError(
+        "You have already sent a friend request for this user."
+      );
+    }
+  });
+
+  currentUser.friends.forEach((friend) => {
+    if (friend.userId.toString() === id) {
+      throw new BadRequestError("You are already friends with that person.");
+    }
+  });
+
+  const currentUserFriends = [];
+  for (let i = 0; i < currentUser.friends.length; i++) {
+    currentUserFriends.push({
+      userId: currentUser.friends[i].userId,
+      name: currentUser.friends[i].name,
+      email: currentUser.friends[i].email,
+      role: currentUser.friends[i].role,
+      school: currentUser.friends[i].school,
+      age: currentUser.friends[i].age,
+      profilePicture: currentUser.friends[i].profilePicture,
+      goalKeeper: currentUser.friends[i].goalKeeper,
+    });
   }
 
-  if (sendUser.selfFriendRequests.includes(userId)) {
-    throw new BadRequestError(
-      "This person has already sent a friend request for you."
-    );
-  }
-
-  if (sendUser.friends.includes(userId)) {
-    throw new BadRequestError("You are already friends with that person.");
-  }
-
-  if (currentUser.friendRequests.includes(id)) {
-    throw new BadRequestError(
-      "This person has already sent a friend request for you."
-    );
-  }
-
-  if (currentUser.selfFriendRequests.includes(id)) {
-    throw new BadRequestError(
-      "You have already sent friend request for that person."
-    );
-  }
-
-  if (currentUser.friends.includes(id)) {
-    throw new BadRequestError("You are already friends with that person.");
+  const sendUserFriends = [];
+  for (let i = 0; i < sendUser.friends.length; i++) {
+    sendUserFriends.push({
+      userId: sendUser.friends[i].userId,
+      name: sendUser.friends[i].name,
+      email: sendUser.friends[i].email,
+      role: sendUser.friends[i].role,
+      school: sendUser.friends[i].school,
+      age: sendUser.friends[i].age,
+      profilePicture: sendUser.friends[i].profilePicture,
+      goalKeeper: sendUser.friends[i].goalKeeper,
+    });
   }
 
   const userSelectedFields =
@@ -210,12 +243,40 @@ const sendFriendRequest = async (req, res) => {
 
   await User.findOneAndUpdate(
     { _id: id },
-    { $addToSet: { friendRequests: new mongoose.Types.ObjectId(userId) } },
+    {
+      $push: {
+        friendRequests: {
+          userId: currentUser._id,
+          name: currentUser.name,
+          email: currentUser.email,
+          role: currentUser.role,
+          school: currentUser.school,
+          age: currentUser.age,
+          profilePicture: currentUser.profilePicture,
+          friends: currentUserFriends,
+          goalKeeper: currentUser.goalKeeper,
+        },
+      },
+    },
     { new: true, runValidators: true, timestamps: false }
   );
   const friendRequest = await User.findOneAndUpdate(
     { _id: userId },
-    { $addToSet: { selfFriendRequests: new mongoose.Types.ObjectId(id) } },
+    {
+      $push: {
+        selfFriendRequests: {
+          userId: sendUser._id,
+          name: sendUser.name,
+          email: sendUser.email,
+          role: sendUser.role,
+          school: sendUser.role,
+          age: sendUser.age,
+          profilePicture: sendUser.profilePicture,
+          friends: sendUserFriends,
+          goalKeeper: sendUser.goalKeeper,
+        },
+      },
+    },
     { new: true, runValidators: true, timestamps: false }
   ).select(userSelectedFields);
 
@@ -400,36 +461,81 @@ const replyFriendRequest = async (req, res) => {
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
-
-  if (!sendUser.selfFriendRequests.includes(userId)) {
-    throw new BadRequestError(
-      "This user has not sent a friend request for you."
-    );
-  }
-
   if (!currentUser) {
     throw new NotFoundError("User couldn't found.");
   }
 
-  if (!currentUser.friendRequests.includes(id)) {
-    throw new BadRequestError("You have no friend request from that person.");
+  let selfFriendStatus = false;
+  sendUser.selfFriendRequests.forEach((friendRequest) => {
+    if (friendRequest.userId.toString() === userId) {
+      selfFriendStatus = true;
+    }
+  });
+  if (!selfFriendStatus) {
+    throw new BadRequestError(
+      "You have not sent friend request for that user."
+    );
   }
+
+  let friendRequestStatus = false;
+  currentUser.friendRequests.forEach((friendRequest) => {
+    if (friendRequest.userId.toString() === id) {
+      friendRequestStatus = true;
+    }
+  });
+
+  if (!friendRequestStatus) {
+    throw new BadRequestError(
+      "You have not received friend request from that user."
+    );
+  }
+
+  currentUser.friends.forEach((friend) => {
+    if (friend.userId.toString() === id) {
+      throw new BadRequestError("You are already friends with that person.");
+    }
+  });
+
+  const addedFriends = currentUser.friends.map((friend) => {
+    return {
+      userId: friend.userId,
+      name: friend.name,
+      email: friend.email,
+      role: friend.role,
+      school: friend.school,
+      age: friend.age,
+      profilePicture: friend.profilePicture,
+      goalKeeper: friend.goalKeeper,
+    };
+  });
+
   const userSelectedFields =
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   if (accepted === "true") {
     await User.findOneAndUpdate(
       { _id: id, isDeleted: false },
       {
-        $pull: { selfFriendRequests: new mongoose.Types.ObjectId(userId) },
-        $addToSet: { friends: new mongoose.Types.ObjectId(userId) },
+        $pull: { selfFriendRequests: { userId: currentUser._id } },
+        $push: {
+          friends: {
+            userId: currentUser._id,
+            name: currentUser.name,
+            email: currentUser.email,
+            role: currentUser.role,
+            school: currentUser.role,
+            age: currentUser.age,
+            profilePicture: currentUser.profilePicture,
+            friends: addedFriends,
+            goalKeeper: currentUser.goalKeeper,
+          },
+        },
       },
       { new: true, runValidators: true, timestamps: false }
     );
     const currentUserFriends = await User.findOneAndUpdate(
       { _id: userId },
       {
-        $pull: { friendRequests: new mongoose.Types.ObjectId(id) },
-        $addToSet: { friends: new mongoose.Types.ObjectId(id) },
+        $pull: { friendRequests: { userId: sendUser._id } },
       },
       { new: true, runValidators: true, timestamps: false }
     ).select(userSelectedFields);
@@ -439,12 +545,12 @@ const replyFriendRequest = async (req, res) => {
   if (accepted === "false") {
     await User.findOneAndUpdate(
       { _id: id, isDeleted: false },
-      { $pull: { selfFriendRequests: new mongoose.Types.ObjectId(userId) } },
+      { $pull: { selfFriendRequests: { userId: currentUser._id } } },
       { new: true, runValidators: true, timestamps: false }
     );
     const currentUserFriends = await User.findOneAndUpdate(
       { _id: userId },
-      { $pull: { friendRequests: new mongoose.Types.ObjectId(id) } },
+      { $pull: { friendRequests: { userId: sendUser._id } } },
       { new: true, runValidators: true, timestamps: false }
     ).select(userSelectedFields);
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
@@ -465,26 +571,46 @@ const revokeSelfFriendRequest = async (req, res) => {
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  if (!currentUser.selfFriendRequests.includes(id)) {
+
+  let selfFriendStatus = false;
+  currentUser.selfFriendRequests.forEach((friendRequest) => {
+    if (friendRequest.userId.toString() === id) {
+      selfFriendStatus = true;
+    }
+  });
+  if (!selfFriendStatus) {
     throw new BadRequestError(
-      "You have not sent friend request for that person."
+      "You have not sent friend request for that user."
     );
   }
-  if (!sendUser.friendRequests.includes(userId)) {
+
+  let friendRequestStatus = false;
+  sendUser.friendRequests.forEach((friendRequest) => {
+    if (friendRequest.userId.toString() === userId) {
+      friendRequestStatus = true;
+    }
+  });
+  if (!friendRequestStatus) {
     throw new BadRequestError(
-      "You have not sent friend request for that person."
+      "This user did not receive a friend request from you."
     );
   }
+
+  currentUser.friends.forEach((friend) => {
+    if (friend.userId.toString() === id) {
+      throw new BadRequestError("You are already friends with that user.");
+    }
+  });
   const userSelectedFields =
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   await User.findOneAndUpdate(
     { _id: id, isDeleted: false },
-    { $pull: { friendRequests: new mongoose.Types.ObjectId(userId) } },
+    { $pull: { friendRequests: { userId: currentUser._id } } },
     { new: true, runValidators: true }
   );
   const newCurrentUser = await User.findOneAndUpdate(
     { _id: userId },
-    { $pull: { selfFriendRequests: new mongoose.Types.ObjectId(id) } },
+    { $pull: { selfFriendRequests: { userId: sendUser._id } } },
     { new: true, runValidators: true }
   ).select(userSelectedFields);
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
@@ -504,22 +630,22 @@ const removeFromFriends = async (req, res) => {
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  if (!currentUser.friends.includes(id)) {
-    throw new BadRequestError("You are not friends with that person.");
+  let currentUserStatus = false;
+  currentUser.friends.forEach((friend) => {
+    if (friend.userId.toString() === id) {
+      currentUserStatus = true;
+    }
+  });
+  if (!currentUserStatus) {
+    throw new BadRequestError("You are not friends with that user.");
   }
-  if (!sendUser.friends.includes(userId)) {
-    throw new BadRequestError("You are not friends with that person.");
-  }
+
   const userSelectedFields =
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
-  await User.findOneAndUpdate(
-    { _id: id, isDeleted: false },
-    { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
-    { new: true, runValidators: true }
-  );
+
   const newCurrentUser = await User.findOneAndUpdate(
     { _id: userId },
-    { $pull: { friends: new mongoose.Types.ObjectId(id) } },
+    { $pull: { friends: { userId: sendUser._id } } },
     { new: true, runValidators: true }
   ).select(userSelectedFields);
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
@@ -647,7 +773,13 @@ const deleteRecentlySearchedUser = async (req, res) => {
   if (!currentUser || !user) {
     throw new NotFoundError("User not found.");
   }
-  if (!currentUser.recentlySearchedUser.includes(id)) {
+  let userStatus = false;
+  currentUser.recentlySearchedUser.forEach((searchedUser) => {
+    if (searchedUser.userId.toString() === id) {
+      userStatus = true;
+    }
+  });
+  if (!userStatus) {
     throw new BadRequestError(
       "This user is not in your recently searched users."
     );
@@ -658,7 +790,7 @@ const deleteRecentlySearchedUser = async (req, res) => {
     {
       _id: userId,
     },
-    { $pull: { recentlySearchedUser: id } },
+    { $pull: { recentlySearchedUser: { userId: user._id } } },
     { new: true, runValidators: true }
   ).select(userSelectedFields);
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
@@ -678,7 +810,13 @@ const deleteRecentlySearchedPitch = async (req, res) => {
   if (!pitch) {
     throw new NotFoundError("Pitch not found.");
   }
-  if (!currentUser.recentlySearchedPitch.includes(id)) {
+  let pitchStatus = false;
+  currentUser.recentlySearchedPitch.forEach((searchedPitch) => {
+    if (searchedPitch.pitchId === id) {
+      pitchStatus = true;
+    }
+  });
+  if (!pitchStatus) {
     throw new BadRequestError(
       "This pitch is not in your recently searched pitches."
     );
@@ -689,7 +827,7 @@ const deleteRecentlySearchedPitch = async (req, res) => {
     {
       _id: userId,
     },
-    { $pull: { recentlySearchedPitch: id } },
+    { $pull: { recentlySearchedPitch: { pitchId: pitch._id } } },
     { new: true, runValidators: true }
   ).select(userSelectedFields);
   res.status(StatusCodes.OK).json({ user: newCurrentUser });

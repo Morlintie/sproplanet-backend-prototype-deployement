@@ -98,25 +98,108 @@ const userSchema = new mongoose.Schema(
     }, // design default PPs
 
     selfFriendRequests: {
-      type: [mongoose.Types.ObjectId],
+      type: [
+        {
+          userId: mongoose.Types.ObjectId,
+          name: String,
+          email: String,
+          role: String,
+          age: Number,
+          profilePicture: String,
+          friends: [
+            {
+              userId: mongoose.Types.ObjectId,
+              name: String,
+              email: String,
+              role: String,
+              school: String,
+              age: Number,
+              profilePicture: String,
+              goalKeeper: Boolean,
+            },
+          ],
+          goalKeeper: Boolean,
+        },
+      ],
       default: [],
     },
 
     friendRequests: {
-      type: [mongoose.Types.ObjectId],
+      type: [
+        {
+          userId: mongoose.Types.ObjectId,
+          name: String,
+          email: String,
+          role: String,
+          age: Number,
+          profilePicture: String,
+          friends: [
+            {
+              userId: mongoose.Types.ObjectId,
+              name: String,
+              email: String,
+              role: String,
+              school: String,
+              age: Number,
+              profilePicture: String,
+              goalKeeper: Boolean,
+            },
+          ],
+          goalKeeper: Boolean,
+        },
+      ],
       default: [],
     },
     friends: {
-      type: [mongoose.Types.ObjectId],
+      type: [
+        {
+          userId: mongoose.Types.ObjectId,
+          name: String,
+          email: String,
+          role: String,
+          age: Number,
+          profilePicture: String,
+          friends: [
+            {
+              userId: mongoose.Types.ObjectId,
+              name: String,
+              email: String,
+              role: String,
+              school: String,
+              age: Number,
+              profilePicture: String,
+              goalKeeper: Boolean,
+            },
+          ],
+          goalKeeper: Boolean,
+        },
+      ],
       default: [],
     },
     recentlySearchedUser: {
-      type: [mongoose.Types.ObjectId],
+      type: [
+        {
+          userId: mongoose.Types.ObjectId,
+          name: String,
+          email: String,
+          role: {
+            type: String,
+            enum: {
+              values: ["user", "admin", "companyOwner", "banned"],
+              message: "Please provide a valid role value.",
+            },
+          },
+          profilePicture: String,
+          goalKeeper: Boolean,
+        },
+      ],
       default: [],
     },
 
     recentlySearchedPitch: {
-      type: [mongoose.Types.ObjectId],
+      type: [
+        { pitchId: mongoose.Types.ObjectId, name: String, rating: Number },
+      ],
       default: [],
     },
 
