@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-const { StatusCodes, METHOD_NOT_ALLOWED } = require("http-status-codes");
+const { StatusCodes } = require("http-status-codes");
 const User = require("../models/User");
 const Pitch = require("../models/Pitch");
 const Token = require("../models/Token");
@@ -7,7 +6,7 @@ const crypto = require("crypto");
 const {
   adminUserQuery,
   adminUserUpdateQuery,
-  adminUserQueryObject,
+
   resetPasswordEmail,
   deletionEmail,
   createCookie,
@@ -45,7 +44,23 @@ const getManyUser = async (req, res) => {
 };
 
 const getAdmin = async (req, res) => {
-  const users = await adminUserQuery(req);
+  let { select, sort } = req.query;
+  if (select) {
+    select = select.split(",").join(" ");
+  }
+  if (sort) {
+    sort = sort.split(",").join(" ");
+  }
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const queryObject = adminUserQuery(req);
+  const users = await User.find(queryObject)
+    .select(select)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit);
 
   res.status(StatusCodes.OK).json({ users: users });
 };
@@ -284,7 +299,15 @@ const sendFriendRequest = async (req, res) => {
 };
 
 const updateManyUser = async (req, res) => {
-  const newUsers = await adminUserUpdateQuery(req);
+  const updateQuery = await adminUserUpdateQuery(req);
+  const findQuery = adminUserQuery(req);
+
+  const newUsers = await User.findOneAndUpdate(findQuery, updateQuery, {
+    new: true,
+    runValidators: true,
+    timestamps: true,
+  });
+
   res.status(StatusCodes.OK).json({ users: newUsers });
 };
 
@@ -747,7 +770,7 @@ const updateDeleteUser = async (req, res) => {
 };
 
 const deleteManyUser = async (req, res) => {
-  const queryOperator = adminUserQueryObject(req);
+  const queryOperator = adminUserQuery(req);
   const users = await User.find(queryOperator);
   const usersId = users.reduce((acc, user) => {
     return (acc = [...acc, user._id]);
