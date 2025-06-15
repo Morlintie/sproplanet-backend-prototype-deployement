@@ -6,7 +6,6 @@ const {
   adminUserQuery,
   adminUserQueryObject,
   adminUserUpdateQuery,
-  adminUpdateQueryObject,
 } = require("./adminUserQuery");
 const adminCompanyQuery = require("./adminCompanyQuery");
 const updateCompanyEmail = require("./updateCompanyEmail");
@@ -21,7 +20,7 @@ module.exports = {
   adminUserQuery,
   adminUserQueryObject,
   adminUserUpdateQuery,
-  adminUpdateQueryObject,
+
   deletionEmail,
   adminCompanyQuery,
   updateCompanyEmail,

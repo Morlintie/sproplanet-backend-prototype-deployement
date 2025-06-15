@@ -101,32 +101,40 @@ const adminUserQuery = async (req) => {
   if (recentlySearchedUser) {
     if (recentlySearchedUser.name) {
       queryOperator.recentlySearchedUser = {
-        name: { $regex: recentlySearchedUser.name, $options: "i" },
+        $elemMatch: {
+          name: { $regex: recentlySearchedUser.name, $options: "i" },
+        },
       };
     }
     if (recentlySearchedUser.email) {
       queryOperator.recentlySearchedUser = {
-        email: { $regex: recentlySearchedUser.email, $options: "i" },
+        $elemMatch: {
+          email: { $regex: recentlySearchedUser.email, $options: "i" },
+        },
       };
     }
     if (recentlySearchedUser.role) {
       queryOperator.recentlySearchedUser = {
-        role: recentlySearchedUser.role,
+        $elemMatch: { role: recentlySearchedUser.role },
       };
     }
     if (recentlySearchedUser.goalKeeper) {
       queryOperator.recentlySearchedUser = {
-        goalKeeper:
-          (recentlySearchedUser.goalKeeper ===
-            recentlySearchedUser.goalKeeper) ===
-          "true"
-            ? true
-            : false,
+        $elemMatch: {
+          goalKeeper:
+            (recentlySearchedUser.goalKeeper ===
+              recentlySearchedUser.goalKeeper) ===
+            "true"
+              ? true
+              : false,
+        },
       };
     }
     if (recentlySearchedUser.userId) {
       queryOperator.recentlySearchedUser = {
-        userId: mongoose.Types.ObjectId(recentlySearchedUser.userId),
+        $elemMatch: {
+          userId: mongoose.Types.ObjectId(recentlySearchedUser.userId),
+        },
       };
     }
   }
@@ -134,19 +142,25 @@ const adminUserQuery = async (req) => {
   if (recentlySearchedPitch) {
     if (recentlySearchedPitch.name) {
       queryOperator.recentlySearchedPitch = {
-        name: { $regex: recentlySearchedPitch.name, $options: "i" },
+        $elemMatch: {
+          name: { $regex: recentlySearchedPitch.name, $options: "i" },
+        },
       };
     }
     if (recentlySearchedPitch.pitchId) {
       queryOperator.recentlySearchedPitch = {
-        pitchId: mongoose.Types.ObjectId(recentlySearchedPitch.pitchId),
+        $elemMatch: {
+          pitchId: mongoose.Types.ObjectId(recentlySearchedPitch.pitchId),
+        },
       };
     }
     if (recentlySearchedPitch.rating) {
       queryOperator.recentlySearchedPitch = {
         ["rating.averageRating"]: {
-          $gte: recentlySearchedPitch.rating.lowerRating,
-          $lte: recentlySearchedPitch.rating.upperRating,
+          $elemMatch: {
+            $gte: recentlySearchedPitch.rating.lowerRating,
+            $lte: recentlySearchedPitch.rating.upperRating,
+          },
         },
       };
     }
@@ -155,54 +169,58 @@ const adminUserQuery = async (req) => {
   if (friendRequests) {
     if (friendRequests.userId) {
       queryOperator.friendRequests = {
-        userId: mongoose.Types.ObjectId(friendRequests.userId),
+        $elemMatch: { userId: mongoose.Types.ObjectId(friendRequests.userId) },
       };
     }
     if (friendRequests.name) {
       queryOperator.friendRequests = {
-        name: { $regex: friendRequests.name, $options: "i" },
+        $elemMatch: { name: { $regex: friendRequests.name, $options: "i" } },
       };
     }
     if (friendRequests.email) {
       queryOperator.friendRequests = {
-        email: { $regex: friendRequests.email, $options: "i" },
+        $elemMatch: { email: { $regex: friendRequests.email, $options: "i" } },
       };
     }
     if (friendRequests.role) {
       queryOperator.friendRequests = {
-        role: friendRequests.role,
+        $elemMatch: { role: friendRequests.role },
       };
     }
     if (friendRequests.goalKeeper) {
       queryOperator.friendRequests = {
-        goalKeeper: friendRequests.goalKeeper === "true" ? true : false,
+        $elemMatch: {
+          goalKeeper: friendRequests.goalKeeper === "true" ? true : false,
+        },
       };
     }
   }
   if (friends) {
     if (friends.userId) {
       queryOperator.friends = {
-        userId: mongoose.Types.ObjectId(friends.userId),
+        $elemMatch: { userId: mongoose.Types.ObjectId(friends.userId) },
       };
     }
     if (friends.name) {
       queryOperator.friends = {
-        name: { $regex: friends.name, $options: "i" },
+        $elemMatch: { name: { $regex: friends.name, $options: "i" } },
       };
     }
     if (friends.email) {
       queryOperator.friends = {
-        email: { $regex: friends.email, $options: "i" },
+        $elemMatch: { email: { $regex: friends.email, $options: "i" } },
       };
     }
     if (friends.role) {
       queryOperator.friends = {
-        role: friends.role,
+        $elemMatch: { role: friends.role },
       };
     }
     if (friends.goalKeeper) {
       queryOperator.friends = {
-        goalKeeper: friends.goalKeeper === "true" ? true : false,
+        $elemMatch: {
+          goalKeeper: friends.goalKeeper === "true" ? true : false,
+        },
       };
     }
   }
@@ -210,27 +228,35 @@ const adminUserQuery = async (req) => {
   if (selfFriendRequests) {
     if (selfFriendRequests.userId) {
       queryOperator.selfFriendRequests = {
-        userId: mongoose.Types.ObjectId(selfFriendRequests.userId),
+        $elemMatch: {
+          userId: mongoose.Types.ObjectId(selfFriendRequests.userId),
+        },
       };
     }
     if (selfFriendRequests.name) {
       queryOperator.selfFriendRequests = {
-        name: { $regex: selfFriendRequests.name, $options: "i" },
+        $elemMatch: {
+          name: { $regex: selfFriendRequests.name, $options: "i" },
+        },
       };
     }
     if (selfFriendRequests.email) {
       queryOperator.selfFriendRequests = {
-        email: { $regex: selfFriendRequests.email, $options: "i" },
+        $elemMatch: {
+          email: { $regex: selfFriendRequests.email, $options: "i" },
+        },
       };
     }
     if (selfFriendRequests.role) {
       queryOperator.selfFriendRequests = {
-        role: selfFriendRequests.role,
+        $elemMatch: { role: selfFriendRequests.role },
       };
     }
     if (selfFriendRequests.goalKeeper) {
       queryOperator.selfFriendRequests = {
-        goalKeeper: selfFriendRequests.goalKeeper === "true" ? true : false,
+        $elemMatch: {
+          goalKeeper: selfFriendRequests.goalKeeper === "true" ? true : false,
+        },
       };
     }
   }
@@ -399,32 +425,40 @@ const adminUserQueryObject = (req) => {
   if (recentlySearchedUser) {
     if (recentlySearchedUser.name) {
       queryOperator.recentlySearchedUser = {
-        name: { $regex: recentlySearchedUser.name, $options: "i" },
+        $elemMatch: {
+          name: { $regex: recentlySearchedUser.name, $options: "i" },
+        },
       };
     }
     if (recentlySearchedUser.email) {
       queryOperator.recentlySearchedUser = {
-        email: { $regex: recentlySearchedUser.email, $options: "i" },
+        $elemMatch: {
+          email: { $regex: recentlySearchedUser.email, $options: "i" },
+        },
       };
     }
     if (recentlySearchedUser.role) {
       queryOperator.recentlySearchedUser = {
-        role: recentlySearchedUser.role,
+        $elemMatch: { role: recentlySearchedUser.role },
       };
     }
     if (recentlySearchedUser.goalKeeper) {
       queryOperator.recentlySearchedUser = {
-        goalKeeper:
-          (recentlySearchedUser.goalKeeper ===
-            recentlySearchedUser.goalKeeper) ===
-          "true"
-            ? true
-            : false,
+        $elemMatch: {
+          goalKeeper:
+            (recentlySearchedUser.goalKeeper ===
+              recentlySearchedUser.goalKeeper) ===
+            "true"
+              ? true
+              : false,
+        },
       };
     }
     if (recentlySearchedUser.userId) {
       queryOperator.recentlySearchedUser = {
-        userId: mongoose.Types.ObjectId(recentlySearchedUser.userId),
+        $elemMatch: {
+          userId: mongoose.Types.ObjectId(recentlySearchedUser.userId),
+        },
       };
     }
   }
@@ -432,19 +466,25 @@ const adminUserQueryObject = (req) => {
   if (recentlySearchedPitch) {
     if (recentlySearchedPitch.name) {
       queryOperator.recentlySearchedPitch = {
-        name: { $regex: recentlySearchedPitch.name, $options: "i" },
+        $elemMatch: {
+          name: { $regex: recentlySearchedPitch.name, $options: "i" },
+        },
       };
     }
     if (recentlySearchedPitch.pitchId) {
       queryOperator.recentlySearchedPitch = {
-        pitchId: mongoose.Types.ObjectId(recentlySearchedPitch.pitchId),
+        $elemMatch: {
+          pitchId: mongoose.Types.ObjectId(recentlySearchedPitch.pitchId),
+        },
       };
     }
     if (recentlySearchedPitch.rating) {
       queryOperator.recentlySearchedPitch = {
         ["rating.averageRating"]: {
-          $gte: recentlySearchedPitch.rating.lowerRating,
-          $lte: recentlySearchedPitch.rating.upperRating,
+          $elemMatch: {
+            $gte: recentlySearchedPitch.rating.lowerRating,
+            $lte: recentlySearchedPitch.rating.upperRating,
+          },
         },
       };
     }
@@ -453,54 +493,58 @@ const adminUserQueryObject = (req) => {
   if (friendRequests) {
     if (friendRequests.userId) {
       queryOperator.friendRequests = {
-        userId: mongoose.Types.ObjectId(friendRequests.userId),
+        $elemMatch: { userId: mongoose.Types.ObjectId(friendRequests.userId) },
       };
     }
     if (friendRequests.name) {
       queryOperator.friendRequests = {
-        name: { $regex: friendRequests.name, $options: "i" },
+        $elemMatch: { name: { $regex: friendRequests.name, $options: "i" } },
       };
     }
     if (friendRequests.email) {
       queryOperator.friendRequests = {
-        email: { $regex: friendRequests.email, $options: "i" },
+        $elemMatch: { email: { $regex: friendRequests.email, $options: "i" } },
       };
     }
     if (friendRequests.role) {
       queryOperator.friendRequests = {
-        role: friendRequests.role,
+        $elemMatch: { role: friendRequests.role },
       };
     }
     if (friendRequests.goalKeeper) {
       queryOperator.friendRequests = {
-        goalKeeper: friendRequests.goalKeeper === "true" ? true : false,
+        $elemMatch: {
+          goalKeeper: friendRequests.goalKeeper === "true" ? true : false,
+        },
       };
     }
   }
   if (friends) {
     if (friends.userId) {
       queryOperator.friends = {
-        userId: mongoose.Types.ObjectId(friends.userId),
+        $elemMatch: { userId: mongoose.Types.ObjectId(friends.userId) },
       };
     }
     if (friends.name) {
       queryOperator.friends = {
-        name: { $regex: friends.name, $options: "i" },
+        $elemMatch: { name: { $regex: friends.name, $options: "i" } },
       };
     }
     if (friends.email) {
       queryOperator.friends = {
-        email: { $regex: friends.email, $options: "i" },
+        $elemMatch: { email: { $regex: friends.email, $options: "i" } },
       };
     }
     if (friends.role) {
       queryOperator.friends = {
-        role: friends.role,
+        $elemMatch: { role: friends.role },
       };
     }
     if (friends.goalKeeper) {
       queryOperator.friends = {
-        goalKeeper: friends.goalKeeper === "true" ? true : false,
+        $elemMatch: {
+          goalKeeper: friends.goalKeeper === "true" ? true : false,
+        },
       };
     }
   }
@@ -508,27 +552,35 @@ const adminUserQueryObject = (req) => {
   if (selfFriendRequests) {
     if (selfFriendRequests.userId) {
       queryOperator.selfFriendRequests = {
-        userId: mongoose.Types.ObjectId(selfFriendRequests.userId),
+        $elemMatch: {
+          userId: mongoose.Types.ObjectId(selfFriendRequests.userId),
+        },
       };
     }
     if (selfFriendRequests.name) {
       queryOperator.selfFriendRequests = {
-        name: { $regex: selfFriendRequests.name, $options: "i" },
+        $elemMatch: {
+          name: { $regex: selfFriendRequests.name, $options: "i" },
+        },
       };
     }
     if (selfFriendRequests.email) {
       queryOperator.selfFriendRequests = {
-        email: { $regex: selfFriendRequests.email, $options: "i" },
+        $elemMatch: {
+          email: { $regex: selfFriendRequests.email, $options: "i" },
+        },
       };
     }
     if (selfFriendRequests.role) {
       queryOperator.selfFriendRequests = {
-        role: selfFriendRequests.role,
+        $elemMatch: { role: selfFriendRequests.role },
       };
     }
     if (selfFriendRequests.goalKeeper) {
       queryOperator.selfFriendRequests = {
-        goalKeeper: selfFriendRequests.goalKeeper === "true" ? true : false,
+        $elemMatch: {
+          goalKeeper: selfFriendRequests.goalKeeper === "true" ? true : false,
+        },
       };
     }
   }
@@ -660,10 +712,12 @@ const adminUserUpdateQuery = async (req) => {
     }
     if (recentlySearchedUser.add) {
       const objectAdd = [];
+      console.log(recentlySearchedUser);
       for (let i = 0; i < recentlySearchedUser.add.items.length; i++) {
         const user = await User.findOne({
           _id: recentlySearchedUser.add.items[i],
         });
+        console.log(user);
         const userObject = {
           userId: user._id,
           name: user.name,
@@ -858,281 +912,8 @@ const adminUserUpdateQuery = async (req) => {
   return newUsers;
 };
 
-const adminUpdateQueryObject = async (req) => {
-  const {
-    validationNumber,
-    validationExpirationDate,
-    isValid,
-    passwordNumber,
-    passwordExpirationDate,
-    deleteNumber,
-    deleteExpirationDate,
-    recentlySearched,
-    archived,
-    isDeleted,
-    school,
-    age,
-    profilePicture,
-    friendRequests,
-    friends,
-    goalKeeper,
-    location,
-    selfFriendRequests,
-    phoneNumber,
-    description,
-    name,
-    email,
-    role,
-  } = req.body;
-
-  const queryUpdateOperator = {};
-
-  if (validationNumber) {
-    queryUpdateOperator.validationNumber = validationNumber;
-  }
-
-  if (validationExpirationDate) {
-    queryUpdateOperator.validationExpirationDate = validationExpirationDate;
-  }
-
-  if (isValid) {
-    queryUpdateOperator.isValid = isValid;
-  }
-  if (passwordNumber) {
-    queryUpdateOperator.passwordNumber = passwordNumber;
-  }
-  if (passwordExpirationDate) {
-    queryUpdateOperator.passwordExpirationDate = passwordExpirationDate;
-  }
-
-  if (deleteNumber) {
-    queryUpdateOperator.deleteNumber = deleteNumber;
-  }
-  if (deleteExpirationDate) {
-    queryUpdateOperator.deleteExpirationDate = deleteExpirationDate;
-  }
-
-  if (archived) {
-    queryUpdateOperator.archived = archived;
-  }
-  if (isDeleted) {
-    queryUpdateOperator.isDeleted = isDeleted;
-  }
-  if (school) {
-    queryUpdateOperator.school = school;
-  }
-  if (age) {
-    queryUpdateOperator.age = age;
-  }
-  if (profilePicture) {
-    queryUpdateOperator.profilePicture = profilePicture;
-  }
-  if (recentlySearchedUser) {
-    if (recentlySearchedUser.remove) {
-      const objectRemove = recentlySearchedUser.remove.items.map((item) => {
-        return new mongoose.Types.ObjectId(item);
-      });
-      queryUpdateOperator.$pull = {
-        recentlySearchedUser: { userId: { $in: objectRemove } },
-      };
-    }
-    if (recentlySearchedUser.add) {
-      const objectAdd = [];
-      for (let i = 0; i < recentlySearchedUser.add.items.length; i++) {
-        const user = await User.findOne({
-          _id: recentlySearchedUser.add.items[i],
-        });
-        const userObject = {
-          userId: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          profilePicture: user.profilePicture,
-          goalKeeper: user.goalKeeper,
-        };
-        objectAdd.push(userObject);
-      }
-      queryUpdateOperator.$addToSet = {
-        recentlySearchedUser: { $each: objectAdd },
-      };
-    }
-  }
-
-  if (recentlySearchedPitch) {
-    if (recentlySearchedPitch.remove) {
-      const objectRemove = recentlySearchedPitch.remove.items.map((item) => {
-        return new mongoose.Types.ObjectId(item);
-      });
-      queryUpdateOperator.$pull = {
-        recentlySearchedPitch: { pitchId: { $in: objectRemove } },
-      };
-    }
-    if (recentlySearchedPitch.add) {
-      const objectAdd = [];
-      for (let i = 0; i < recentlySearchedPitch.add.items.length; i++) {
-        const pitch = await Pitch.findOne({
-          _id: recentlySearchedPitch.add.items[i],
-        });
-        const pitchObject = {
-          pitchId: pitch._id,
-          name: pitch.name,
-          rating: pitch.rating.averageRating,
-        };
-        objectAdd.push(pitchObject);
-      }
-      queryUpdateOperator.$addToSet = {
-        recentlySearchedPitch: { $each: objectAdd },
-      };
-    }
-  }
-
-  if (friendRequests) {
-    if (friendRequests.remove) {
-      const objectRemove = friendRequests.remove.items.map((item) => {
-        return new mongoose.Types.ObjectId(item);
-      });
-      queryUpdateOperator.$pull = {
-        friendRequests: { userId: { $in: objectRemove } },
-      };
-    }
-    if (friendRequests.add) {
-      const objectAdd = [];
-      for (let i = 0; i < friendRequests.add.items.length; i++) {
-        const user = await User.findOne({ _id: friendRequests.add.items[i] });
-        const userObject = {
-          userId: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          profilePicture: user.profilePicture,
-          friends: user.friends.map((user) => {
-            return {
-              userId: user.userId,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              school: user.school,
-              age: user.age,
-              profilePicture: user.profilePicture,
-              goalKeeper: user.goalKeeper,
-            };
-          }),
-          goalKeeper: user.goalKeeper,
-        };
-        objectAdd.push(userObject);
-      }
-      queryUpdateOperator.$addToSet = { friendRequests: { $each: objectAdd } };
-    }
-  }
-  if (friends) {
-    if (friends.remove) {
-      const objectRemove = friends.remove.items.map((item) => {
-        return new mongoose.Types.ObjectId(item);
-      });
-      queryUpdateOperator.$pull = {
-        friends: { userId: { $in: objectRemove } },
-      };
-    }
-    if (friends.add) {
-      const objectAdd = [];
-      for (let i = 0; i < friends.add.items.length; i++) {
-        const user = await User.findOne({ _id: friends.add.items[i] });
-        const userObject = {
-          userId: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          profilePicture: user.profilePicture,
-          friends: user.friends.map((user) => {
-            return {
-              userId: user.userId,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              school: user.school,
-              age: user.age,
-              profilePicture: user.profilePicture,
-              goalKeeper: user.goalKeeper,
-            };
-          }),
-          goalKeeper: user.goalKeeper,
-        };
-        objectAdd.push(userObject);
-      }
-      queryUpdateOperator.$addToSet = { friends: { $each: objectAdd } };
-    }
-  }
-  if (selfFriendRequests) {
-    if (selfFriendRequests.remove) {
-      const objectRemove = selfFriendRequests.remove.items.map((item) => {
-        return new mongoose.Types.ObjectId(item);
-      });
-      queryUpdateOperator.$pull = {
-        selfFriendRequests: { userId: { $in: objectRemove } },
-      };
-    }
-    if (selfFriendRequests.add) {
-      const objectAdd = [];
-      for (let i = 0; i < selfFriendRequests.add.items.length; i++) {
-        const user = await User.findOne({
-          _id: selfFriendRequests.add.items[i],
-        });
-        const userObject = {
-          userId: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          profilePicture: user.profilePicture,
-          friends: user.friends.map((user) => {
-            return {
-              userId: user.userId,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              school: user.school,
-              age: user.age,
-              profilePicture: user.profilePicture,
-              goalKeeper: user.goalKeeper,
-            };
-          }),
-          goalKeeper: user.goalKeeper,
-        };
-        objectAdd.push(userObject);
-      }
-      queryUpdateOperator.$addToSet = {
-        selfFriendRequests: { $each: objectAdd },
-      };
-    }
-  }
-  if (goalKeeper) {
-    queryUpdateOperator.goalKeeper = goalKeeper;
-  }
-  if (location) {
-    queryUpdateOperator.location = location;
-  }
-  if (phoneNumber) {
-    queryUpdateOperator.phoneNumber = phoneNumber;
-  }
-  if (description) {
-    queryUpdateOperator.description = description;
-  }
-  if (name) {
-    queryUpdateOperator.name = name;
-  }
-  if (email) {
-    queryUpdateOperator.email = email;
-  }
-
-  if (role) {
-    queryUpdateOperator.role = role;
-  }
-
-  return queryUpdateOperator;
-};
-
 module.exports = {
   adminUserQuery,
   adminUserQueryObject,
   adminUserUpdateQuery,
-  adminUpdateQueryObject,
 };
