@@ -4,13 +4,14 @@ const deletionEmail = require("./deletionEmail");
 const { createCookie, verifyCookie } = require("./jwt");
 const {
   adminUserQuery,
-  adminUserQueryObject,
+
   adminUserUpdateQuery,
 } = require("./adminUserQuery");
 const adminCompanyQuery = require("./adminCompanyQuery");
 const updateCompanyEmail = require("./updateCompanyEmail");
 const resetCompanyPasswordEmail = require("./resetCompanyPasswordEmail");
 const pitchDeletionRequestEmail = require("./pitchDeletionRequestEmail");
+const adminPitchQuery = require("./adminPitchQuery");
 
 module.exports = {
   resetPasswordEmail,
@@ -18,7 +19,7 @@ module.exports = {
   createCookie,
   verifyCookie,
   adminUserQuery,
-  adminUserQueryObject,
+
   adminUserUpdateQuery,
 
   deletionEmail,
@@ -26,4 +27,5 @@ module.exports = {
   updateCompanyEmail,
   resetCompanyPasswordEmail,
   pitchDeletionRequestEmail,
+  adminPitchQuery,
 };

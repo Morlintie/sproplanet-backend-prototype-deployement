@@ -10,7 +10,7 @@ const errorHandlerMiddleware = async (err, req, res, next) => {
   if (err.name === "ValidationError") {
     customError.statusCode = StatusCodes.BAD_REQUEST;
     customError.message =
-      err.errors.name.message || "Validation error occurred.";
+      err?.errors?.name?.message || "Validation error occurred.";
   }
 
   if (err?.cause?.code === 11000) {

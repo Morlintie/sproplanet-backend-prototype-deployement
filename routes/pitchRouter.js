@@ -31,7 +31,13 @@ router.get("/", passUserInfoMiddleware, getAllPitches);
 
 router.get("/surrounding", passUserInfoMiddleware, getAllVicinityPitches);
 
-router.get("/admin", getAdminPitches);
+router.get(
+  "/admin",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  getAdminPitches
+);
 
 router.get("/companyUser", getCompanyUserPitches);
 

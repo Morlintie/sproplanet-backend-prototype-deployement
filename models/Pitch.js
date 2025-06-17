@@ -6891,31 +6891,17 @@ const pitchSchema = new mongoose.Schema(
           },
           message: "Please provide a valid Turkish phone number.",
         },
-        validate: {
-          validator: async function (v) {
-            const phoneExists = await this.model("Pitch").findOne({
-              "contact.phone": v,
-            });
-            return !phoneExists;
-          },
-        },
       },
       email: {
         type: String,
         required: [true, "Please provide a contact email."],
         validate: {
           validator: function (v) {
-            return !v || /^\+?[0-9\s\-().]{7,20}$/.test(v);
+            return (
+              !v || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v)
+            );
           },
           message: "Please provide a valid email address",
-        },
-        validate: {
-          validator: async function (v) {
-            const emailExists = await this.model("Pitch").findOne({
-              "contact.email": v,
-            });
-            return !emailExists;
-          },
         },
       },
       website: String,

@@ -3,7 +3,7 @@ const User = require("../models/User");
 const Company = require("../models/Company");
 const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../errors");
-const { pitchDeletionRequestEmail } = require("../utils");
+const { pitchDeletionRequestEmail, adminPitchQuery } = require("../utils");
 
 const createPitch = async (req, res) => {
   const {
@@ -21,6 +21,7 @@ const createPitch = async (req, res) => {
     lastMaintenanceDate,
     nextMaintenanceDate,
   } = req.body;
+  console.log(contact);
   const pitch = await Pitch.create({
     name,
     description,
@@ -246,7 +247,45 @@ const getSinglePitch = async (req, res) => {
 };
 
 const getAdminPitches = async (req, res) => {
-  res.send("Get all pitches for admin");
+  let { sort, select } = req.query;
+  let { search } = req.body;
+  if (!search) {
+    search = "";
+  }
+  if (sort) {
+    sort = sort.split(",").join(" ");
+  } else {
+    sort = "-createdAt";
+  }
+  if (select) {
+    select = select.split(",").join(" ");
+  }
+
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+  const adminQuery = adminPitchQuery(req);
+  const pitches = await Pitch.find({
+    $or: [
+      { name: { $regex: search, $options: "i" } },
+      { tags: { $regex: search, $options: "i" } },
+      { searchKeywords: { $regex: search, $options: "i" } },
+    ],
+    ...adminQuery,
+  })
+    .sort(sort)
+    .select(select)
+    .limit(limit)
+    .skip(skip);
+  const countDocuments = await Pitch.countDocuments({});
+  if (!pitches || pitches.length === 0) {
+    throw new NotFoundError("pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({
+    pitches,
+    count: pitches.length,
+    totalCount: countDocuments,
+  });
 };
 
 const getCompanyUserPitches = async (req, res) => {
