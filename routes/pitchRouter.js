@@ -39,9 +39,23 @@ router.get(
   getAdminPitches
 );
 
-router.get("/companyUser", getCompanyUserPitches);
+router.get(
+  "/companyUser",
 
-router.get("/companyUser:id", getCompanyUserPitch);
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+
+  getCompanyUserPitches
+);
+
+router.get(
+  "/companyUser:id",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  getCompanyUserPitch
+);
 
 router.get(
   "/companyUser/delete:id",

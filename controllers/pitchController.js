@@ -185,7 +185,7 @@ const getAllVicinityPitches = async (req, res) => {
   if (!coordinates) {
     throw new BadRequestError("Please provide required data.");
   }
-  //[langitude, latitude]
+
   const userSelectedFields = "-status -__v -totalBookings -totalRevenue";
   const pitches = await Pitch.find({
     location: {
@@ -289,16 +289,335 @@ const getAdminPitches = async (req, res) => {
 };
 
 const getCompanyUserPitches = async (req, res) => {
-  res.send("Get all pitches for company user");
+  const { companyId } = req.user;
+  const {
+    city,
+    district,
+    isIndoor,
+    hasLighting,
+    sort,
+    description,
+    createdAt,
+    updatedAt,
+    status,
+    surfaceType,
+  } = req.query;
+  let {
+    search,
+    recommendedCapacity,
+    facilities,
+    pricing,
+    rating,
+    totalRevenue,
+    totalBookings,
+    nextMaintenanceDate,
+    lastMaintenanceDate,
+  } = req.body;
+
+  const searchQuery = {};
+  const numericConverter = {
+    ">": "$gt",
+    "<": "$lt",
+    ">=": "$gte",
+    "<=": "$lte",
+    "=": "$eq",
+  };
+  const queryOperators = ["$gt", "$lt", "$gte", "$lte", "$eq"];
+  let sortBy = "-rating.averageRating pricing.hourlyRate";
+  if (!search) {
+    search = "";
+  }
+  if (city) {
+    searchQuery["location.address.city"] = { $regex: city, $options: "i" };
+  }
+  if (district) {
+    searchQuery["location.address.district"] = {
+      $regex: district,
+      $options: "i",
+    };
+  }
+  if (isIndoor) {
+    searchQuery["specifications.isIndoor"] = isIndoor === "true" ? true : false;
+  }
+  if (hasLighting) {
+    searchQuery["specifications.hasLighting"] =
+      hasLighting === "true" ? true : false;
+  }
+  if (recommendedCapacity) {
+    if (recommendedCapacity.players) {
+      searchQuery["specifications.recommendedCapacity.players"] = parseInt(
+        recommendedCapacity.players
+      );
+    }
+
+    if (recommendedCapacity.spectators) {
+      searchQuery["specifications.recommendedCapacity.spectators"] = parseInt(
+        recommendedCapacity.spectators
+      );
+    }
+  }
+
+  if (facilities) {
+    if (facilities.changingRooms) {
+      searchQuery["facilities.changingRooms"] =
+        facilities.changingRooms === "true" ? true : false;
+    }
+
+    if (facilities.showers) {
+      searchQuery["facilities.showers"] =
+        facilities.showers === "true" ? true : false;
+    }
+    if (facilities.shoeRenting) {
+      searchQuery["facilities.shoeRenting"] =
+        facilities.shoeRenting === "true" ? true : false;
+    }
+    if (facilities.parking) {
+      searchQuery["facilities.parking"] =
+        facilities.parking === "true" ? true : false;
+    }
+    if (facilities.otherAmenities) {
+      searchQuery["facilities.otherAmenities"] = {
+        $regex: facilities.otherAmenities || "",
+        $options: "i",
+      };
+    }
+  }
+
+  if (pricing) {
+    const upperLimit = pricing.upperLimit
+      ? parseFloat(pricing.upperLimit)
+      : 100000000;
+    const lowerLimit = pricing.lowerLimit ? parseFloat(pricing.lowerLimit) : 0;
+    if (isNaN(upperLimit) || isNaN(lowerLimit)) {
+      throw new BadRequestError("Please provide valid pricing limits");
+    }
+    searchQuery["pricing.hourlyRate"] = {
+      $gte: lowerLimit,
+      $lte: upperLimit,
+    };
+    if (pricing.specialDayMultiplier) {
+      const specialDayMultiplier = parseFloat(pricing.specialDayMultiplier);
+      if (isNaN(specialDayMultiplier) || specialDayMultiplier < 0) {
+        throw new BadRequestError(
+          "Please provide a valid special day multiplier."
+        );
+      }
+      searchQuery["pricing.specialDayMultiplier"] = specialDayMultiplier;
+    }
+    if (pricing.weekendMultiplier) {
+      const weekendMultiplier = parseFloat(pricing.weekendMultiplier);
+      if (isNaN(weekendMultiplier) || weekendMultiplier < 0) {
+        throw new BadRequestError("Please provide a valid weekend multiplier.");
+      }
+      searchQuery["pricing.weekendMultiplier"] = weekendMultiplier;
+    }
+    if (pricing.currency) {
+      if (!["TRY", "USD", "EUR"].includes(pricing.currency)) {
+        throw new BadRequestError("Please provide a valid currency.");
+      }
+      searchQuery["pricing.currency"] = pricing.currency;
+    }
+  }
+
+  if (rating) {
+    if (rating.averageRating) {
+      const adjustedRating = rating.averageRating.replace(
+        /(<=|>=|<|>|=)/g,
+        (match) => {
+          return `-${numericConverter[match]}-`;
+        }
+      );
+      const adjustedRatingArray = adjustedRating.split("-");
+      if (!queryOperators.includes(adjustedRatingArray[1])) {
+        throw new BadRequestError("Please provide a valid rating query.");
+      }
+      if (adjustedRatingArray.length !== 3) {
+        throw new BadRequestError("Please provide a valid rating query.");
+      }
+
+      if (adjustedRatingArray[2] > 5) {
+        throw new BadRequestError("Rating cannot be greater than 5.");
+      }
+      searchQuery["rating.averageRating"] = {
+        [adjustedRatingArray[1]]: parseFloat(adjustedRatingArray[2]),
+      };
+    }
+    if (rating.totalReviews) {
+      const adjustedTotalReviews = rating.totalReviews.replace(
+        /(<=|>=|<|>|=)/g,
+        (match) => {
+          return `-${numericConverter[match]}-`;
+        }
+      );
+      const adjustedTotalReviewsArray = adjustedTotalReviews.split("-");
+      if (!queryOperators.includes(adjustedTotalReviewsArray[1])) {
+        throw new BadRequestError(
+          "Please provide a valid total reviews query."
+        );
+      }
+      if (adjustedTotalReviewsArray.length !== 3) {
+        throw new BadRequestError(
+          "Please provide a valid total reviews query."
+        );
+      }
+      if (adjustedTotalReviewsArray[2] < 0) {
+        throw new BadRequestError("Total reviews cannot be negative.");
+      }
+      searchQuery["rating.totalReviews"] = {
+        [adjustedTotalReviewsArray[1]]: parseInt(adjustedTotalReviewsArray[2]),
+      };
+    }
+  }
+
+  if (status) {
+    if (
+      status === "active" ||
+      status === "inactive" ||
+      status === "maintenance"
+    ) {
+      searchQuery.status = status;
+    } else {
+      throw new BadRequestError("Please provide a valid status.");
+    }
+  }
+  if (description) {
+    searchQuery.description = {
+      $regex: description,
+      $options: "i",
+    };
+  }
+  if (createdAt) {
+    const lowerDate = new Date(createdAt);
+    const upperDateArray = createdAt.split("-");
+    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
+    const upperDate = new Date(upperDateArray.join("-"));
+
+    searchQuery.createdAt = {
+      $gte: lowerDate,
+      $lt: upperDate,
+    };
+  }
+
+  if (updatedAt) {
+    const lowerDate = new Date(updatedAt);
+    const upperDateArray = updatedAt.split("-");
+    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
+    const upperDate = new Date(upperDateArray.join("-"));
+
+    searchQuery.updatedAt = {
+      $gte: lowerDate,
+      $lt: upperDate,
+    };
+  }
+  if (surfaceType) {
+    searchQuery["specifications.surfaceType"] = {
+      $regex: surfaceType,
+      $options: "i",
+    };
+  }
+  if (totalBookings) {
+    const lowerLimit = totalBookings.lowerLimit
+      ? parseFloat(totalBookings.lowerLimit)
+      : 0;
+    const upperLimit = (totalBookings.upperLimit =
+      parseFloat(totalBookings.upperLimit) || 100000000);
+    if (isNaN(lowerLimit) || isNaN(upperLimit)) {
+      throw new BadRequestError("Please provide valid total booking limits.");
+    }
+    searchQuery.totalBookings = {
+      $gte: lowerLimit,
+      $lte: upperLimit,
+    };
+  }
+  if (totalRevenue) {
+    const lowerLimit = totalRevenue.lowerLimit
+      ? parseFloat(totalRevenue.lowerLimit)
+      : 0;
+    const upperLimit = (totalRevenue.upperLimit =
+      parseFloat(totalRevenue.upperLimit) || 100000000);
+    if (isNaN(lowerLimit) || isNaN(upperLimit)) {
+      throw new BadRequestError("Please provide valid total revenue limits.");
+    }
+    searchQuery.totalRevenue = {
+      $gte: lowerLimit,
+      $lte: upperLimit,
+    };
+  }
+
+  if (lastMaintenanceDate) {
+    const lowerDate = new Date(lastMaintenanceDate.lowerLimit);
+    const upperDate = new Date(lastMaintenanceDate.upperLimit);
+    if (isNaN(lowerDate.getTime()) || isNaN(upperDate.getTime())) {
+      throw new BadRequestError(
+        "Please provide valid last maintenance date limits."
+      );
+    }
+    searchQuery.lastMaintenanceDate = {
+      $gte: lowerDate,
+      $lte: upperDate,
+    };
+  }
+  if (nextMaintenanceDate) {
+    const lowerDate = new Date(nextMaintenanceDate.lowerLimit);
+    const upperDate = new Date(nextMaintenanceDate.upperLimit);
+    if (isNaN(lowerDate.getTime()) || isNaN(upperDate.getTime())) {
+      throw new BadRequestError(
+        "Please provide valid next maintenance date limits."
+      );
+    }
+    searchQuery.nextMaintenanceDate = {
+      $gte: lowerDate,
+      $lte: upperDate,
+    };
+  }
+  if (sort) {
+    sortBy = sort.split(",").join(" ");
+  }
+
+  const limit = 20;
+  const page = Number(req.query.page) || 1;
+  const skip = (page - 1) * limit;
+  const userSelectedFields = " -__v ";
+
+  const pitches = await Pitch.find({
+    $or: [
+      { name: { $regex: search, $options: "i" } },
+      { tags: { $regex: search, $options: "i" } },
+      { searchKeywords: { $regex: search, $options: "i" } },
+    ],
+    company: companyId,
+    ...searchQuery,
+  })
+    .select(userSelectedFields)
+    .limit(limit)
+    .skip(skip)
+    .sort(sortBy);
+  const countDocuments = await Pitch.countDocuments({ company: companyId });
+
+  if (!pitches || pitches.length === 0) {
+    throw new NotFoundError("No pitch found.");
+  }
+  res
+    .status(StatusCodes.OK)
+    .json({ pitches, count: pitches.length, totalCount: countDocuments });
 };
 
 const getCompanyUserPitch = async (req, res) => {
+  console.log(req.user);
   const { companyId } = req.user;
   const { id } = req.params;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
-  const pitch = await Pitch.findOne({ _id: id }).select("");
+  const userSelectedFields = "-__v";
+  const pitch = await Pitch.findOne({ _id: id }).select(userSelectedFields);
+  if (!pitch) {
+    throw new NotFoundError("No pitch found.");
+  }
+  if (pitch.company.toString() !== companyId) {
+    throw new ForbiddenError("You are not authorized to perform that action.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
 };
 
 const deletionRequest = async (req, res) => {
