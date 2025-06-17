@@ -66,12 +66,36 @@ router.get(
 );
 router.get("/:id", passUserInfoMiddleware, getSinglePitch);
 
-router.patch("/admin/update:id", updateAdminPitch);
+router.patch(
+  "/admin/update:id",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  updateAdminPitch
+);
 
-router.patch("/companyUser/update", updateCompanyUserPitches);
+router.patch(
+  "/companyUser/update",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  updateCompanyUserPitches
+);
 
-router.patch("/companyUser/update:id", updateCompanyUserPitch);
+router.patch(
+  "/companyUser/update:id",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  updateCompanyUserPitch
+);
 
-router.delete("/admin/delete:id", deletePitch);
+router.delete(
+  "/admin/delete:id",
+  async (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deletePitch
+);
 
 module.exports = router;

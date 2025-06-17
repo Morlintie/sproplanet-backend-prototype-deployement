@@ -21,7 +21,7 @@ const createPitch = async (req, res) => {
     lastMaintenanceDate,
     nextMaintenanceDate,
   } = req.body;
-  console.log(contact);
+
   const pitch = await Pitch.create({
     name,
     description,
@@ -603,20 +603,19 @@ const getCompanyUserPitches = async (req, res) => {
 };
 
 const getCompanyUserPitch = async (req, res) => {
-  console.log(req.user);
   const { companyId } = req.user;
   const { id } = req.params;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
   const userSelectedFields = "-__v";
-  const pitch = await Pitch.findOne({ _id: id }).select(userSelectedFields);
+  const pitch = await Pitch.findOne({ _id: id, company: companyId }).select(
+    userSelectedFields
+  );
   if (!pitch) {
     throw new NotFoundError("No pitch found.");
   }
-  if (pitch.company.toString() !== companyId) {
-    throw new ForbiddenError("You are not authorized to perform that action.");
-  }
+
   res.status(StatusCodes.OK).json({ pitch });
 };
 
@@ -645,19 +644,151 @@ const deletionRequest = async (req, res) => {
 };
 
 const updateAdminPitch = async (req, res) => {
-  res.send("Update single pitch for admin");
+  const { id } = req.params;
+  const {
+    name,
+    description,
+    location,
+    specifications,
+    facilities,
+    pricing,
+    media,
+    contact,
+    status,
+    tags,
+    searchKeywords,
+    lastMaintenanceDate,
+    nextMaintenanceDate,
+  } = req.body;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOneAndUpdate(
+    { _id: id },
+    {
+      name,
+      description,
+      location,
+      specifications,
+      facilities,
+      pricing,
+      media,
+      contact,
+      status,
+      tags,
+      searchKeywords,
+      lastMaintenanceDate,
+      nextMaintenanceDate,
+    },
+    { new: true, runValidators: true, timestamps: true }
+  );
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
 };
 
 const updateCompanyUserPitches = async (req, res) => {
-  res.send("Update multiple pitches for company user");
+  const { companyId } = req.user;
+
+  const {
+    name,
+    description,
+    location,
+    specifications,
+    facilities,
+    pricing,
+    media,
+    contact,
+    status,
+
+    lastMaintenanceDate,
+    nextMaintenanceDate,
+  } = req.body;
+  const pitches = await Pitch.updateMany(
+    {
+      company: companyId,
+    },
+    {
+      description,
+      location,
+      specifications,
+      facilities,
+      pricing,
+      media,
+      contact,
+      status,
+      name,
+      lastMaintenanceDate,
+      nextMaintenanceDate,
+    },
+    { new: true, runValidators: true, timestamps: true }
+  );
+  if (!pitches || pitches.length === 0) {
+    throw new NotFoundError("No pitch found.");
+  }
+  res.status(StatusCodes.OK).json({
+    pitches,
+  });
 };
 
 const updateCompanyUserPitch = async (req, res) => {
-  res.send("Update single pitch for company user");
+  const { companyId } = req.user;
+  const { id } = req.params;
+  const {
+    name,
+    description,
+    location,
+    specifications,
+    facilities,
+    pricing,
+    media,
+    contact,
+    status,
+
+    lastMaintenanceDate,
+    nextMaintenanceDate,
+  } = req.body;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOneAndUpdate(
+    { _id: id, company: companyId },
+    {
+      name,
+      description,
+      location,
+      specifications,
+      facilities,
+      pricing,
+      media,
+      contact,
+      status,
+
+      lastMaintenanceDate,
+      nextMaintenanceDate,
+    },
+    { new: true, runValidators: true, timestamps: true }
+  );
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
 };
 
 const deletePitch = async (req, res) => {
-  res.send("Delete single pitch for admin");
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOne({ _id: id });
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  await Pitch.deleteOne({ _id: id });
+  res
+    .status(StatusCodes.NO_CONTENT)
+    .json({ message: "Pitch deleted successfully!" });
 };
 
 module.exports = {
