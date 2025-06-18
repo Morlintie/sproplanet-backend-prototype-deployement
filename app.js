@@ -25,6 +25,7 @@ const app = express();
 
 app.use(cors({ origin: process.env.ORIGIN_FRONTEND, credentials: true }));
 
+app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 cloudinary.config({
@@ -32,7 +33,7 @@ cloudinary.config({
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
 });
-app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
+
 app.use(morgan("tiny"));
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(passport.initialize());

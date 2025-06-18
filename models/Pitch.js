@@ -125,13 +125,16 @@ const pitchSchema = new mongoose.Schema(
           caption: String,
           public_id: { type: String, required: true },
           isPrimary: { type: Boolean, default: false },
+          size: { type: Number, required: true },
         },
       ],
       videos: [
         {
           url: { type: String, required: true },
           caption: String,
+          public_id: { type: String, required: true },
           thumbnail: String,
+          size: { type: Number, required: true },
         },
       ],
     },

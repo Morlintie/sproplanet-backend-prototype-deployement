@@ -156,7 +156,7 @@ const userSchema = new mongoose.Schema(
           userId: mongoose.Types.ObjectId,
           name: String,
           email: String,
-          role: String,
+          role: {type: String, enum: {values: ["user", "admin", "companyOwner", "banned"], message: "Please provide a valid role value."}},
           age: Number,
           profilePicture: String,
           friends: [

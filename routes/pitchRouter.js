@@ -15,6 +15,8 @@ const {
   deletePitch,
   insertImage,
   deleteImage,
+  InsertVideo,
+  deleteVideo,
 } = require("../controllers/pitchController");
 
 const roleMiddleware = require("../middlewares/roleMiddleware");
@@ -97,6 +99,21 @@ router.post(
     roleMiddleware(req, res, next, "admin", "owner");
   },
   insertImage
+);
+router.post(
+  "/insertVideo:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  InsertVideo
+);
+
+router.delete(
+  "/deleteVideo:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  deleteVideo
 );
 router.delete(
   "/deleteImage:id",

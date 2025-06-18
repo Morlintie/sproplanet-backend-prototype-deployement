@@ -978,6 +978,7 @@ const insertImage = async (req, res) => {
   const { role } = req.user;
   const { caption, isPrimary } = req.body;
   const { image } = req.files;
+
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
@@ -987,8 +988,9 @@ const insertImage = async (req, res) => {
   if (!image.mimetype.startsWith("image")) {
     throw new BadRequestError("Please provide a valid image file.");
   }
-  if (!image.size || image.size > process.env.MAX_IMAGE_SIZE) {
-    throw new BadRequestError("Please provide an image smaller than 1KB.");
+
+  if (!image.size || image.size > 1024 * 1024) {
+    throw new BadRequestError("Please provide an image smaller than 1MB.");
   }
 
   if (role === "owner") {
@@ -998,6 +1000,17 @@ const insertImage = async (req, res) => {
 
     if (!checkPitch) {
       throw new NotFoundError("Pitch not found.");
+    }
+    let imageSize = 0;
+    let videoSize = 0;
+    for (let i = 0; i < checkPitch.media.images.length; i++) {
+      imageSize += checkPitch.media.images[i].size;
+    }
+    for (let i = 0; i < checkPitch.media.videos.length; i++) {
+      videoSize += checkPitch.media.videos[i].size;
+    }
+    if (imageSize + videoSize > 1024 * 1024 * 1024 * 5) {
+      throw new BadRequestError("You have reached your media limit of 5GB.");
     }
     const result = await cloudinary.uploader.upload(image.tempFilePath, {
       use_filename: true,
@@ -1013,6 +1026,7 @@ const insertImage = async (req, res) => {
             caption,
             isPrimary,
             public_id: result.public_id,
+            size: image.size,
           },
         },
       },
@@ -1022,7 +1036,7 @@ const insertImage = async (req, res) => {
       }
     );
 
-    res.status(StatusCodes.OK).json({ pitch });
+    res.status(StatusCodes.CREATED).json({ pitch });
   }
 
   if (role === "admin") {
@@ -1035,7 +1049,7 @@ const insertImage = async (req, res) => {
       folder: "pitch-images",
     });
     await fs.unlink(image.tempFilePath);
-    console.log(result);
+
     const pitch = await Pitch.findOneAndUpdate(
       { _id: id },
       {
@@ -1045,6 +1059,7 @@ const insertImage = async (req, res) => {
             caption,
             isPrimary,
             public_id: result.public_id,
+            size: image.size,
           },
         },
       },
@@ -1056,7 +1071,7 @@ const insertImage = async (req, res) => {
     if (!pitch) {
       throw new NotFoundError("Pitch not found.");
     }
-    res.status(StatusCodes.OK).json({ pitch });
+    res.status(StatusCodes.CREATED).json({ pitch });
   }
 };
 const deleteImage = async (req, res) => {
@@ -1106,6 +1121,168 @@ const deleteImage = async (req, res) => {
   }
 };
 
+const InsertVideo = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+  const { caption, thumbnail } = req.body;
+  const { video } = req.files;
+
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  if (!video) {
+    throw new BadRequestError("Please provide a video file.");
+  }
+  const videoTypes = [
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+    "video/x-matroska",
+  ];
+  if (!videoTypes.includes(video.mimetype)) {
+    throw new BadRequestError("Please provide a valid video file.");
+  }
+  if (!video.size || video.size > 1024 * 1024 * 1024) {
+    throw new BadRequestError("Please provide a video smaller than 1GB.");
+  }
+
+  if (role === "owner") {
+    const { companyId } = req.user;
+    const checkPitch = await Pitch.findOne({ _id: id, company: companyId });
+    if (!checkPitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    let imageSize = 0;
+    let videoSize = 0;
+    for (let i = 0; i < checkPitch.media.images.length; i++) {
+      imageSize += checkPitch.media.images[i].size;
+    }
+    for (let i = 0; i < checkPitch.media.videos.length; i++) {
+      videoSize += checkPitch.media.videos[i].size;
+    }
+    if (imageSize + videoSize > 1024 * 1024 * 1024 * 5) {
+      throw new BadRequestError("You have reached your media limit of 5GB.");
+    }
+    let result;
+    if (video.size <= 1024 * 1024 * 100) {
+      result = await cloudinary.uploader.upload(video.tempFilePath, {
+        use_filename: true,
+        folder: "pitch-videos",
+        resource_type: "video",
+      });
+    } else {
+      result = await cloudinary.uploader.upload_large(video.tempFilePath, {
+        use_filename: true,
+        folder: "pitch-videos",
+        resource_type: "video",
+        chunk_size: parseInt(process.env.VIDEO_CHUNK_SIZE),
+      });
+    }
+
+    await fs.unlink(video.tempFilePath);
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId },
+      {
+        $push: {
+          "media.videos": {
+            url: result.secure_url,
+            caption,
+            thumbnail,
+            public_id: result.public_id,
+            size: video.size,
+          },
+        },
+      },
+      { runValidators: true, new: true }
+    );
+    res.status(StatusCodes.CREATED).json({ pitch });
+  }
+  if (role === "admin") {
+    const checkPitch = await Pitch.findOne({ _id: id });
+    if (!checkPitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    let result;
+    if (video.size <= 1024 * 1024 * 100) {
+      result = await cloudinary.uploader.upload(video.tempFilePath, {
+        use_filename: true,
+        folder: "pitch-videos",
+        resource_type: "video",
+      });
+    } else {
+      result = await cloudinary.uploader.upload_large(video.tempFilePath, {
+        use_filename: true,
+        folder: "pitch-videos",
+        resource_type: "video",
+        chunk_size: parseInt(process.env.VIDEO_CHUNK_SIZE),
+      });
+    }
+
+    await fs.unlink(video.tempFilePath);
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id },
+      {
+        $push: {
+          "media.videos": {
+            url: result.secure_url,
+            caption,
+            thumbnail,
+            public_id: result.public_id,
+            size: video.size,
+          },
+        },
+      },
+      { runValidators: true, new: true }
+    );
+    res.status(StatusCodes.CREATED).json({ pitch });
+  }
+};
+const deleteVideo = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+  const { public_id } = req.body;
+  if (!id || !public_id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  if (role === "owner") {
+    const { companyId } = req.user;
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId },
+      {
+        $pull: {
+          "media.videos": { public_id },
+        },
+      }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    await cloudinary.uploader.destroy(public_id, {
+      folder: "pitch-videos",
+      resource_type: "video",
+    });
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+  if (role === "admin") {
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id },
+      {
+        $pull: {
+          "media.videos": { public_id },
+        },
+      }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    await cloudinary.uploader.destroy(public_id, {
+      folder: "pitch-videos",
+      resource_type: "video",
+    });
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
+
 module.exports = {
   createPitch,
   getAllPitches,
@@ -1121,4 +1298,6 @@ module.exports = {
   deletePitch,
   insertImage,
   deleteImage,
+  InsertVideo,
+  deleteVideo,
 };
