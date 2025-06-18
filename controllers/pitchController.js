@@ -1436,6 +1436,75 @@ const deleteSearchKeywords = async (req, res) => {
   res.status(StatusCodes.OK).json({ pitch });
 };
 
+const insertAmenities = async (req, res) => {
+  const { role } = req.user;
+  const { id } = req.params;
+  const { amenities } = req.body;
+  if (!id || !amenities || !Array.isArray(amenities)) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  if (role === "admin") {
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id },
+      { $addToSet: { "facilities.otherAmenities": { $each: amenities } } },
+      { new: true, runValidators: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+
+  if (role === "owner") {
+    const { companyId } = req.user;
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId },
+      { $addToSet: { "facilities.otherAmenities": { $each: amenities } } },
+      { new: true, runValidators: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
+
+const deleteAmenities = async (req, res) => {
+  const { role } = req.user;
+  const { id } = req.params;
+  const { amenities } = req.body;
+  if (!id || !amenities || !Array.isArray(amenities)) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  if (role === "admin") {
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id },
+      {
+        $pull: { "facilities.otherAmenities": { $in: amenities } },
+      },
+      { runValidators: true, new: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+  if (role === "owner") {
+    const { companyId } = req.user;
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId },
+      {
+        $pull: { "facilities.otherAmenities": { $in: amenities } },
+      },
+      { runValidators: true, new: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
+
 module.exports = {
   createPitch,
   getAllPitches,
@@ -1459,4 +1528,6 @@ module.exports = {
   deleteTags,
   insertSearchKeywords,
   deleteSearchKeywords,
+  insertAmenities,
+  deleteAmenities,
 };

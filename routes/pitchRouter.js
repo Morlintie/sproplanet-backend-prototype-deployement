@@ -23,6 +23,8 @@ const {
   deleteTags,
   insertSearchKeywords,
   deleteSearchKeywords,
+  insertAmenities,
+  deleteAmenities,
 } = require("../controllers/pitchController");
 
 const roleMiddleware = require("../middlewares/roleMiddleware");
@@ -143,6 +145,14 @@ router.post(
   insertSearchKeywords
 );
 
+router.post(
+  "/insertAmenities:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  insertAmenities
+);
+
 router.delete(
   "/deleteVideo:id",
   (req, res, next) => {
@@ -178,6 +188,13 @@ router.delete(
     roleMiddleware(req, res, next, "admin");
   },
   deleteSearchKeywords
+);
+router.delete(
+  "/deleteAmenities:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  deleteAmenities
 );
 
 module.exports = router;
