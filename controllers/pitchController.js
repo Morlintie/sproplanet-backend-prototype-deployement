@@ -16,7 +16,7 @@ const createPitch = async (req, res) => {
     specifications,
     facilities,
     pricing,
-    media,
+
     contact,
     tags,
     searchKeywords,
@@ -32,7 +32,7 @@ const createPitch = async (req, res) => {
     specifications,
     facilities,
     pricing,
-    media,
+
     contact,
     tags,
     searchKeywords,
@@ -1283,6 +1283,159 @@ const deleteVideo = async (req, res) => {
   }
 };
 
+const updateImage = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+  const { public_id, caption, isPrimary } = req.body;
+  if (!id || !public_id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const update = {
+    "media.images.$.caption": caption,
+    "media.images.$.isPrimary":
+      isPrimary === undefined ? undefined : isPrimary === "true" ? true : false,
+  };
+  Object.keys(update).forEach((key) => {
+    if (update[key] === undefined || update[key] === null) {
+      delete update[key];
+    }
+  });
+  if (role === "owner") {
+    const { companyId } = req.user;
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId, "media.images.public_id": public_id },
+      update,
+      { new: true, runValidators: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+  if (role === "admin") {
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, "media.images.public_id": public_id },
+      update,
+      { new: true, runValidators: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
+
+const updateVideo = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+  const { public_id, caption, thumbnail } = req.body;
+  if (!id || !public_id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const update = {
+    "media.videos.$.caption": caption,
+    "media.videos.$.thumbnail": thumbnail,
+  };
+  Object.keys(update).forEach((key) => {
+    if (update[key] === undefined || update[key] === null) {
+      throw new BadRequestError("Please provide required data.");
+    }
+  });
+  if (role === "owner") {
+    const { companyId } = req.user;
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId, "media.videos.public_id": public_id },
+      update,
+      { new: true, runValidators: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+  if (role === "admin") {
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, "media.videos.public_id": public_id },
+      update,
+      { new: true, runValidators: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
+
+const insertTags = async (req, res) => {
+  const { id } = req.params;
+  const { tags } = req.body;
+  if (!id || !tags || !Array.isArray(tags)) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOneAndUpdate(
+    { _id: id },
+    { $addToSet: { tags: { $each: tags } } },
+    { new: true, runValidators: true }
+  );
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
+};
+const deleteTags = async (req, res) => {
+  const { id } = req.params;
+  const { tags } = req.body;
+  if (!id || !tags || !Array.isArray(tags)) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOneAndUpdate(
+    { _id: id },
+    {
+      $pull: { tags: { $in: tags } },
+    },
+    { runValidators: true, new: true }
+  );
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
+};
+
+const insertSearchKeywords = async (req, res) => {
+  const { id } = req.params;
+  const { searchKeywords } = req.body;
+  if (!id || !searchKeywords || !Array.isArray(searchKeywords)) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOneAndUpdate(
+    { _id: id },
+    { $addToSet: { searchKeywords: { $each: searchKeywords } } },
+    { new: true, runValidators: true }
+  );
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
+};
+const deleteSearchKeywords = async (req, res) => {
+  const { id } = req.params;
+  const { searchKeywords } = req.body;
+  if (!id || !searchKeywords || !Array.isArray(searchKeywords)) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOneAndUpdate(
+    { _id: id },
+    {
+      $pull: { searchKeywords: { $in: searchKeywords } },
+    },
+    { runValidators: true, new: true }
+  );
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  res.status(StatusCodes.OK).json({ pitch });
+};
+
 module.exports = {
   createPitch,
   getAllPitches,
@@ -1300,4 +1453,10 @@ module.exports = {
   deleteImage,
   InsertVideo,
   deleteVideo,
+  updateImage,
+  updateVideo,
+  insertTags,
+  deleteTags,
+  insertSearchKeywords,
+  deleteSearchKeywords,
 };

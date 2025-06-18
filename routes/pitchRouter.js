@@ -17,6 +17,12 @@ const {
   deleteImage,
   InsertVideo,
   deleteVideo,
+  updateImage,
+  updateVideo,
+  insertTags,
+  deleteTags,
+  insertSearchKeywords,
+  deleteSearchKeywords,
 } = require("../controllers/pitchController");
 
 const roleMiddleware = require("../middlewares/roleMiddleware");
@@ -93,6 +99,21 @@ router.patch(
   },
   updateCompanyUserPitch
 );
+
+router.patch(
+  "/updateImage:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  updateImage
+);
+router.patch(
+  "/updateVideo:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  updateVideo
+);
 router.post(
   "/insertImage:id",
   (req, res, next) => {
@@ -106,6 +127,20 @@ router.post(
     roleMiddleware(req, res, next, "admin", "owner");
   },
   InsertVideo
+);
+router.post(
+  "/insertTags:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  insertTags
+);
+router.post(
+  "/insertSearchKeywords:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  insertSearchKeywords
 );
 
 router.delete(
@@ -129,6 +164,20 @@ router.delete(
     roleMiddleware(req, res, next, "admin");
   },
   deletePitch
+);
+router.delete(
+  "/deleteTags:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteTags
+);
+router.delete(
+  "/deleteSearchKeywords:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteSearchKeywords
 );
 
 module.exports = router;
