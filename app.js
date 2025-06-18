@@ -33,12 +33,6 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/company", companyRouter);
 app.use("/api/v1/pitch", pitchRouter);
 
-app.get("/", (req, res) => {
-  res.send(
-    "<a href ='/api/v1/auth/google'> Click here to test google oauth </a> "
-  );
-});
-
 app.use(errorHandlerMiddleware);
 app.use(notFoundMiddleware);
 

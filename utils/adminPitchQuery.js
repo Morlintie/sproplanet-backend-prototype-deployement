@@ -261,7 +261,7 @@ const adminPitchQuery = (req) => {
     searchQuery["specifications.surfaceType"] = surfaceType;
   }
   if (closed) {
-    searchQuery["availability.closed"] = closed === "true" ? true : false;
+    searchQuery.closed = closed === "true" ? true : false;
   }
   if (media) {
     if (media.images) {
