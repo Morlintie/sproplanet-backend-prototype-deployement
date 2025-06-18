@@ -1,6 +1,8 @@
 const Pitch = require("../models/Pitch");
 const User = require("../models/User");
 const Company = require("../models/Company");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs/promises");
 const { StatusCodes } = require("http-status-codes");
 const { BadRequestError, NotFoundError, ForbiddenError } = require("../errors");
 const { pitchDeletionRequestEmail, adminPitchQuery } = require("../utils");
@@ -648,40 +650,105 @@ const updateAdminPitch = async (req, res) => {
   const {
     name,
     description,
-    location,
-    specifications,
-    facilities,
-    pricing,
-    media,
-    contact,
+    street,
+    neighborhood,
+    city,
+    district,
+    postalCode,
+    country,
+    coordinates,
+    length,
+    width,
+    surfaceType,
+    isIndoor,
+    hasLighting,
+    players,
+    spectators,
+    changingRooms,
+    showers,
+    parking,
+    shoeRenting,
+    hourlyRate,
+    currency,
+    specialDayMultiplier,
+    weekendMultiplier,
+    phone,
+    email,
+    website,
+    instagram,
+    facebook,
+    twitter,
     status,
-    tags,
-    searchKeywords,
     lastMaintenanceDate,
     nextMaintenanceDate,
   } = req.body;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
-  const pitch = await Pitch.findOneAndUpdate(
-    { _id: id },
-    {
-      name,
-      description,
-      location,
-      specifications,
-      facilities,
-      pricing,
-      media,
-      contact,
-      status,
-      tags,
-      searchKeywords,
-      lastMaintenanceDate,
-      nextMaintenanceDate,
-    },
-    { new: true, runValidators: true, timestamps: true }
-  );
+  const update = {
+    name,
+    description,
+    "location.address.street": street,
+    "location.address.neighborhood": neighborhood,
+    "location.address.city": city,
+    "location.address.district": district,
+    "location.address.postalCode": postalCode,
+    "location.address.country": country,
+    "location.coordinates": coordinates,
+    "specifications.dimensions.length": length,
+    "specifications.dimensions.width": width,
+    "specifications.surfaceType": surfaceType,
+    "specifications.isIndoor":
+      isIndoor === undefined ? undefined : isIndoor === "true" ? true : false,
+    "specifications.hasLighting":
+      hasLighting === undefined
+        ? undefined
+        : hasLighting === "true"
+        ? true
+        : false,
+    "specifications.recommendedCapacity.players": players,
+    "specifications.recommendedCapacity.spectators": spectators,
+    "facilities.changingRooms":
+      changingRooms === undefined
+        ? undefined
+        : changingRooms === "true"
+        ? true
+        : false,
+    "facilities.showers":
+      showers === undefined ? undefined : showers === "true" ? true : false,
+    "facilities.parking":
+      parking === undefined ? undefined : parking === "true" ? true : false,
+    "facilities.shoeRenting":
+      shoeRenting === undefined
+        ? undefined
+        : shoeRenting === "true"
+        ? true
+        : false,
+    "pricing.hourlyRate": hourlyRate,
+    "pricing.currency": currency,
+    "pricing.specialDayMultiplier": specialDayMultiplier,
+    "pricing.weekendMultiplier": weekendMultiplier,
+    "contact.phone": phone,
+    "contact.email": email,
+    "contact.website": website,
+    "contact.socialMedia.instagram": instagram,
+    "contact.socialMedia.facebook": facebook,
+    "contact.socialMedia.twitter": twitter,
+    status,
+    lastMaintenanceDate,
+    nextMaintenanceDate,
+  };
+  Object.keys(update).forEach((key) => {
+    if (update[key] === undefined || update[key] === null) {
+      delete update[key];
+    }
+  });
+
+  const pitch = await Pitch.findOneAndUpdate({ _id: id }, update, {
+    new: true,
+    runValidators: true,
+    timestamps: true,
+  });
   if (!pitch) {
     throw new NotFoundError("Pitch not found.");
   }
@@ -692,36 +759,86 @@ const updateCompanyUserPitches = async (req, res) => {
   const { companyId } = req.user;
 
   const {
-    name,
-    description,
-    location,
-    specifications,
-    facilities,
-    pricing,
-    media,
-    contact,
+    length,
+    width,
+    surfaceType,
+    isIndoor,
+    hasLighting,
+    players,
+    spectators,
+    changingRooms,
+    showers,
+    parking,
+    shoeRenting,
+    hourlyRate,
+    currency,
+    specialDayMultiplier,
+    weekendMultiplier,
+    phone,
+    email,
+    website,
+    instagram,
+    facebook,
+    twitter,
     status,
-
     lastMaintenanceDate,
     nextMaintenanceDate,
   } = req.body;
+
+  const update = {
+    "specifications.dimensions.length": length,
+    "specifications.dimensions.width": width,
+    "specifications.surfaceType": surfaceType,
+    "specifications.isIndoor":
+      isIndoor === undefined ? undefined : isIndoor === "true" ? true : false,
+    "specifications.hasLighting":
+      hasLighting === undefined
+        ? undefined
+        : hasLighting === "true"
+        ? true
+        : false,
+    "specifications.recommendedCapacity.players": players,
+    "specifications.recommendedCapacity.spectators": spectators,
+    "facilities.changingRooms":
+      changingRooms === undefined
+        ? undefined
+        : changingRooms === "true"
+        ? true
+        : false,
+    "facilities.showers":
+      showers === undefined ? undefined : showers === "true" ? true : false,
+    "facilities.parking":
+      parking === undefined ? undefined : parking === "true" ? true : false,
+    "facilities.shoeRenting":
+      shoeRenting === undefined
+        ? undefined
+        : shoeRenting === "true"
+        ? true
+        : false,
+    "pricing.hourlyRate": hourlyRate,
+    "pricing.currency": currency,
+    "pricing.specialDayMultiplier": specialDayMultiplier,
+    "pricing.weekendMultiplier": weekendMultiplier,
+    "contact.phone": phone,
+    "contact.email": email,
+    "contact.website": website,
+    "contact.socialMedia.instagram": instagram,
+    "contact.socialMedia.facebook": facebook,
+    "contact.socialMedia.twitter": twitter,
+    status,
+    lastMaintenanceDate,
+    nextMaintenanceDate,
+  };
+  Object.keys(update).forEach((key) => {
+    if (update[key] === undefined || update[key] === null) {
+      delete update[key];
+    }
+  });
   const pitches = await Pitch.updateMany(
     {
       company: companyId,
     },
-    {
-      description,
-      location,
-      specifications,
-      facilities,
-      pricing,
-      media,
-      contact,
-      status,
-      name,
-      lastMaintenanceDate,
-      nextMaintenanceDate,
-    },
+    update,
     { new: true, runValidators: true, timestamps: true }
   );
   if (!pitches || pitches.length === 0) {
@@ -738,36 +855,102 @@ const updateCompanyUserPitch = async (req, res) => {
   const {
     name,
     description,
-    location,
-    specifications,
-    facilities,
-    pricing,
-    media,
-    contact,
+    street,
+    neighborhood,
+    city,
+    district,
+    postalCode,
+    country,
+    coordinates,
+    length,
+    width,
+    surfaceType,
+    isIndoor,
+    hasLighting,
+    players,
+    spectators,
+    changingRooms,
+    showers,
+    parking,
+    shoeRenting,
+    hourlyRate,
+    currency,
+    specialDayMultiplier,
+    weekendMultiplier,
+    phone,
+    email,
+    website,
+    instagram,
+    facebook,
+    twitter,
     status,
-
     lastMaintenanceDate,
     nextMaintenanceDate,
   } = req.body;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
+  const update = {
+    name,
+    description,
+    "location.address.street": street,
+    "location.address.neighborhood": neighborhood,
+    "location.address.city": city,
+    "location.address.district": district,
+    "location.address.postalCode": postalCode,
+    "location.address.country": country,
+    "location.coordinates": coordinates,
+    "specifications.dimensions.length": length,
+    "specifications.dimensions.width": width,
+    "specifications.surfaceType": surfaceType,
+    "specifications.isIndoor":
+      isIndoor === undefined ? undefined : isIndoor === "true" ? true : false,
+    "specifications.hasLighting":
+      hasLighting === undefined
+        ? undefined
+        : hasLighting === "true"
+        ? true
+        : false,
+    "specifications.recommendedCapacity.players": players,
+    "specifications.recommendedCapacity.spectators": spectators,
+    "facilities.changingRooms":
+      changingRooms === undefined
+        ? undefined
+        : changingRooms === "true"
+        ? true
+        : false,
+    "facilities.showers":
+      showers === undefined ? undefined : showers === "true" ? true : false,
+    "facilities.parking":
+      parking === undefined ? undefined : parking === "true" ? true : false,
+    "facilities.shoeRenting":
+      shoeRenting === undefined
+        ? undefined
+        : shoeRenting === "true"
+        ? true
+        : false,
+    "pricing.hourlyRate": hourlyRate,
+    "pricing.currency": currency,
+    "pricing.specialDayMultiplier": specialDayMultiplier,
+    "pricing.weekendMultiplier": weekendMultiplier,
+    "contact.phone": phone,
+    "contact.email": email,
+    "contact.website": website,
+    "contact.socialMedia.instagram": instagram,
+    "contact.socialMedia.facebook": facebook,
+    "contact.socialMedia.twitter": twitter,
+    status,
+    lastMaintenanceDate,
+    nextMaintenanceDate,
+  };
+  Object.keys(update).forEach((key) => {
+    if (update[key] === undefined || update[key] === null) {
+      delete update[key];
+    }
+  });
   const pitch = await Pitch.findOneAndUpdate(
     { _id: id, company: companyId },
-    {
-      name,
-      description,
-      location,
-      specifications,
-      facilities,
-      pricing,
-      media,
-      contact,
-      status,
-
-      lastMaintenanceDate,
-      nextMaintenanceDate,
-    },
+    update,
     { new: true, runValidators: true, timestamps: true }
   );
   if (!pitch) {
@@ -790,6 +973,138 @@ const deletePitch = async (req, res) => {
     .status(StatusCodes.NO_CONTENT)
     .json({ message: "Pitch deleted successfully!" });
 };
+const insertImage = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+  const { caption, isPrimary } = req.body;
+  const { image } = req.files;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  if (!image) {
+    throw new BadRequestError("Please provide an image.");
+  }
+  if (!image.mimetype.startsWith("image")) {
+    throw new BadRequestError("Please provide a valid image file.");
+  }
+  if (!image.size || image.size > process.env.MAX_IMAGE_SIZE) {
+    throw new BadRequestError("Please provide an image smaller than 1KB.");
+  }
+
+  if (role === "owner") {
+    const { companyId } = req.user;
+
+    const checkPitch = await Pitch.findOne({ _id: id, company: companyId });
+
+    if (!checkPitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    const result = await cloudinary.uploader.upload(image.tempFilePath, {
+      use_filename: true,
+      folder: "pitch-images",
+    });
+    await fs.unlink(image.tempFilePath);
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId },
+      {
+        $push: {
+          "media.images": {
+            url: result.secure_url,
+            caption,
+            isPrimary,
+            public_id: result.public_id,
+          },
+        },
+      },
+      {
+        runValidators: true,
+        new: true,
+      }
+    );
+
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+
+  if (role === "admin") {
+    const checkPitch = await Pitch.findOne({ _id: id });
+    if (!checkPitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    const result = await cloudinary.uploader.upload(image.tempFilePath, {
+      use_filename: true,
+      folder: "pitch-images",
+    });
+    await fs.unlink(image.tempFilePath);
+    console.log(result);
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id },
+      {
+        $push: {
+          "media.images": {
+            url: result.secure_url,
+            caption,
+            isPrimary,
+            public_id: result.public_id,
+          },
+        },
+      },
+      {
+        runValidators: true,
+        new: true,
+      }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
+const deleteImage = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.user;
+  const { public_id } = req.body;
+  if (!id || !public_id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  if (role === "owner") {
+    const { companyId } = req.user;
+
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id, company: companyId },
+      {
+        $pull: {
+          "media.images": { public_id },
+        },
+      },
+      { runValidators: true, new: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    await cloudinary.uploader.destroy(public_id, {
+      folder: "pitch-images",
+    });
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+  if (role === "admin") {
+    const pitch = await Pitch.findOneAndUpdate(
+      { _id: id },
+      {
+        $pull: {
+          "media.images": { public_id },
+        },
+      },
+      { runValidators: true, new: true }
+    );
+    if (!pitch) {
+      throw new NotFoundError("Pitch not found.");
+    }
+    await cloudinary.uploader.destroy(public_id, {
+      folder: "pitch-images",
+    });
+    res.status(StatusCodes.OK).json({ pitch });
+  }
+};
 
 module.exports = {
   createPitch,
@@ -804,4 +1119,6 @@ module.exports = {
   updateCompanyUserPitches,
   updateCompanyUserPitch,
   deletePitch,
+  insertImage,
+  deleteImage,
 };

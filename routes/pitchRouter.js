@@ -13,6 +13,8 @@ const {
   updateCompanyUserPitches,
   updateCompanyUserPitch,
   deletePitch,
+  insertImage,
+  deleteImage,
 } = require("../controllers/pitchController");
 
 const roleMiddleware = require("../middlewares/roleMiddleware");
@@ -88,6 +90,20 @@ router.patch(
     roleMiddleware(req, res, next, "admin", "owner");
   },
   updateCompanyUserPitch
+);
+router.post(
+  "/insertImage:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  insertImage
+);
+router.delete(
+  "/deleteImage:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin", "owner");
+  },
+  deleteImage
 );
 
 router.delete(

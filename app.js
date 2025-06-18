@@ -17,6 +17,8 @@ const pitchRouter = require("./routes/pitchRouter");
 const cors = require("cors");
 //others
 const morgan = require("morgan");
+const fileUpload = require("express-fileupload");
+const cloudinary = require("cloudinary").v2;
 
 const PORT = process.env.PORT;
 const app = express();
@@ -24,6 +26,13 @@ const app = express();
 app.use(cors({ origin: process.env.ORIGIN_FRONTEND, credentials: true }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
+app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
 app.use(morgan("tiny"));
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(passport.initialize());
