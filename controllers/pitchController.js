@@ -1,6 +1,7 @@
 const Pitch = require("../models/Pitch");
 const User = require("../models/User");
 const Company = require("../models/Company");
+const PitchReview = require("../models/PitchReview");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs/promises");
 const { StatusCodes } = require("http-status-codes");
@@ -177,9 +178,12 @@ const getAllPitches = async (req, res) => {
   if (!pitches || pitches.length === 0) {
     throw new NotFoundError("No pitch found.");
   }
-  res
-    .status(StatusCodes.OK)
-    .json({ pitches, count: pitches.length, totalCount: countDocuments });
+  res.status(StatusCodes.OK).json({
+    pitches,
+    count: pitches.length,
+    totalCount: countDocuments,
+    limit,
+  });
 };
 
 const getAllVicinityPitches = async (req, res) => {
@@ -187,7 +191,9 @@ const getAllVicinityPitches = async (req, res) => {
   if (!coordinates) {
     throw new BadRequestError("Please provide required data.");
   }
-
+  const limit = 20;
+  const page = Number(req.query.page) || 1;
+  const skip = (page - 1) * limit;
   const userSelectedFields = "-status -__v -totalBookings -totalRevenue";
   const pitches = await Pitch.find({
     location: {
@@ -199,14 +205,21 @@ const getAllVicinityPitches = async (req, res) => {
         $maxDistance: 7000,
       },
     },
-  }).select(userSelectedFields);
+  })
+    .select(userSelectedFields)
+    .limit(limit)
+    .skip(skip)
+    .sort("-rating.averageRating pricing.hourlyRate");
   const countDocuments = await Pitch.countDocuments({});
   if (!pitches || pitches.length === 0) {
     throw new NotFoundError("No pitch found.");
   }
-  res
-    .status(StatusCodes.OK)
-    .json({ pitches, count: pitches.length, totalCount: countDocuments });
+  res.status(StatusCodes.OK).json({
+    pitches,
+    count: pitches.length,
+    totalCount: countDocuments,
+    limit,
+  });
 };
 
 const getSinglePitch = async (req, res) => {
@@ -226,6 +239,16 @@ const getSinglePitch = async (req, res) => {
   if (!pitch) {
     throw new NotFoundError("No pitch found.");
   }
+
+  const page = 1;
+  const limit = 10;
+  const skip = (page - 1) * limit;
+  const pitchReviews = await PitchReview.find({ pitch: pitch._id })
+    .limit(limit)
+    .skip(skip)
+    .sort("-rating -createdAt")
+    .select("-__v");
+  const totalReviews = await PitchReview.countDocuments({ pitch: pitch._id });
   if (userId) {
     const user = await User.findOne({ _id: userId });
     if (!user.recentlySearchedPitch.includes(pitch._id)) {
@@ -245,7 +268,13 @@ const getSinglePitch = async (req, res) => {
       );
     }
   }
-  res.status(StatusCodes.OK).json({ pitch });
+  res.status(StatusCodes.OK).json({
+    pitch,
+    pitchReviews,
+    countReviews: pitchReviews.length,
+    totalReviews,
+    limitReviews: limit,
+  });
 };
 
 const getAdminPitches = async (req, res) => {
@@ -287,6 +316,7 @@ const getAdminPitches = async (req, res) => {
     pitches,
     count: pitches.length,
     totalCount: countDocuments,
+    limit,
   });
 };
 
@@ -599,9 +629,12 @@ const getCompanyUserPitches = async (req, res) => {
   if (!pitches || pitches.length === 0) {
     throw new NotFoundError("No pitch found.");
   }
-  res
-    .status(StatusCodes.OK)
-    .json({ pitches, count: pitches.length, totalCount: countDocuments });
+  res.status(StatusCodes.OK).json({
+    pitches,
+    count: pitches.length,
+    totalCount: countDocuments,
+    limit,
+  });
 };
 
 const getCompanyUserPitch = async (req, res) => {
@@ -618,7 +651,23 @@ const getCompanyUserPitch = async (req, res) => {
     throw new NotFoundError("No pitch found.");
   }
 
-  res.status(StatusCodes.OK).json({ pitch });
+  const page = 1;
+  const limit = 10;
+  const skip = (page - 1) * limit;
+  const pitchReviews = await PitchReview.find({ pitch: pitch._id })
+    .limit(limit)
+    .skip(skip)
+    .sort("-rating -createdAt")
+    .select("-__v");
+  const totalReviews = await PitchReview.countDocuments({ pitch: pitch._id });
+
+  res.status(StatusCodes.OK).json({
+    pitch,
+    pitchReviews,
+    countReviews: pitchReviews.length,
+    totalReviews,
+    limitReviews: limit,
+  });
 };
 
 const deletionRequest = async (req, res) => {

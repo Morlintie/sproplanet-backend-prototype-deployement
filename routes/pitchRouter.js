@@ -28,7 +28,7 @@ const {
 } = require("../controllers/pitchController");
 
 const roleMiddleware = require("../middlewares/roleMiddleware");
-const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
+
 const passUserInfoMiddleware = require("../middlewares/passUserInfoMiddleware");
 
 router.post(

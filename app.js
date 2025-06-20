@@ -13,6 +13,7 @@ const authRouter = require("./routes/authRouter");
 const userRouter = require("./routes/userRouter");
 const companyRouter = require("./routes/companyRouter");
 const pitchRouter = require("./routes/pitchRouter");
+const pitchReviewRouter = require("./routes/pitchReviewRouter");
 //security
 const cors = require("cors");
 //others
@@ -25,7 +26,13 @@ const app = express();
 
 app.use(cors({ origin: process.env.ORIGIN_FRONTEND, credentials: true }));
 
-app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/",
+    limits: { files: 5, fileSize: 1024 * 1024 * 1024 * 5 },
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 cloudinary.config({
@@ -42,6 +49,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/company", companyRouter);
 app.use("/api/v1/pitch", pitchRouter);
+app.use("/api/v1/pitch-review", pitchReviewRouter);
 
 app.use(errorHandlerMiddleware);
 app.use(notFoundMiddleware);

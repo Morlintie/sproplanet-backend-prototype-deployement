@@ -1,8 +1,7 @@
 const adminCompanyQuery = (req) => {
   const {
     id,
-    createdAt,
-    updatedAt,
+
     name,
     email,
     phone,
@@ -18,6 +17,8 @@ const adminCompanyQuery = (req) => {
     type,
   } = req.query;
 
+  const { createdAt, updatedAt } = req.body;
+
   const queryObject = {};
 
   if (id) {
@@ -25,27 +26,27 @@ const adminCompanyQuery = (req) => {
   }
 
   if (createdAt) {
-    const lowerDate = new Date(createdAt);
-    const upperDateArray = createdAt.split("-");
-    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
-    const upperDate = new Date(upperDateArray.join("-"));
-
-    queryObject.createdAt = {
-      $gte: lowerDate,
-      $lt: upperDate,
-    };
+    const upperLimit = new Date(createdAt?.upperLimit);
+    const lowerLimit = new Date(createdAt?.lowerLimit);
+    if (upperLimit && lowerLimit) {
+      queryObject.createdAt = { $gte: lowerLimit, $lte: upperLimit };
+    } else if (upperLimit) {
+      queryObject.createdAt = { $lte: upperLimit };
+    } else if (lowerLimit) {
+      queryObject.createdAt = { $gte: lowerLimit };
+    }
   }
 
   if (updatedAt) {
-    const lowerDate = new Date(updatedAt);
-    const upperDateArray = updatedAt.split("-");
-    upperDateArray[1] = `${Number(upperDateArray[1]) + 1}`;
-    const upperDate = new Date(upperDateArray.join("-"));
-
-    queryObject.updatedAt = {
-      $gte: lowerDate,
-      $lt: upperDate,
-    };
+    const upperLimit = new Date(updatedAt?.upperLimit);
+    const lowerLimit = new Date(updatedAt?.lowerLimit);
+    if (upperLimit && lowerLimit) {
+      queryObject.updatedAt = { $gte: lowerLimit, $lte: upperLimit };
+    } else if (upperLimit) {
+      queryObject.updatedAt = { $lte: upperLimit };
+    } else if (lowerLimit) {
+      queryObject.updatedAt = { $gte: lowerLimit };
+    }
   }
 
   if (name) {

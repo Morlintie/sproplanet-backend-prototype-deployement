@@ -12,6 +12,7 @@ const updateCompanyEmail = require("./updateCompanyEmail");
 const resetCompanyPasswordEmail = require("./resetCompanyPasswordEmail");
 const pitchDeletionRequestEmail = require("./pitchDeletionRequestEmail");
 const adminPitchQuery = require("./adminPitchQuery");
+const adminPitchReviewQuery = require("./adminPitchReviewQuery");
 
 module.exports = {
   resetPasswordEmail,
@@ -19,7 +20,7 @@ module.exports = {
   createCookie,
   verifyCookie,
   adminUserQuery,
-
+  adminPitchReviewQuery,
   adminUserUpdateQuery,
 
   deletionEmail,
