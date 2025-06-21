@@ -243,12 +243,23 @@ const getSinglePitch = async (req, res) => {
   const page = 1;
   const limit = 10;
   const skip = (page - 1) * limit;
-  const pitchReviews = await PitchReview.find({ pitch: pitch._id })
+  const pitchReviews = await PitchReview.find({ pitch: id, isDeleted: false })
     .limit(limit)
     .skip(skip)
     .sort("-rating -createdAt")
-    .select("-__v");
-  const totalReviews = await PitchReview.countDocuments({ pitch: pitch._id });
+    .select("-__v")
+    .populate({
+      path: "user",
+      select: "name profilePicture email",
+    })
+    .populate({
+      path: "replies.user",
+      select: "name profilePicture email",
+    });
+  const totalReviews = await PitchReview.countDocuments({
+    pitch: id,
+    isDeleted: false,
+  });
   if (userId) {
     const user = await User.findOne({ _id: userId });
     if (!user.recentlySearchedPitch.includes(pitch._id)) {
@@ -258,7 +269,11 @@ const getSinglePitch = async (req, res) => {
           $push: {
             recentlySearchedPitch: {
               $each: [
-                { pitchId: pitch._id, name: pitch.name, rating: pitch.rating },
+                {
+                  pitchId: pitch._id,
+                  name: pitch.name,
+                  rating: pitch.rating.averageRating,
+                },
               ],
               $slice: -10,
             },
@@ -654,12 +669,26 @@ const getCompanyUserPitch = async (req, res) => {
   const page = 1;
   const limit = 10;
   const skip = (page - 1) * limit;
-  const pitchReviews = await PitchReview.find({ pitch: pitch._id })
+  const pitchReviews = await PitchReview.find({
+    pitch: pitch._id,
+    isDeleted: false,
+  })
     .limit(limit)
     .skip(skip)
     .sort("-rating -createdAt")
-    .select("-__v");
-  const totalReviews = await PitchReview.countDocuments({ pitch: pitch._id });
+    .select("-__v")
+    .populate({
+      path: "user",
+      select: "name profilePicture email",
+    })
+    .populate({
+      path: "replies.user",
+      select: "name profilePicture email",
+    });
+  const totalReviews = await PitchReview.countDocuments({
+    pitch: pitch._id,
+    isDeleted: false,
+  });
 
   res.status(StatusCodes.OK).json({
     pitch,

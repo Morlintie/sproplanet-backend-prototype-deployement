@@ -8,7 +8,7 @@ const adminPitchQuery = (req) => {
     hasLighting,
     status,
     tags,
-
+    id,
     description,
     street,
     neighborhood,
@@ -52,6 +52,9 @@ const adminPitchQuery = (req) => {
       $regex: district,
       $options: "i",
     };
+  }
+  if (id) {
+    searchQuery._id = id;
   }
   if (isIndoor) {
     searchQuery["specifications.isIndoor"] = isIndoor === "true" ? true : false;

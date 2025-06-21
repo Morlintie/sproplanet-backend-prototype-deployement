@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Pitch = require("./Pitch");
 const reviewSchema = new mongoose.Schema(
   {
     pitch: {
@@ -22,7 +23,7 @@ const reviewSchema = new mongoose.Schema(
     rating: {
       type: Number,
       required: true,
-      min: 1,
+      min: 0,
       max: 5,
       set: (v) => Math.round(v * 10) / 10,
     },
@@ -32,7 +33,7 @@ const reviewSchema = new mongoose.Schema(
       type: [
         {
           url: { type: String, required: true, trim: true },
-          publicId: { type: String, required: true, trim: true },
+          public_id: { type: String, required: true, trim: true },
         },
       ],
       default: [],
@@ -55,6 +56,14 @@ const reviewSchema = new mongoose.Schema(
     dislikes: [{ type: mongoose.Types.ObjectId, ref: "User" }],
     isVerified: { type: Boolean, default: false },
     isEdited: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+    archived: { type: Boolean, default: false },
+    archivedRating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      set: (v) => Math.round(v * 10) / 10,
+    },
   },
   { timestamps: true }
 );
@@ -67,7 +76,9 @@ reviewSchema.index({ user: 1, createdAt: -1 });
 
 reviewSchema.statics.getAverageRating = async function (pitchId) {
   const result = await this.aggregate([
-    { $match: { pitch: new mongoose.Types.ObjectId(pitchId) } },
+    {
+      $match: { pitch: new mongoose.Types.ObjectId(pitchId), isDeleted: false },
+    },
     {
       $group: {
         _id: null,
@@ -96,41 +107,16 @@ reviewSchema.post("findOneAndUpdate", async function (doc) {
     await doc.constructor.getAverageRating(doc.pitch);
   }
 });
-reviewSchema.pre("updateMany", async function (next) {
-  this._updatePayload = this.getUpdate();
-  this._filterPayload = this.getFilter();
-  next();
-});
 
-reviewSchema.post("updateMany", async function (result) {
-  if (result.modifiedCount > 0) {
-    if (this._updatePayload.$set.rating) {
-      const pitchId = this._filterPayload.pitch;
-      await this.model("Pitch").getAverageRating(pitchId);
+reviewSchema.post(
+  "deleteOne",
+  { document: true, query: false },
+  async function (doc) {
+    if (doc) {
+      await doc.constructor.getAverageRating(this.pitch);
     }
   }
-});
-
-reviewSchema.post("deleteOne", async function (doc) {
-  if (doc) {
-    await doc.constructor.getAverageRating(doc.pitch);
-  }
-});
-
-reviewSchema.pre("deleteMany", async function (next) {
-  this._updatePayload = this.getUpdate();
-  this._filterPayload = this.getFilter();
-  next();
-});
-
-reviewSchema.post("deleteMany", async function (result) {
-  if (result.modifiedCount > 0) {
-    if (this._updatePayload.$set.rating) {
-      const pitchId = this._filterPayload.pitch;
-      await this.model("Pitch").getAverageRating(pitchId);
-    }
-  }
-});
+);
 
 const PitchReview = mongoose.model("PitchReview", reviewSchema);
 

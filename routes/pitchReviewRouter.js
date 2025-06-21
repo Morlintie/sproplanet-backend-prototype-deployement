@@ -5,7 +5,7 @@ const {
   getReview,
   getCompanyReviews,
   updateReview,
-  updateMultipleReviews,
+  deleteAdmin,
   insertImages,
   deleteImages,
   replyReview,
@@ -14,9 +14,10 @@ const {
   likeReview,
   dislikeReview,
   deleteReview,
-  deleteManyReviews,
+  updateAdminReview,
   getNextReviews,
   getUserReviews,
+  editReplies,
 } = require("../controllers/pitchReviewController");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 const roleMiddleware = require("../middlewares/roleMiddleware");
@@ -42,17 +43,35 @@ router.get(
   getCompanyReviews
 );
 
-router.patch("/multiple", updateMultipleReviews);
 router.patch("/:id", authenticationMiddleware, updateReview);
-router.post("/insertImage/:id", insertImages);
-router.delete("/deleteImage/:id", deleteImages);
-router.post("/reply/:id", replyReview);
-router.patch("/editReply/:id", editReply);
-router.delete("/deleteReply/:id", deleteReply);
-router.post("/like/:id", likeReview);
-router.post("/dislike/:id", dislikeReview);
-
-router.delete("/deleteMany", deleteManyReviews);
-router.delete("/:id", deleteReview);
+router.post("/insertImage/:id", authenticationMiddleware, insertImages);
+router.delete("/deleteImage/:id", authenticationMiddleware, deleteImages);
+router.post("/reply/:id", authenticationMiddleware, replyReview);
+router.patch("/editReply/:id", authenticationMiddleware, editReply);
+router.patch(
+  "/admin/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  updateAdminReview
+);
+router.patch(
+  "/editReplies/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  editReplies
+);
+router.delete("/deleteReply/:id", authenticationMiddleware, deleteReply);
+router.post("/like/:id", authenticationMiddleware, likeReview);
+router.post("/dislike/:id", authenticationMiddleware, dislikeReview);
+router.delete(
+  "/admin/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteAdmin
+);
+router.delete("/:id", authenticationMiddleware, deleteReview);
 
 module.exports = router;

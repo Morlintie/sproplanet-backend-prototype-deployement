@@ -175,4 +175,150 @@ const adminPitchReviewQuery = (req) => {
   }
   return queryObject;
 };
-module.exports = adminPitchReviewQuery;
+
+const adminPitchReviewUpdateQuery = (req) => {
+  const {
+    pitch,
+    user,
+    company,
+    rating,
+    title,
+    comment,
+    likes,
+    dislikes,
+    isVerified,
+    isEdited,
+    isDeleted,
+    isArchived,
+    archivedRating,
+    replies,
+    createdAt,
+    updatedAt,
+  } = req.body;
+  const updateObject = {};
+  if (pitch) {
+    updateObject.pitch = pitch;
+  }
+  if (user) {
+    updateObject.user = user;
+  }
+  if (company) {
+    updateObject.company = company;
+  }
+  if (rating) {
+    updateObject.rating = rating;
+  }
+  if (title) {
+    updateObject.title = title;
+  }
+  if (comment) {
+    updateObject.comment = comment;
+  }
+  if (likes) {
+    if (likes.add) {
+      updateObject.$addToSet = { likes: { $each: likes.add } };
+    }
+    if (likes.remove) {
+      updateObject.$pull = { likes: { $in: likes.remove } };
+    }
+  }
+  if (dislikes) {
+    if (dislikes.add) {
+      updateObject.$addToSet = { dislikes: { $each: dislikes.add } };
+    }
+    if (dislikes.remove) {
+      updateObject.$pull = { dislikes: { $in: dislikes.remove } };
+    }
+  }
+  if (isVerified) {
+    if (isVerified === "true") {
+      updateObject.isVerified = true;
+    } else if (isVerified === "false") {
+      updateObject.isVerified = false;
+    }
+  }
+  if (isEdited) {
+    if (isEdited === "true") {
+      updateObject.isEdited = true;
+    } else if (isEdited === "false") {
+      updateObject.isEdited = false;
+    }
+  }
+  if (isDeleted) {
+    if (isDeleted === "true") {
+      updateObject.isDeleted = true;
+    } else if (isDeleted === "false") {
+      updateObject.isDeleted = false;
+    }
+  }
+  if (isArchived) {
+    if (isArchived === "true") {
+      updateObject.isArchived = true;
+    } else if (isArchived === "false") {
+      updateObject.isArchived = false;
+    }
+  }
+
+  if (archivedRating) {
+    updateObject.archivedRating = archivedRating;
+  }
+
+  if (createdAt) {
+    updateObject.createdAt = new Date(createdAt);
+  }
+  if (updatedAt) {
+    updateObject.updatedAt = new Date(updatedAt);
+  }
+  if (replies) {
+    if (replies.add) {
+      updateObject.$addToSet = { replies: { $each: replies.add } };
+    }
+    if (replies.remove) {
+      const replyRemoveObject = {};
+      if (replies.remove.user) {
+        replyRemoveObject.user = replies.remove.user;
+      }
+      if (replies.remove.comment) {
+        replyRemoveObject.comment = {
+          $regex: replies.remove.comment,
+          $options: "i",
+        };
+      }
+      if (replies.remove.createdAt) {
+        const upperLimit = replies.remove.createdAt.upperLimit;
+        const lowerLimit = replies.remove.createdAt.lowerLimit;
+        if (upperLimit && lowerLimit) {
+          replyRemoveObject.createdAt = { $gte: lowerLimit, $lte: upperLimit };
+        } else if (upperLimit) {
+          replyRemoveObject.createdAt = { $lte: upperLimit };
+        } else if (lowerLimit) {
+          replyRemoveObject.createdAt = { $gte: lowerLimit };
+        }
+      }
+
+      if (replies.remove.updatedAt) {
+        const upperLimit = replies.remove.updatedAt.upperLimit;
+        const lowerLimit = replies.remove.updatedAt.lowerLimit;
+        if (upperLimit && lowerLimit) {
+          replyRemoveObject.updatedAt = { $gte: lowerLimit, $lte: upperLimit };
+        } else if (upperLimit) {
+          replyRemoveObject.updatedAt = { $lte: upperLimit };
+        } else if (lowerLimit) {
+          replyRemoveObject.updatedAt = { $gte: lowerLimit };
+        }
+      }
+      if (replies.remove.isEdited) {
+        if (replies.remove.isEdited === "true") {
+          replyRemoveObject.isEdited = true;
+        } else if (replies.remove.isEdited === "false") {
+          replyRemoveObject.isEdited = false;
+        }
+      }
+
+      updateObject.$pull = { replies: replyRemoveObject };
+    }
+  }
+  return updateObject;
+};
+
+module.exports = { adminPitchReviewQuery, adminPitchReviewUpdateQuery };
