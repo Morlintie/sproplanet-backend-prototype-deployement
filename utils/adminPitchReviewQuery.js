@@ -6,13 +6,16 @@ const adminPitchReviewQuery = (req) => {
     id,
     title,
     comment,
+    isDeleted,
+    archived,
 
     likes,
     dislikes,
     isVerified,
     isEdited,
   } = req.query;
-  const { replies, rating, createdAt, updatedAt, photos } = req.body;
+  const { replies, rating, archivedRating, createdAt, updatedAt, photos } =
+    req.body;
   const queryObject = {};
   if (pitch) {
     queryObject.pitch = pitch;
@@ -173,6 +176,33 @@ const adminPitchReviewQuery = (req) => {
       queryObject.updatedAt = { $gte: lowerLimit };
     }
   }
+
+  if (isDeleted) {
+    if (isDeleted === "true") {
+      queryObject.isDeleted = true;
+    } else if (isDeleted === "false") {
+      queryObject.isDeleted = false;
+    }
+  }
+  if (archived) {
+    if (archived === "true") {
+      queryObject.archived = true;
+    } else if (archived === "false") {
+      queryObject.archived = false;
+    }
+  }
+
+  if (archivedRating) {
+    const upperLimit = parseFloat(archivedRating?.upperLimit);
+    const lowerLimit = parseFloat(archivedRating?.lowerLimit);
+    if (upperLimit && lowerLimit) {
+      queryObject.archivedRating = { $gte: lowerLimit, $lte: upperLimit };
+    } else if (upperLimit) {
+      queryObject.archivedRating = { $lte: upperLimit };
+    } else if (lowerLimit) {
+      queryObject.archivedRating = { $gte: lowerLimit };
+    }
+  }
   return queryObject;
 };
 
@@ -189,7 +219,7 @@ const adminPitchReviewUpdateQuery = (req) => {
     isVerified,
     isEdited,
     isDeleted,
-    isArchived,
+    archived,
     archivedRating,
     replies,
     createdAt,
@@ -251,7 +281,7 @@ const adminPitchReviewUpdateQuery = (req) => {
       updateObject.isDeleted = false;
     }
   }
-  if (isArchived) {
+  if (archived) {
     if (isArchived === "true") {
       updateObject.isArchived = true;
     } else if (isArchived === "false") {
