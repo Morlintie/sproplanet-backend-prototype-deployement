@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please provide user email"],
       unique: [true, "This email has already been taken."],
+      trim: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please provide a valid email."],
     },
 
@@ -140,9 +141,6 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-userSchema.index({ name: 1 });
-userSchema.index({ email: 1 });
 
 userSchema.pre("save", async function (next) {
   try {
