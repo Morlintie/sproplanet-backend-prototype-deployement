@@ -98,108 +98,25 @@ const userSchema = new mongoose.Schema(
     }, // design default PPs
 
     selfFriendRequests: {
-      type: [
-        {
-          userId: mongoose.Types.ObjectId,
-          name: String,
-          email: String,
-          role: String,
-          age: Number,
-          profilePicture: String,
-          friends: [
-            {
-              userId: mongoose.Types.ObjectId,
-              name: String,
-              email: String,
-              role: String,
-              school: String,
-              age: Number,
-              profilePicture: String,
-              goalKeeper: Boolean,
-            },
-          ],
-          goalKeeper: Boolean,
-        },
-      ],
+      type: [{ type: mongoose.Types.ObjectId, ref: "User" }],
       default: [],
     },
 
     friendRequests: {
-      type: [
-        {
-          userId: mongoose.Types.ObjectId,
-          name: String,
-          email: String,
-          role: String,
-          age: Number,
-          profilePicture: String,
-          friends: [
-            {
-              userId: mongoose.Types.ObjectId,
-              name: String,
-              email: String,
-              role: String,
-              school: String,
-              age: Number,
-              profilePicture: String,
-              goalKeeper: Boolean,
-            },
-          ],
-          goalKeeper: Boolean,
-        },
-      ],
+      type: [{ type: mongoose.Types.ObjectId, ref: "User" }],
       default: [],
     },
     friends: {
-      type: [
-        {
-          userId: mongoose.Types.ObjectId,
-          name: String,
-          email: String,
-          role: {type: String, enum: {values: ["user", "admin", "companyOwner", "banned"], message: "Please provide a valid role value."}},
-          age: Number,
-          profilePicture: String,
-          friends: [
-            {
-              userId: mongoose.Types.ObjectId,
-              name: String,
-              email: String,
-              role: String,
-              school: String,
-              age: Number,
-              profilePicture: String,
-              goalKeeper: Boolean,
-            },
-          ],
-          goalKeeper: Boolean,
-        },
-      ],
+      type: [{ type: mongoose.Types.ObjectId, ref: "User" }],
       default: [],
     },
     recentlySearchedUser: {
-      type: [
-        {
-          userId: mongoose.Types.ObjectId,
-          name: String,
-          email: String,
-          role: {
-            type: String,
-            enum: {
-              values: ["user", "admin", "companyOwner", "banned"],
-              message: "Please provide a valid role value.",
-            },
-          },
-          profilePicture: String,
-          goalKeeper: Boolean,
-        },
-      ],
+      type: [{ type: mongoose.Types.ObjectId, ref: "User" }],
       default: [],
     },
 
     recentlySearchedPitch: {
-      type: [
-        { pitchId: mongoose.Types.ObjectId, name: String, rating: Number },
-      ],
+      type: [{ type: mongoose.Types.ObjectId, ref: "Pitch" }],
       default: [],
     },
 
@@ -224,7 +141,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.index({ name: "text" }, { default_language: "turkish" });
+userSchema.index({ name: 1 });
+userSchema.index({ email: 1 });
 
 userSchema.pre("save", async function (next) {
   try {

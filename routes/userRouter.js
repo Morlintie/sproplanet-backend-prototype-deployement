@@ -21,10 +21,11 @@ const {
   checkPasswordCode,
   resetPassword,
   revokeSelfFriendRequest,
-  removeFromFriends,
+  exitFromFriends,
   getAdmin,
   deleteRecentlySearchedUser,
   deleteRecentlySearchedPitch,
+  removeFromFriends,
 } = require("../controllers/userController");
 const router = express.Router();
 
@@ -92,6 +93,12 @@ router.patch(
 router.patch("/updateDeleteUser", authenticationMiddleware, updateDeleteUser);
 
 router.delete(
+  "/removeFromFriends:id",
+  authenticationMiddleware,
+  removeFromFriends
+);
+
+router.delete(
   "/deleteMany",
   (req, res, next) => {
     roleMiddleware(req, res, next, "admin");
@@ -103,11 +110,7 @@ router.delete(
   authenticationMiddleware,
   revokeSelfFriendRequest
 ); //auth, admin
-router.delete(
-  "/removeFromFriends:id",
-  authenticationMiddleware,
-  removeFromFriends
-); // auth, admin
+router.delete("/exitFromFriends:id", authenticationMiddleware, exitFromFriends); // auth, admin
 router.delete(
   "/deleteRecentlySearchedUser:id",
   authenticationMiddleware,

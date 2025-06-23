@@ -268,13 +268,7 @@ const getSinglePitch = async (req, res) => {
         {
           $push: {
             recentlySearchedPitch: {
-              $each: [
-                {
-                  pitchId: pitch._id,
-                  name: pitch.name,
-                  rating: pitch.rating.averageRating,
-                },
-              ],
+              $each: [pitch._id],
               $slice: -10,
             },
           },
