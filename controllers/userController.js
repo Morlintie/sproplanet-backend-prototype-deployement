@@ -89,7 +89,8 @@ const getSingleUser = async (req, res) => {
     })
     .populate({
       path: "favoritePitches",
-      select: "name _id rating.averageRating location media.images",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
     });
   if (!user) {
     throw new NotFoundError("User couldn't found.");
@@ -143,7 +144,11 @@ const showUser = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
 
   if (!user) {
     throw new NotFoundError("User couldn't found.");
@@ -286,7 +291,11 @@ const sendFriendRequest = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
 
   res.status(StatusCodes.CREATED).json({ user: friendRequest });
 };
@@ -325,7 +334,11 @@ const updateSingleUser = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
   if (!newUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -547,7 +560,11 @@ const replyFriendRequest = async (req, res) => {
         path: "recentlySearchedPitch",
         select: "name _id rating.averageRating location",
       })
-      .populate("favoritePitches");
+      .populate({
+        path: "favoritePitches",
+        select:
+          "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+      });
     res.status(StatusCodes.OK).json({ user: currentUserFriends });
   }
 
@@ -586,7 +603,11 @@ const replyFriendRequest = async (req, res) => {
         path: "recentlySearchedPitch",
         select: "name _id rating.averageRating location",
       })
-      .populate("favoritePitches");
+      .populate({
+        path: "favoritePitches",
+        select:
+          "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+      });
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
   }
 };
@@ -655,7 +676,11 @@ const revokeSelfFriendRequest = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -709,7 +734,11 @@ const exitFromFriends = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -764,7 +793,11 @@ const removeFromFriends = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -947,7 +980,11 @@ const deleteRecentlySearchedUser = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -1003,7 +1040,11 @@ const deleteRecentlySearchedPitch = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -1050,7 +1091,11 @@ const addFavoritePitch = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
 
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -1098,7 +1143,11 @@ const removeFavoritePitch = async (req, res) => {
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
     })
-    .populate("favoritePitches");
+    .populate({
+      path: "favoritePitches",
+      select:
+        "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    });
 
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
