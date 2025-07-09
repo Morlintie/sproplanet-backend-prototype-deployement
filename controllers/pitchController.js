@@ -1041,6 +1041,11 @@ const deletePitch = async (req, res) => {
     throw new NotFoundError("Pitch not found.");
   }
   await Pitch.deleteOne({ _id: id });
+  await User.updateMany(
+    { $or: [{ favoritePitches: id }, { recentlySearchedPitch: id }] },
+    { $pull: { favoritePitches: id, recentlySearchedPitch: id } }
+  );
+
   res
     .status(StatusCodes.NO_CONTENT)
     .json({ message: "Pitch deleted successfully!" });

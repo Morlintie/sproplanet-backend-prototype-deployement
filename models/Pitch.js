@@ -37,18 +37,23 @@ const pitchSchema = new mongoose.Schema(
           required: [true, "Please provide country."],
         },
       },
+      //type for geospatial queries
+      //konuma göre arama yapabilmek için
       type: {
         type: String,
         enum: ["Point"],
         default: "Point",
         required: true,
       },
+      //coordinates for geospatial queries
+      //konuma göre arama yapabilmek için
       coordinates: {
         type: [Number],
         required: [true, "Please provide pitch coordinates."],
       },
     },
-
+    // whose pitch is this?
+    //bu saha hangi şirkete ait
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
@@ -104,11 +109,15 @@ const pitchSchema = new mongoose.Schema(
         type: String,
         default: "TRY",
       },
+      // Multiplier for special days (e.g., holidays, weekends)
+      // Özel günler için çarpan (örneğin, tatiller, hafta sonları)
       specialDayMultiplier: {
         type: Number,
         default: 1.0,
         min: [1.0, "Special day multiplier cannot be less than 1.0"],
       },
+      // Multiplier for weekends
+      // Hafta sonları için çarpan
       weekendMultiplier: {
         type: Number,
         default: 1.0,
@@ -171,12 +180,16 @@ const pitchSchema = new mongoose.Schema(
     },
 
     rating: {
+      // Average rating based on reviews
+      // İncelemelere dayalı ortalama puan
       averageRating: {
         type: Number,
         default: 0,
         min: [0, "Rating cannot be negative"],
         max: [5, "Rating cannot exceed 5"],
       },
+      // Total number of reviews
+      // Toplam inceleme sayısı
       totalReviews: {
         type: Number,
         default: 0,
@@ -185,6 +198,7 @@ const pitchSchema = new mongoose.Schema(
     },
 
     // Administrative
+    // Yönetimsel Data
     status: {
       type: String,
       enum: ["active", "inactive", "maintenance"],
@@ -192,12 +206,14 @@ const pitchSchema = new mongoose.Schema(
     },
 
     // Business Logic
+    // Metricler için
     totalBookings: {
       type: Number,
       default: 0,
       min: [0, "Total bookings cannot be negative"],
     },
-
+    // Business Logic
+    // Metricler için
     totalRevenue: {
       type: Number,
       default: 0,
@@ -206,7 +222,7 @@ const pitchSchema = new mongoose.Schema(
 
     //SEO and Search Optimization
     tags: [String], // for search optimization
-    searchKeywords: [String],
+    searchKeywords: [String], // for search optimization
 
     lastMaintenanceDate: Date,
     nextMaintenanceDate: Date,
@@ -224,5 +240,22 @@ pitchSchema.index({ "specifications.isIndoor": 1 });
 pitchSchema.index({ "pricing.hourlyRate": 1 });
 pitchSchema.index({ "rating.averageRating": -1 });
 pitchSchema.index({ name: 1 });
+
+pitchSchema.pre("findOneAndDelete", async function (next) {
+  this.model("User").updateMany(
+    {
+      $or: [
+        { favoritePitches: this.getFilter()._id },
+        { recentlySearchedPitch: this.getFilter()._id },
+      ],
+    },
+    {
+      $pull: {
+        favoritePitches: this.getFilter()._id,
+        recentlySearchedPitch: this.getFilter()._id,
+      },
+    }
+  );
+});
 
 module.exports = mongoose.model("Pitch", pitchSchema);

@@ -7,13 +7,13 @@ const {
   getSingleUser,
   showUser,
   getManyGoalkeeper,
-  updateManyUser,
+
   updateSingleUser,
   updatePasswordUser,
   updateDeleteUserRequest,
   checkDeletionCode,
   updateDeleteUser,
-  deleteManyUser,
+  deleteUser,
   getByGoogleId,
   sendFriendRequest,
   replyFriendRequest,
@@ -26,6 +26,8 @@ const {
   deleteRecentlySearchedUser,
   deleteRecentlySearchedPitch,
   removeFromFriends,
+  addFavoritePitch,
+  removeFavoritePitch,
 } = require("../controllers/userController");
 const router = express.Router();
 
@@ -70,13 +72,6 @@ router.post("/checkDeletion", authenticationMiddleware, checkDeletionCode);
 router.patch("/resetPassword", authenticationMiddleware, resetPassword); // auth, admin
 
 router.patch(
-  "/updateMany",
-  (req, res, next) => {
-    roleMiddleware(req, res, next, "admin");
-  },
-  updateManyUser
-); // admin only, query
-router.patch(
   "/replyFriendRequest:id",
   authenticationMiddleware,
   replyFriendRequest
@@ -91,6 +86,19 @@ router.patch(
 ); //  admin
 
 router.patch("/updateDeleteUser", authenticationMiddleware, updateDeleteUser);
+router.patch(
+  "/addFavoritePitch:id",
+  authenticationMiddleware,
+  addFavoritePitch
+);
+
+router.delete(
+  "/delete:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteUser
+);
 
 router.delete(
   "/removeFromFriends:id",
@@ -98,13 +106,6 @@ router.delete(
   removeFromFriends
 );
 
-router.delete(
-  "/deleteMany",
-  (req, res, next) => {
-    roleMiddleware(req, res, next, "admin");
-  },
-  deleteManyUser
-);
 router.delete(
   "/revokeFriendRequest:id",
   authenticationMiddleware,
@@ -120,6 +121,11 @@ router.delete(
   "/deleteRecentlySearchedPitch:id",
   authenticationMiddleware,
   deleteRecentlySearchedPitch
+);
+router.delete(
+  "/removeFavoritePitch:id",
+  authenticationMiddleware,
+  removeFavoritePitch
 );
 
 module.exports = router;

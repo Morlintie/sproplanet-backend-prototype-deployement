@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+
 const { BadRequestError } = require("../errors");
 
 const userSchema = new mongoose.Schema(
@@ -138,6 +139,9 @@ const userSchema = new mongoose.Schema(
       required: [true, "Please provide a keeper status"],
       default: false,
     },
+    favoritePitches: {
+      type: [{ type: mongoose.Types.ObjectId, ref: "Pitch", default: [] }],
+    }, // In the future an algorithm that makes the pitches suggested more for the users.
   },
   { timestamps: true }
 );

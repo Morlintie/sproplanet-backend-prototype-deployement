@@ -12,6 +12,7 @@ const adminUserQuery = (req) => {
     school,
     age,
     profilePicture,
+    favoritePitches,
 
     goalKeeper,
 
@@ -31,62 +32,62 @@ const adminUserQuery = (req) => {
   } = req.query;
   const { createdAt, updatedAt } = req.body;
 
-  const queryOperator = {};
+  const queryObject = {};
 
   if (id) {
-    queryOperator._id = id;
+    queryObject._id = id;
   }
 
   if (name) {
-    queryOperator.name = { $regex: name, $options: "i" };
+    queryObject.name = { $regex: name, $options: "i" };
   }
 
   if (email) {
-    queryOperator.email = { $regex: email, $options: "i" };
+    queryObject.email = { $regex: email, $options: "i" };
   }
 
   if (validationNumber) {
-    queryOperator.validationNumber = validationNumber;
+    queryObject.validationNumber = validationNumber;
   }
   if (isValid) {
-    queryOperator.isValid = isValid === "true" ? true : false;
+    queryObject.isValid = isValid === "true" ? true : false;
   }
 
   if (passwordNumber) {
-    queryOperator.passwordNumber = passwordNumber;
+    queryObject.passwordNumber = passwordNumber;
   }
 
   if (deleteNumber) {
-    queryOperator.deleteNumber = deleteNumber;
+    queryObject.deleteNumber = deleteNumber;
   }
 
   if (role) {
-    queryOperator.role = role;
+    queryObject.role = role;
   }
   if (archived) {
-    queryOperator.archived = archived === "true" ? true : false;
+    queryObject.archived = archived === "true" ? true : false;
   }
 
   if (isDeleted) {
-    queryOperator.isDeleted = isDeleted === "true" ? true : false;
+    queryObject.isDeleted = isDeleted === "true" ? true : false;
   }
   if (school) {
-    queryOperator.school = { $regex: school, $options: "i" };
+    queryObject.school = { $regex: school, $options: "i" };
   }
   if (age) {
-    queryOperator.age = Number(age);
+    queryObject.age = Number(age);
   }
   if (profilePicture) {
-    queryOperator.profilePicture = profilePicture;
+    queryObject.profilePicture = profilePicture;
   }
 
   if (location) {
     const locationArray = location.split(",");
     if (locationArray.length > 1) {
-      queryOperator["location.city"] = locationArray[0];
-      queryOperator["location.district"] = locationArray[1];
+      queryObject["location.city"] = locationArray[0];
+      queryObject["location.district"] = locationArray[1];
     } else {
-      queryOperator["location.city"] = locationArray[0];
+      queryObject["location.city"] = locationArray[0];
     }
   }
 
@@ -94,11 +95,11 @@ const adminUserQuery = (req) => {
     if (recentlySearchedUser.startsWith("exact")) {
       const queryArray = recentlySearchedUser.split(",").slice(1);
 
-      queryOperator.recentlySearchedUser = queryArray;
+      queryObject.recentlySearchedUser = queryArray;
     } else {
       const queryArray = recentlySearchedUser.split(",");
 
-      queryOperator.recentlySearchedUser = { $in: queryArray };
+      queryObject.recentlySearchedUser = { $in: queryArray };
     }
   }
 
@@ -106,11 +107,11 @@ const adminUserQuery = (req) => {
     if (recentlySearchedPitch.startsWith("exact")) {
       const queryArray = recentlySearchedPitch.split(",").slice(1);
 
-      queryOperator.recentlySearchedPitch = queryArray;
+      queryObject.recentlySearchedPitch = queryArray;
     } else {
       const queryArray = recentlySearchedPitch.split(",");
 
-      queryOperator.recentlySearchedPitch = { $in: queryArray };
+      queryObject.recentlySearchedPitch = { $in: queryArray };
     }
   }
 
@@ -118,22 +119,32 @@ const adminUserQuery = (req) => {
     if (friendRequests.startsWith("exact")) {
       const queryArray = friendRequests.split(",").slice(1);
 
-      queryOperator.friendRequests = queryArray;
+      queryObject.friendRequests = queryArray;
     } else {
       const queryArray = friendRequests.split(",");
 
-      queryOperator.friendRequests = { $in: queryArray };
+      queryObject.friendRequests = { $in: queryArray };
     }
   }
   if (friends) {
     if (friends.startsWith("exact")) {
       const queryArray = friends.split(",").slice(1);
 
-      queryOperator.friends = queryArray;
+      queryObject.friends = queryArray;
     } else {
       const queryArray = friends.split(",");
 
-      queryOperator.friends = { $in: queryArray };
+      queryObject.friends = { $in: queryArray };
+    }
+  }
+
+  if (favoritePitches) {
+    if (favoritePitches.startsWith("exact")) {
+      const queryArray = favoritePitches.split(",").slice(1);
+      queryObject.favoritePitches = queryArray;
+    } else {
+      const queryArray = favoritePitches.split(",");
+      queryObject.favoritePitches = { $in: queryArray };
     }
   }
 
@@ -141,15 +152,15 @@ const adminUserQuery = (req) => {
     if (selfFriendRequests.startsWith("exact")) {
       const queryArray = selfFriendRequests.split(",").slice(1);
 
-      queryOperator.selfFriendRequests = queryArray;
+      queryObject.selfFriendRequests = queryArray;
     } else {
       const queryArray = selfFriendRequests.split(",");
 
-      queryOperator.selfFriendRequests = { $in: queryArray };
+      queryObject.selfFriendRequests = { $in: queryArray };
     }
   }
   if (goalKeeper) {
-    queryOperator.goalKeeper = goalKeeper === "true" ? true : false;
+    queryObject.goalKeeper = goalKeeper === "true" ? true : false;
   }
 
   if (createdAt) {
@@ -176,22 +187,22 @@ const adminUserQuery = (req) => {
     }
   }
   if (validationExpirationDate) {
-    queryOperator.validationExpirationDate = validationExpirationDate;
+    queryObject.validationExpirationDate = validationExpirationDate;
   }
   if (passwordExpirationDate) {
-    queryOperator.passwordExpirationDate = passwordExpirationDate;
+    queryObject.passwordExpirationDate = passwordExpirationDate;
   }
   if (deleteExpirationDate) {
-    queryOperator.deleteExpirationDate = deleteExpirationDate;
+    queryObject.deleteExpirationDate = deleteExpirationDate;
   }
   if (phoneNumber) {
-    queryOperator.phoneNumber = phoneNumber;
+    queryObject.phoneNumber = phoneNumber;
   }
   if (description) {
-    queryOperator.description = { $regex: description, $options: "i" };
+    queryObject.description = { $regex: description, $options: "i" };
   }
 
-  return queryOperator;
+  return queryObject;
 };
 
 const adminUserUpdateQuery = async (req) => {
@@ -220,58 +231,59 @@ const adminUserUpdateQuery = async (req) => {
     nameUpdate: name,
     emailUpdate: email,
     roleUpdate: role,
+    favoritePitchesUpdate: favoritePitches,
   } = req.body;
 
-  const queryUpdateOperator = {};
+  const updateObject = {};
 
   if (validationNumber) {
-    queryUpdateOperator.validationNumber = validationNumber;
+    updateObject.validationNumber = validationNumber;
   }
 
   if (validationExpirationDate) {
-    queryUpdateOperator.validationExpirationDate = validationExpirationDate;
+    updateObject.validationExpirationDate = validationExpirationDate;
   }
 
   if (isValid) {
-    queryUpdateOperator.isValid = isValid;
+    updateObject.isValid = isValid;
   }
   if (passwordNumber) {
-    queryUpdateOperator.passwordNumber = passwordNumber;
+    updateObject.passwordNumber = passwordNumber;
   }
   if (passwordExpirationDate) {
-    queryUpdateOperator.passwordExpirationDate = passwordExpirationDate;
+    updateObject.passwordExpirationDate = passwordExpirationDate;
   }
 
   if (deleteNumber) {
-    queryUpdateOperator.deleteNumber = deleteNumber;
+    updateObject.deleteNumber = deleteNumber;
   }
   if (deleteExpirationDate) {
-    queryUpdateOperator.deleteExpirationDate = deleteExpirationDate;
+    updateObject.deleteExpirationDate = deleteExpirationDate;
   }
 
   if (archived) {
-    queryUpdateOperator.archived = archived;
+    updateObject.archived = archived;
   }
   if (isDeleted) {
-    queryUpdateOperator.isDeleted = isDeleted;
+    updateObject.isDeleted = isDeleted;
   }
   if (school) {
-    queryUpdateOperator.school = school;
+    updateObject.school = school;
   }
   if (age) {
-    queryUpdateOperator.age = age;
+    updateObject.age = age;
   }
   if (profilePicture) {
-    queryUpdateOperator.profilePicture = profilePicture;
+    updateObject.profilePicture = profilePicture;
   }
   if (recentlySearchedUser) {
     if (recentlySearchedUser.add) {
-      queryUpdateOperator.$addToSet = {
+      updateObject.$addToSet = {
         recentlySearchedUser: { $each: recentlySearchedUser.add },
       };
     }
     if (recentlySearchedUser.remove) {
-      queryUpdateOperator.$pull = {
+      updateObject.$pull = {
         recentlySearchedUser: { $in: recentlySearchedUser.remove },
       };
     }
@@ -279,12 +291,12 @@ const adminUserUpdateQuery = async (req) => {
 
   if (recentlySearchedPitch) {
     if (recentlySearchedPitch.add) {
-      queryUpdateOperator.$addToSet = {
+      updateObject.$addToSet = {
         recentlySearchedPitch: { $each: recentlySearchedPitch.add },
       };
     }
     if (recentlySearchedPitch.remove) {
-      queryUpdateOperator.$pull = {
+      updateObject.$pull = {
         recentlySearchedPitch: { $in: recentlySearchedPitch.remove },
       };
     }
@@ -292,12 +304,12 @@ const adminUserUpdateQuery = async (req) => {
 
   if (friendRequests) {
     if (friendRequests.add) {
-      queryUpdateOperator.$addToSet = {
+      updateObject.$addToSet = {
         friendRequests: { $each: friendRequests.add },
       };
     }
     if (friendRequests.remove) {
-      queryUpdateOperator.$pull = {
+      updateObject.$pull = {
         friendRequests: { $in: friendRequests.remove },
       };
     }
@@ -305,48 +317,58 @@ const adminUserUpdateQuery = async (req) => {
 
   if (selfFriendRequests) {
     if (selfFriendRequests.add) {
-      queryUpdateOperator.$addToSet = {
+      updateObject.$addToSet = {
         selfFriendRequests: { $each: selfFriendRequests.add },
       };
     }
     if (selfFriendRequests.remove) {
-      queryUpdateOperator.$pull = {
+      updateObject.$pull = {
         selfFriendRequests: { $in: selfFriendRequests.remove },
       };
     }
   }
   if (friends) {
     if (friends.add) {
-      queryUpdateOperator.$addToSet = { friends: { $each: friends.add } };
+      updateObject.$addToSet = { friends: { $each: friends.add } };
     }
     if (friends.remove) {
-      queryUpdateOperator.$pull = { friends: { $in: friends.remove } };
+      updateObject.$pull = { friends: { $in: friends.remove } };
+    }
+  }
+  if (favoritePitches) {
+    if (favoritePitches.add) {
+      updateObject.$addToSet = {
+        favoritePitches: { $each: favoritePitches.add },
+      };
+    }
+    if (favoritePitches.remove) {
+      updateObject.$pull = { favoritePitches: { $in: favoritePitches.remove } };
     }
   }
   if (goalKeeper) {
-    queryUpdateOperator.goalKeeper = goalKeeper;
+    updateObject.goalKeeper = goalKeeper;
   }
   if (location) {
-    queryUpdateOperator.location = location;
+    updateObject.location = location;
   }
   if (phoneNumber) {
-    queryUpdateOperator.phoneNumber = phoneNumber;
+    updateObject.phoneNumber = phoneNumber;
   }
   if (description) {
-    queryUpdateOperator.description = description;
+    updateObject.description = description;
   }
   if (name) {
-    queryUpdateOperator.name = name;
+    updateObject.name = name;
   }
   if (email) {
-    queryUpdateOperator.email = email;
+    updateObject.email = email;
   }
 
   if (role) {
-    queryUpdateOperator.role = role;
+    updateObject.role = role;
   }
 
-  return queryUpdateOperator;
+  return updateObject;
 };
 
 module.exports = {

@@ -5,7 +5,6 @@ const Token = require("../models/Token");
 const crypto = require("crypto");
 const {
   adminUserQuery,
-  adminUserUpdateQuery,
 
   resetPasswordEmail,
   deletionEmail,
@@ -87,6 +86,10 @@ const getSingleUser = async (req, res) => {
       path: "friends",
       select:
         "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "favoritePitches",
+      select: "name _id rating.averageRating location media.images",
     });
   if (!user) {
     throw new NotFoundError("User couldn't found.");
@@ -139,7 +142,8 @@ const showUser = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
 
   if (!user) {
     throw new NotFoundError("User couldn't found.");
@@ -281,22 +285,10 @@ const sendFriendRequest = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
 
   res.status(StatusCodes.CREATED).json({ user: friendRequest });
-};
-
-const updateManyUser = async (req, res) => {
-  const updateQuery = await adminUserUpdateQuery(req);
-  const findQuery = adminUserQuery(req);
-
-  const newUsers = await User.findOneAndUpdate(findQuery, updateQuery, {
-    new: true,
-    runValidators: true,
-    timestamps: true,
-  });
-
-  res.status(StatusCodes.OK).json({ users: newUsers });
 };
 
 const updateSingleUser = async (req, res) => {
@@ -332,7 +324,8 @@ const updateSingleUser = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
   if (!newUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -347,6 +340,7 @@ const updateSingleUser = async (req, res) => {
     email: newUser.email,
     role: newUser.role,
     userId: newUser._id,
+    favoritePitches: user.favoritePitches,
   };
   createCookie(res, cookieUser, refreshToken);
   res.status(StatusCodes.OK).json({ user: newUser });
@@ -475,6 +469,7 @@ const resetPassword = async (req, res) => {
     email: newUser.email,
     role: newUser.role,
     userId: newUser._id,
+    favoritePitches: user.favoritePitches,
   };
   createCookie(res, cookieUser, refreshToken);
 
@@ -551,8 +546,9 @@ const replyFriendRequest = async (req, res) => {
       .populate({
         path: "recentlySearchedPitch",
         select: "name _id rating.averageRating location",
-      });
-    res.status(StatusCodes.OK).json({ friends: currentUserFriends });
+      })
+      .populate("favoritePitches");
+    res.status(StatusCodes.OK).json({ user: currentUserFriends });
   }
 
   if (accepted === "false") {
@@ -589,7 +585,8 @@ const replyFriendRequest = async (req, res) => {
       .populate({
         path: "recentlySearchedPitch",
         select: "name _id rating.averageRating location",
-      });
+      })
+      .populate("favoritePitches");
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
   }
 };
@@ -657,7 +654,8 @@ const revokeSelfFriendRequest = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -710,7 +708,8 @@ const exitFromFriends = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -764,7 +763,8 @@ const removeFromFriends = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -860,23 +860,41 @@ const updateDeleteUser = async (req, res) => {
     signed: true,
   });
 
+  await Token.findOneAndDelete({ user: userId });
+
   res.status(StatusCodes.NO_CONTENT);
 };
 
-const deleteManyUser = async (req, res) => {
-  const queryOperator = adminUserQuery(req);
-  const users = await User.find(queryOperator);
-  const usersId = users.reduce((acc, user) => {
-    return (acc = [...acc, user._id]);
-  }, []);
-  if (!users) {
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide user credentials.");
+  }
+  const user = await User.findOne({ _id: id, isDeleted: false });
+  if (!user) {
     throw new NotFoundError("User couldn't found.");
   }
-  await User.deleteMany(queryOperator);
-  await Token.deleteMany({ user: { $in: usersId } });
-  res
-    .status(StatusCodes.NO_CONTENT)
-    .json({ msg: "Users successfully deleted." });
+  await User.findOneAndDelete({ _id: id, isDeleted: false });
+  await Token.findOneAndDelete({ user: id });
+  await User.updateMany(
+    {
+      $or: [
+        { friends: id },
+        { selfFriendRequests: id },
+        { friendRequests: id },
+        { recentlySearchedUser: id },
+      ],
+    },
+    {
+      $pull: {
+        friends: id,
+        selfFriendRequests: id,
+        friendRequests: id,
+        recentlySearchedUser: id,
+      },
+    }
+  );
+  res.status(StatusCodes.NO_CONTENT).json({ msg: "User has been deleted." });
 };
 
 const deleteRecentlySearchedUser = async (req, res) => {
@@ -928,7 +946,8 @@ const deleteRecentlySearchedUser = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -961,6 +980,52 @@ const deleteRecentlySearchedPitch = async (req, res) => {
     { new: true, runValidators: true }
   )
     .select(userSelectedFields)
+    .populate({
+      path: "friends",
+      select:
+        "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "selfFriendRequests",
+      select:
+        "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "friendRequests",
+      select:
+        "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "recentlySearchedUser",
+      select: "name email school age profilePicture goalKeeper location _id ",
+    })
+    .populate({
+      path: "recentlySearchedPitch",
+      select: "name _id rating.averageRating location",
+    })
+    .populate("favoritePitches");
+  res.status(StatusCodes.OK).json({ user: newCurrentUser });
+};
+
+const addFavoritePitch = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOne({ _id: id });
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  const userSelectedFields =
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
+  const newCurrentUser = await User.findOneAndUpdate(
+    { _id: userId },
+    {
+      $addToSet: { favoritePitches: id },
+    },
+    { new: true, runValidators: true }
+  )
     .select(userSelectedFields)
     .populate({
       path: "friends",
@@ -984,7 +1049,57 @@ const deleteRecentlySearchedPitch = async (req, res) => {
     .populate({
       path: "recentlySearchedPitch",
       select: "name _id rating.averageRating location",
-    });
+    })
+    .populate("favoritePitches");
+
+  res.status(StatusCodes.OK).json({ user: newCurrentUser });
+};
+
+const removeFavoritePitch = async (req, res) => {
+  const { userId } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide required data.");
+  }
+  const pitch = await Pitch.findOne({ _id: id });
+  if (!pitch) {
+    throw new NotFoundError("Pitch not found.");
+  }
+  const userSelectedFields =
+    "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
+  const newCurrentUser = await User.findOneAndUpdate(
+    { _id: userId },
+    {
+      $pull: { favoritePitches: id },
+    },
+    { new: true, runValidators: true }
+  )
+    .select(userSelectedFields)
+    .populate({
+      path: "friends",
+      select:
+        "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "selfFriendRequests",
+      select:
+        "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "friendRequests",
+      select:
+        "name email role school age profilePicture goalKeeper _id createdAt updatedAt location",
+    })
+    .populate({
+      path: "recentlySearchedUser",
+      select: "name email school age profilePicture goalKeeper location _id ",
+    })
+    .populate({
+      path: "recentlySearchedPitch",
+      select: "name _id rating.averageRating location",
+    })
+    .populate("favoritePitches");
+
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
 
@@ -993,13 +1108,13 @@ module.exports = {
   getSingleUser,
   showUser,
   getManyGoalkeeper,
-  updateManyUser,
+
   updateSingleUser,
   updatePasswordUser,
   updateDeleteUserRequest,
   checkDeletionCode,
   updateDeleteUser,
-  deleteManyUser,
+
   getByGoogleId,
   sendFriendRequest,
   replyFriendRequest,
@@ -1012,4 +1127,7 @@ module.exports = {
   deleteRecentlySearchedUser,
   deleteRecentlySearchedPitch,
   removeFromFriends,
+  addFavoritePitch,
+  removeFavoritePitch,
+  deleteUser,
 };

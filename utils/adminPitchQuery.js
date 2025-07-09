@@ -34,7 +34,7 @@ const adminPitchQuery = (req) => {
     updatedAt,
   } = req.body;
 
-  const searchQuery = {};
+  const queryObject = {};
   const numericConverter = {
     ">": "$gt",
     "<": "$lt",
@@ -45,33 +45,33 @@ const adminPitchQuery = (req) => {
   const queryOperators = ["$gt", "$lt", "$gte", "$lte", "$eq"];
 
   if (city) {
-    searchQuery["location.address.city"] = { $regex: city, $options: "i" };
+    queryObject["location.address.city"] = { $regex: city, $options: "i" };
   }
   if (district) {
-    searchQuery["location.address.district"] = {
+    queryObject["location.address.district"] = {
       $regex: district,
       $options: "i",
     };
   }
   if (id) {
-    searchQuery._id = id;
+    queryObject._id = id;
   }
   if (isIndoor) {
-    searchQuery["specifications.isIndoor"] = isIndoor === "true" ? true : false;
+    queryObject["specifications.isIndoor"] = isIndoor === "true" ? true : false;
   }
   if (hasLighting) {
-    searchQuery["specifications.hasLighting"] =
+    queryObject["specifications.hasLighting"] =
       hasLighting === "true" ? true : false;
   }
   if (recommendedCapacity) {
     if (recommendedCapacity.players) {
-      searchQuery["specifications.recommendedCapacity.players"] = parseInt(
+      queryObject["specifications.recommendedCapacity.players"] = parseInt(
         recommendedCapacity.players
       );
     }
 
     if (recommendedCapacity.spectators) {
-      searchQuery["specifications.recommendedCapacity.spectators"] = parseInt(
+      queryObject["specifications.recommendedCapacity.spectators"] = parseInt(
         recommendedCapacity.spectators
       );
     }
@@ -79,24 +79,24 @@ const adminPitchQuery = (req) => {
 
   if (facilities) {
     if (facilities.changingRooms) {
-      searchQuery["facilities.changingRooms"] =
+      queryObject["facilities.changingRooms"] =
         facilities.changingRooms === "true" ? true : false;
     }
 
     if (facilities.showers) {
-      searchQuery["facilities.showers"] =
+      queryObject["facilities.showers"] =
         facilities.showers === "true" ? true : false;
     }
     if (facilities.shoeRenting) {
-      searchQuery["facilities.shoeRenting"] =
+      queryObject["facilities.shoeRenting"] =
         facilities.shoeRenting === "true" ? true : false;
     }
     if (facilities.parking) {
-      searchQuery["facilities.parking"] =
+      queryObject["facilities.parking"] =
         facilities.parking === "true" ? true : false;
     }
     if (facilities.otherAmenities) {
-      searchQuery["facilities.otherAmenities"] = {
+      queryObject["facilities.otherAmenities"] = {
         $regex: facilities.otherAmenities || "",
         $options: "i",
       };
@@ -111,7 +111,7 @@ const adminPitchQuery = (req) => {
     if (isNaN(upperLimit) || isNaN(lowerLimit)) {
       throw new BadRequestError("Please provide valid pricing limits");
     }
-    searchQuery["pricing.hourlyRate"] = {
+    queryObject["pricing.hourlyRate"] = {
       $gte: lowerLimit,
       $lte: upperLimit,
     };
@@ -122,20 +122,20 @@ const adminPitchQuery = (req) => {
           "Please provide a valid special day multiplier."
         );
       }
-      searchQuery["pricing.specialDayMultiplier"] = specialDayMultiplier;
+      queryObject["pricing.specialDayMultiplier"] = specialDayMultiplier;
     }
     if (pricing.weekendMultiplier) {
       const weekendMultiplier = parseFloat(pricing.weekendMultiplier);
       if (isNaN(weekendMultiplier) || weekendMultiplier < 0) {
         throw new BadRequestError("Please provide a valid weekend multiplier.");
       }
-      searchQuery["pricing.weekendMultiplier"] = weekendMultiplier;
+      queryObject["pricing.weekendMultiplier"] = weekendMultiplier;
     }
     if (pricing.currency) {
       if (!["TRY", "USD", "EUR"].includes(pricing.currency)) {
         throw new BadRequestError("Please provide a valid currency.");
       }
-      searchQuery["pricing.currency"] = pricing.currency;
+      queryObject["pricing.currency"] = pricing.currency;
     }
   }
 
@@ -158,7 +158,7 @@ const adminPitchQuery = (req) => {
       if (adjustedRatingArray[2] > 5) {
         throw new BadRequestError("Rating cannot be greater than 5.");
       }
-      searchQuery["rating.averageRating"] = {
+      queryObject["rating.averageRating"] = {
         [adjustedRatingArray[1]]: parseFloat(adjustedRatingArray[2]),
       };
     }
@@ -183,7 +183,7 @@ const adminPitchQuery = (req) => {
       if (adjustedTotalReviewsArray[2] < 0) {
         throw new BadRequestError("Total reviews cannot be negative.");
       }
-      searchQuery["rating.totalReviews"] = {
+      queryObject["rating.totalReviews"] = {
         [adjustedTotalReviewsArray[1]]: parseInt(adjustedTotalReviewsArray[2]),
       };
     }
@@ -213,26 +213,26 @@ const adminPitchQuery = (req) => {
     }
   }
   if (description) {
-    searchQuery.description = {
+    queryObject.description = {
       $regex: description,
       $options: "i",
     };
   }
 
   if (street) {
-    searchQuery["location.address.street"] = {
+    queryObject["location.address.street"] = {
       $regex: street,
       $options: "i",
     };
   }
   if (neighborhood) {
-    searchQuery["location.address.neighborhood"] = {
+    queryObject["location.address.neighborhood"] = {
       $regex: neighborhood,
       $options: "i",
     };
   }
   if (country) {
-    searchQuery["location.address.country"] = country;
+    queryObject["location.address.country"] = country;
   }
 
   if (coordinates) {
@@ -249,7 +249,7 @@ const adminPitchQuery = (req) => {
         "Please provide valid coordinates in the format 'latitude, longitude'."
       );
     }
-    searchQuery.location = {
+    queryObject.location = {
       $near: {
         $geometry: {
           type: "Point",
@@ -262,63 +262,63 @@ const adminPitchQuery = (req) => {
     };
   }
   if (company) {
-    searchQuery["company"] = company;
+    queryObject["company"] = company;
   }
   if (surfaceType) {
-    searchQuery["specifications.surfaceType"] = surfaceType;
+    queryObject["specifications.surfaceType"] = surfaceType;
   }
   if (closed) {
-    searchQuery.closed = closed === "true" ? true : false;
+    queryObject.closed = closed === "true" ? true : false;
   }
   if (media) {
     if (media.images) {
       if (media.images.url) {
-        searchQuery["media.images.url"] = {
+        queryObject["media.images.url"] = {
           $regex: media.images.url,
           $options: "i",
         };
       }
       if (media.images.caption) {
-        searchQuery["media.images.caption"] = media.images.caption;
+        queryObject["media.images.caption"] = media.images.caption;
       }
     }
     if (media.videos) {
       if (media.videos.url) {
-        searchQuery["media.videos.url"] = {
+        queryObject["media.videos.url"] = {
           $regex: media.videos.url,
           $options: "i",
         };
       }
       if (media.videos.caption) {
-        searchQuery["media.videos.caption"] = media.videos.caption;
+        queryObject["media.videos.caption"] = media.videos.caption;
       }
       if (media.videos.thumbnail) {
-        searchQuery["media.videos.caption.thumbnail"] = media.videos.thumbnail;
+        queryObject["media.videos.caption.thumbnail"] = media.videos.thumbnail;
       }
     }
   }
 
   if (contact) {
     if (contact.phone) {
-      searchQuery["contact.phone"] = contact.phone;
+      queryObject["contact.phone"] = contact.phone;
     }
     if (contact.email) {
-      searchQuery["contact.email"] = contact.email;
+      queryObject["contact.email"] = contact.email;
     }
     if (contact.website) {
-      searchQuery["contact.website"] = {
+      queryObject["contact.website"] = {
         $regex: contact.website,
         $options: "i",
       };
     }
     if (contact.instagram) {
-      searchQuery["contact.socialMedia.instagram"] = contact.instagram;
+      queryObject["contact.socialMedia.instagram"] = contact.instagram;
     }
     if (contact.facebook) {
-      searchQuery["contact.socialMedia.facebook"] = contact.facebook;
+      queryObject["contact.socialMedia.facebook"] = contact.facebook;
     }
     if (contact.twitter) {
-      searchQuery["contact.socialMedia.twitter"] = contact.twitter;
+      queryObject["contact.socialMedia.twitter"] = contact.twitter;
     }
   }
 
@@ -328,7 +328,7 @@ const adminPitchQuery = (req) => {
       status === "inactive" ||
       status === "maintenance"
     ) {
-      searchQuery.status = status;
+      queryObject.status = status;
     } else {
       throw new BadRequestError("Please provide a valid status.");
     }
@@ -343,7 +343,7 @@ const adminPitchQuery = (req) => {
     if (isNaN(lowerLimit) || isNaN(upperLimit)) {
       throw new BadRequestError("Please provide valid total booking limits.");
     }
-    searchQuery.totalBookings = {
+    queryObject.totalBookings = {
       $gte: lowerLimit,
       $lte: upperLimit,
     };
@@ -357,19 +357,19 @@ const adminPitchQuery = (req) => {
     if (isNaN(lowerLimit) || isNaN(upperLimit)) {
       throw new BadRequestError("Please provide valid total revenue limits.");
     }
-    searchQuery.totalRevenue = {
+    queryObject.totalRevenue = {
       $gte: lowerLimit,
       $lte: upperLimit,
     };
   }
   if (tags) {
     const tagsArray = tags.split(",");
-    searchQuery.tags = { $all: tagsArray };
+    queryObject.tags = { $all: tagsArray };
   }
 
   if (searchKeywords) {
     const searchKeywordsArray = searchKeywords.split(",");
-    searchQuery.searchKeywords = {
+    queryObject.searchKeywords = {
       $all: searchKeywordsArray,
     };
   }
@@ -382,7 +382,7 @@ const adminPitchQuery = (req) => {
         "Please provide valid last maintenance date limits."
       );
     }
-    searchQuery.lastMaintenanceDate = {
+    queryObject.lastMaintenanceDate = {
       $gte: lowerDate,
       $lte: upperDate,
     };
@@ -395,12 +395,12 @@ const adminPitchQuery = (req) => {
         "Please provide valid next maintenance date limits."
       );
     }
-    searchQuery.nextMaintenanceDate = {
+    queryObject.nextMaintenanceDate = {
       $gte: lowerDate,
       $lte: upperDate,
     };
   }
 
-  return searchQuery;
+  return queryObject;
 };
 module.exports = adminPitchQuery;

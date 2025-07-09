@@ -45,6 +45,7 @@ const verifyCookie = (req, res) => {
         email: user.email,
         userId: user.userId,
         role: user.role,
+        favoritePitches: user.favoritePitches,
       };
     }
 
@@ -68,6 +69,7 @@ const verifyCookie = (req, res) => {
         email: user.email,
         userId: user.userId,
         role: user.role,
+        favoritePitches: user.favoritePitches,
       };
     }
 
