@@ -23,6 +23,7 @@ const createPitch = async (req, res) => {
     searchKeywords,
     lastMaintenanceDate,
     nextMaintenanceDate,
+    middlemanShare,
   } = req.body;
 
   const pitch = await Pitch.create({
@@ -39,6 +40,7 @@ const createPitch = async (req, res) => {
     searchKeywords,
     lastMaintenanceDate,
     nextMaintenanceDate,
+    middlemanShare,
   });
   res
     .status(StatusCodes.CREATED)
@@ -348,6 +350,7 @@ const getCompanyUserPitches = async (req, res) => {
     status,
     surfaceType,
     refundAllowed,
+    middlemanShare,
   } = req.query;
   let {
     search,
@@ -373,6 +376,33 @@ const getCompanyUserPitches = async (req, res) => {
   let sortBy = "-rating.averageRating pricing.hourlyRate";
   if (!search) {
     search = "";
+  }
+  if (middlemanShare) {
+    const adjustedMiddlemanShare = middlemanShare.replace(
+      /(<=|>=|<|>|=)/g,
+      (match) => {
+        return `-${numericConverter[match]}`;
+      }
+    );
+    const adjustedMiddlemanShareArray = adjustedMiddlemanShare.split("-");
+    if (!queryOperators.includes(adjustedMiddlemanShareArray[1])) {
+      throw new BadRequestError(
+        "Please provide a valid middleman share query."
+      );
+    }
+    if (adjustedMiddlemanShareArray.length !== 3) {
+      throw new BadRequestError(
+        "Please provide a valid middleman share query."
+      );
+    }
+    if (adjustedMiddlemanShareArray[2] < 0) {
+      throw new BadRequestError("Middleman share cannot be negative.");
+    }
+    searchQuery.middlemanShare = {
+      [adjustedMiddlemanShareArray[1]]: parseFloat(
+        adjustedMiddlemanShareArray[2]
+      ),
+    };
   }
   if (city) {
     searchQuery["location.address.city"] = { $regex: city, $options: "i" };
@@ -763,6 +793,7 @@ const updateAdminPitch = async (req, res) => {
     status,
     lastMaintenanceDate,
     nextMaintenanceDate,
+    middlemanShare,
   } = req.body;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
@@ -775,6 +806,7 @@ const updateAdminPitch = async (req, res) => {
       : false,
     name,
     description,
+    middlemanShare,
     "location.address.street": street,
     "location.address.neighborhood": neighborhood,
     "location.address.city": city,

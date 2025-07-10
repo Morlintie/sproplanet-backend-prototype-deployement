@@ -4,9 +4,11 @@ const authenticationMiddleware = require("../middlewares/authenticationMiddlewar
 const roleMiddleware = require("../middlewares/roleMiddleware");
 const {
   createBooking,
-  createBookingCompany,
-  getUserBookings,
+  getPreviousUserBookings,
+  getCurrentUserBookings,
   getCompanyBookings,
+  getPreviousCompanyBookings,
+  getCurrentCompanyBookings,
   getSingleBooking,
   updateBooking,
   replyBooking,
@@ -14,14 +16,36 @@ const {
   refundBooking,
   rejectBooking,
   deleteBooking,
+  payBooking,
 } = require("../controllers/bookingController");
 
-router.post("/", createBooking);
-router.post("/company", createBookingCompany);
+router.post("/", authenticationMiddleware, createBooking);
 
-router.get("/", getUserBookings);
-router.get("/company", getCompanyBookings);
-router.get("/:id", getSingleBooking);
+router.get("/", authenticationMiddleware, getCurrentUserBookings);
+router.get("/previous", authenticationMiddleware, getPreviousUserBookings);
+router.get(
+  "/company/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "company", "admin");
+  },
+  getCompanyBookings
+);
+router.get(
+  "/company/previous/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "company", "admin");
+  },
+  getPreviousCompanyBookings
+);
+router.get(
+  "/company/current/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "company", "admin");
+  },
+  getCurrentCompanyBookings
+);
+router.get("/pay/:id", authenticationMiddleware, payBooking);
+router.get("/:id", authenticationMiddleware, getSingleBooking);
 
 router.patch("/refund/:id", refundBooking);
 router.patch("/reject/:id", rejectBooking);

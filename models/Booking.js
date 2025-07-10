@@ -16,7 +16,8 @@ const priceSchema = new mongoose.Schema(
       enum: ["card", "wallet", "cash", "transfer"],
       default: "card",
     },
-    txId: { type: String, trim: true, required: true },
+    pitchTxId: { type: String, trim: true, required: true },
+    middlemanTxId: { type: String, trim: true, required: true },
   },
   { _id: false }
 );
@@ -44,7 +45,7 @@ const bookingSchema = new mongoose.Schema(
       reason: { type: String, trim: true, maxlength: 240 },
     },
 
-    totalPlayers: { type: Number, required: true, min: 2, max: 22 },
+    totalPlayers: { type: Number, min: 2, max: 22, default: 14 },
 
     price: priceSchema,
 

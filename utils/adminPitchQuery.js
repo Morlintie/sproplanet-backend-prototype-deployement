@@ -19,6 +19,7 @@ const adminPitchQuery = (req) => {
     closed,
     searchKeywords,
     refundAllowed,
+    middlemanShare,
   } = req.query;
   let {
     recommendedCapacity,
@@ -44,6 +45,34 @@ const adminPitchQuery = (req) => {
     "=": "$eq",
   };
   const queryOperators = ["$gt", "$lt", "$gte", "$lte", "$eq"];
+
+  if (middlemanShare) {
+    const adjustedMiddlemanShare = middlemanShare.replace(
+      /(<=|>=|<|>|=)/g,
+      (match) => {
+        return `-${numericConverter[match]}`;
+      }
+    );
+    const adjustedMiddlemanShareArray = adjustedMiddlemanShare.split("-");
+    if (!queryOperators.includes(adjustedMiddlemanShareArray[1])) {
+      throw new BadRequestError(
+        "Please provide a valid middleman share query."
+      );
+    }
+    if (adjustedMiddlemanShareArray.length !== 3) {
+      throw new BadRequestError(
+        "Please provide a valid middleman share query."
+      );
+    }
+    if (adjustedMiddlemanShareArray[2] < 0) {
+      throw new BadRequestError("Middleman share cannot be negative.");
+    }
+    queryObject.middlemanShare = {
+      [adjustedMiddlemanShareArray[1]]: parseFloat(
+        adjustedMiddlemanShareArray[2]
+      ),
+    };
+  }
 
   if (city) {
     queryObject["location.address.city"] = { $regex: city, $options: "i" };

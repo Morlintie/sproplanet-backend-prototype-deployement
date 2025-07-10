@@ -17,6 +17,9 @@ const {
   adminPitchReviewUpdateQuery,
 } = require("./adminPitchReviewQuery");
 const paymentHelper = require("./helpers/payment");
+const { middlemanTax, pitchTax } = require("./taxes");
+const dateToIso = require("./dateToIso");
+const companyBookingQuery = require("./companyBookingQuery");
 
 module.exports = {
   resetPasswordEmail,
@@ -34,4 +37,8 @@ module.exports = {
   pitchDeletionRequestEmail,
   adminPitchQuery,
   paymentHelper,
+  middlemanTax,
+  pitchTax,
+  dateToIso,
+  companyBookingQuery,
 };

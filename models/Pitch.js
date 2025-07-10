@@ -221,6 +221,10 @@ const pitchSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Total revenue cannot be negative"],
     },
+    middlemanShare: {
+      type: Number,
+      default: 0,
+    },
 
     //SEO and Search Optimization
     tags: [String], // for search optimization

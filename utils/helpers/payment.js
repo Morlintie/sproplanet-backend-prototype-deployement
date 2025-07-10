@@ -1,8 +1,8 @@
 const crypto = require("crypto");
 
-const paymentHelper = async ({ amount, currency }) => {
+const paymentHelper = ({ amount, currency }) => {
   const intent = crypto.randomBytes(16).toString("hex");
-  return intent;
+  return String(intent);
 };
 
 module.exports = paymentHelper;
