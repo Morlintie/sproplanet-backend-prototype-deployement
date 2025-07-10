@@ -17,7 +17,7 @@ const createPitch = async (req, res) => {
     specifications,
     facilities,
     pricing,
-
+    refundAllowed,
     contact,
     tags,
     searchKeywords,
@@ -33,7 +33,7 @@ const createPitch = async (req, res) => {
     specifications,
     facilities,
     pricing,
-
+    refundAllowed,
     contact,
     tags,
     searchKeywords,
@@ -47,7 +47,8 @@ const createPitch = async (req, res) => {
 
 const getAllPitches = async (req, res) => {
   const role = req?.user?.role;
-  const { city, district, isIndoor, hasLighting, rating, sort } = req.query;
+  const { city, district, isIndoor, hasLighting, rating, sort, refundAllowed } =
+    req.query;
   let { search, recommendedCapacity, facilities, pricing } = req.body;
   if (role === "banned") {
     throw new ForbiddenError(
@@ -66,6 +67,10 @@ const getAllPitches = async (req, res) => {
   let sortBy = "-rating.averageRating pricing.hourlyRate";
   if (!search) {
     search = "";
+  }
+
+  if (refundAllowed) {
+    searchQuery.refundAllowed = refundAllowed === "true" ? true : false;
   }
   if (city) {
     searchQuery["location.address.city"] = { $regex: city, $options: "i" };
@@ -342,6 +347,7 @@ const getCompanyUserPitches = async (req, res) => {
     updatedAt,
     status,
     surfaceType,
+    refundAllowed,
   } = req.query;
   let {
     search,
@@ -370,6 +376,9 @@ const getCompanyUserPitches = async (req, res) => {
   }
   if (city) {
     searchQuery["location.address.city"] = { $regex: city, $options: "i" };
+  }
+  if (refundAllowed) {
+    searchQuery.refundAllowed = refundAllowed === "true" ? true : false;
   }
   if (district) {
     searchQuery["location.address.district"] = {
@@ -722,6 +731,7 @@ const updateAdminPitch = async (req, res) => {
   const {
     name,
     description,
+    refundAllowed,
     street,
     neighborhood,
     city,
@@ -758,6 +768,11 @@ const updateAdminPitch = async (req, res) => {
     throw new BadRequestError("Please provide required data.");
   }
   const update = {
+    refundAllowed: undefined
+      ? undefined
+      : refundAllowed === "true"
+      ? true
+      : false,
     name,
     description,
     "location.address.street": street,
@@ -855,9 +870,15 @@ const updateCompanyUserPitches = async (req, res) => {
     status,
     lastMaintenanceDate,
     nextMaintenanceDate,
+    refundAllowed,
   } = req.body;
 
   const update = {
+    refundAllowed: undefined
+      ? undefined
+      : refundAllowed === "true"
+      ? true
+      : false,
     "specifications.dimensions.length": length,
     "specifications.dimensions.width": width,
     "specifications.surfaceType": surfaceType,
@@ -958,11 +979,17 @@ const updateCompanyUserPitch = async (req, res) => {
     status,
     lastMaintenanceDate,
     nextMaintenanceDate,
+    refundAllowed,
   } = req.body;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
   }
   const update = {
+    refundAllowed: undefined
+      ? undefined
+      : refundAllowed === "true"
+      ? true
+      : false,
     name,
     description,
     "location.address.street": street,
@@ -1041,10 +1068,6 @@ const deletePitch = async (req, res) => {
     throw new NotFoundError("Pitch not found.");
   }
   await Pitch.deleteOne({ _id: id });
-  await User.updateMany(
-    { $or: [{ favoritePitches: id }, { recentlySearchedPitch: id }] },
-    { $pull: { favoritePitches: id, recentlySearchedPitch: id } }
-  );
 
   res
     .status(StatusCodes.NO_CONTENT)

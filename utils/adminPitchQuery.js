@@ -18,6 +18,7 @@ const adminPitchQuery = (req) => {
     surfaceType,
     closed,
     searchKeywords,
+    refundAllowed,
   } = req.query;
   let {
     recommendedCapacity,
@@ -269,6 +270,9 @@ const adminPitchQuery = (req) => {
   }
   if (closed) {
     queryObject.closed = closed === "true" ? true : false;
+  }
+  if (refundAllowed) {
+    queryObject.refundAllowed = refundAllowed === "true" ? true : false;
   }
   if (media) {
     if (media.images) {

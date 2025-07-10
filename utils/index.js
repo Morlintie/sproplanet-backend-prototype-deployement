@@ -16,6 +16,7 @@ const {
   adminPitchReviewQuery,
   adminPitchReviewUpdateQuery,
 } = require("./adminPitchReviewQuery");
+const paymentHelper = require("./helpers/payment");
 
 module.exports = {
   resetPasswordEmail,
@@ -32,4 +33,5 @@ module.exports = {
   resetCompanyPasswordEmail,
   pitchDeletionRequestEmail,
   adminPitchQuery,
+  paymentHelper,
 };

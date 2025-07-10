@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const User = require("./User");
 
 const pitchSchema = new mongoose.Schema(
   {
@@ -196,6 +197,7 @@ const pitchSchema = new mongoose.Schema(
         min: [0, "Total reviews cannot be negative"],
       },
     },
+    refundAllowed: { type: Boolean, default: true },
 
     // Administrative
     // Yönetimsel Data
@@ -241,8 +243,8 @@ pitchSchema.index({ "pricing.hourlyRate": 1 });
 pitchSchema.index({ "rating.averageRating": -1 });
 pitchSchema.index({ name: 1 });
 
-pitchSchema.pre("findOneAndDelete", async function (next) {
-  this.model("User").updateMany(
+pitchSchema.pre("deleteOne", async function (next) {
+  await User.updateMany(
     {
       $or: [
         { favoritePitches: this.getFilter()._id },

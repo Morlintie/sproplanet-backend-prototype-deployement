@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const Token = require("./Token");
 
 const { BadRequestError } = require("../errors");
 
@@ -171,6 +172,30 @@ userSchema.pre("findOneAndUpdate", async function (next) {
   } catch (err) {
     console.log(err);
     next(err);
+  }
+});
+
+userSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    await User.updateMany(
+      {
+        $or: [
+          { friends: doc._id },
+          { selfFriendRequests: doc._id },
+          { friendRequests: doc._id },
+          { recentlySearchedUser: doc._id },
+        ],
+      },
+      {
+        $pull: {
+          friends: doc._id,
+          selfFriendRequests: doc._id,
+          friendRequests: doc._id,
+          recentlySearchedUser: doc._id,
+        },
+      }
+    );
+    await Token.findOneAndDelete({ user: doc._id });
   }
 });
 

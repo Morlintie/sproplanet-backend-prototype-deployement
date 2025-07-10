@@ -908,25 +908,7 @@ const deleteUser = async (req, res) => {
     throw new NotFoundError("User couldn't found.");
   }
   await User.findOneAndDelete({ _id: id, isDeleted: false });
-  await Token.findOneAndDelete({ user: id });
-  await User.updateMany(
-    {
-      $or: [
-        { friends: id },
-        { selfFriendRequests: id },
-        { friendRequests: id },
-        { recentlySearchedUser: id },
-      ],
-    },
-    {
-      $pull: {
-        friends: id,
-        selfFriendRequests: id,
-        friendRequests: id,
-        recentlySearchedUser: id,
-      },
-    }
-  );
+
   res.status(StatusCodes.NO_CONTENT).json({ msg: "User has been deleted." });
 };
 
