@@ -1,8 +1,19 @@
 const { BadRequestError } = require("../errors");
 
 const companyBookingQuery = (req) => {
-  const { pitch, bookedBy, start, status, cancel, totalPlayers, notes, price } =
-    req.body;
+  const {
+    pitch,
+    bookedBy,
+    start,
+    status,
+    cancel,
+    refunded,
+    totalPlayers,
+    notes,
+    price,
+    createdAt,
+    updatedAt,
+  } = req.body;
   const queryObject = {};
   if (pitch) {
     queryObject.pitch = pitch;
@@ -64,6 +75,87 @@ const companyBookingQuery = (req) => {
       }
     }
   }
+
+  if (createdAt) {
+    let upperLimit;
+    let lowerLimit;
+    if (createdAt.upperLimit) {
+      const [upperDay, upperMonth, upperYear] = createdAt.upperLimit
+        .split(".")
+        .map(Number);
+
+      upperLimit = new Date(upperYear, upperMonth - 1, upperDay);
+    }
+    if (createdAt.lowerLimit) {
+      const [lowerDay, lowerMonth, lowerYear] = createdAt.lowerLimit
+        .split(".")
+        .map(Number);
+
+      lowerLimit = new Date(lowerYear, lowerMonth - 1, lowerDay);
+    }
+
+    if (!upperLimit) {
+      queryObject.createdAt = { $gte: lowerLimit };
+    }
+
+    if (!lowerLimit) {
+      queryObject.createdAt = { $lte: upperLimit };
+    }
+
+    if (upperLimit && lowerLimit) {
+      if (upperLimit < lowerLimit) {
+        throw new BadRequestError(
+          "Upper limit cannot be less than lower limit"
+        );
+      }
+      if (upperLimit.getTime() === lowerLimit.getTime()) {
+        queryObject.createdAt = upperLimit;
+      }
+      if (upperLimit.getTime() > lowerLimit.getTime()) {
+        queryObject.createdAt = { $gte: lowerLimit, $lte: upperLimit };
+      }
+    }
+  }
+  if (updatedAt) {
+    let upperLimit;
+    let lowerLimit;
+    if (updatedAt.upperLimit) {
+      const [upperDay, upperMonth, upperYear] = updatedAt.upperLimit
+        .split(".")
+        .map(Number);
+
+      upperLimit = new Date(upperYear, upperMonth - 1, upperDay);
+    }
+    if (updatedAt.lowerLimit) {
+      const [lowerDay, lowerMonth, lowerYear] = updatedAt.lowerLimit
+        .split(".")
+        .map(Number);
+
+      lowerLimit = new Date(lowerYear, lowerMonth - 1, lowerDay);
+    }
+
+    if (!upperLimit) {
+      queryObject.updatedAt = { $gte: lowerLimit };
+    }
+
+    if (!lowerLimit) {
+      queryObject.updatedAt = { $lte: upperLimit };
+    }
+
+    if (upperLimit && lowerLimit) {
+      if (upperLimit < lowerLimit) {
+        throw new BadRequestError(
+          "Upper limit cannot be less than lower limit"
+        );
+      }
+      if (upperLimit.getTime() === lowerLimit.getTime()) {
+        queryObject.updatedAt = upperLimit;
+      }
+      if (upperLimit.getTime() > lowerLimit.getTime()) {
+        queryObject.updatedAt = { $gte: lowerLimit, $lte: upperLimit };
+      }
+    }
+  }
   if (status) {
     queryObject.status = status;
   }
@@ -71,13 +163,120 @@ const companyBookingQuery = (req) => {
     const { at, by, reason } = cancel;
 
     if (at) {
-      queryObject["cancel.at"] = at;
+      let upperLimit;
+      let lowerLimit;
+      if (at.upperLimit) {
+        const [upperLimitDate, upperLimitTime] = at.upperLimit.split("-");
+        const [upperDay, upperMonth, upperYear] = upperLimitDate
+          .split(".")
+          .map(Number);
+        const [upperHours, upperMinutes] = upperLimitTime
+          .split(":")
+          .map(Number);
+        upperLimit = new Date(
+          upperYear,
+          upperMonth - 1,
+          upperDay,
+          upperHours,
+          upperMinutes
+        );
+      }
+      if (at.lowerLimit) {
+        const [lowerLimitDate, lowerLimitTime] = at.lowerLimit.split("-");
+        const [lowerDay, lowerMonth, lowerYear] = lowerLimitDate
+          .split(".")
+          .map(Number);
+        const [lowerHours, lowerMinutes] = lowerLimitTime
+          .split(":")
+          .map(Number);
+        lowerLimit = new Date(
+          lowerYear,
+          lowerMonth - 1,
+          lowerDay,
+          lowerHours,
+          lowerMinutes
+        );
+      }
+      if (upperLimit && lowerLimit) {
+        if (upperLimit < lowerLimit) {
+          throw new BadRequestError(
+            "Upper limit cannot be less than lower limit"
+          );
+        }
+        queryObject["cancel.at"] = { $gte: lowerLimit, $lte: upperLimit };
+      }
+      if (upperLimit && !lowerLimit) {
+        queryObject["cancel.at"] = { $lte: upperLimit };
+      }
+      if (!upperLimit && lowerLimit) {
+        queryObject["cancel.at"] = { $gte: lowerLimit };
+      }
     }
     if (by) {
       queryObject["cancel.by"] = by;
     }
     if (reason) {
-      queryObject["cancel.reason"] = reason;
+      queryObject["cancel.reason"] = { $regex: reason, $options: "i" };
+    }
+  }
+  if (refunded) {
+    const { at, by, reason } = refunded;
+
+    if (at) {
+      let upperLimit;
+      let lowerLimit;
+      if (at.upperLimit) {
+        const [upperLimitDate, upperLimitTime] = at.upperLimit.split("-");
+        const [upperDay, upperMonth, upperYear] = upperLimitDate
+          .split(".")
+          .map(Number);
+        const [upperHours, upperMinutes] = upperLimitTime
+          .split(":")
+          .map(Number);
+        upperLimit = new Date(
+          upperYear,
+          upperMonth - 1,
+          upperDay,
+          upperHours,
+          upperMinutes
+        );
+      }
+      if (at.lowerLimit) {
+        const [lowerLimitDate, lowerLimitTime] = at.lowerLimit.split("-");
+        const [lowerDay, lowerMonth, lowerYear] = lowerLimitDate
+          .split(".")
+          .map(Number);
+        const [lowerHours, lowerMinutes] = lowerLimitTime
+          .split(":")
+          .map(Number);
+        lowerLimit = new Date(
+          lowerYear,
+          lowerMonth - 1,
+          lowerDay,
+          lowerHours,
+          lowerMinutes
+        );
+      }
+      if (upperLimit && lowerLimit) {
+        if (upperLimit < lowerLimit) {
+          throw new BadRequestError(
+            "Upper limit cannot be less than lower limit"
+          );
+        }
+        queryObject["refunded.at"] = { $gte: lowerLimit, $lte: upperLimit };
+      }
+      if (upperLimit && !lowerLimit) {
+        queryObject["refunded.at"] = { $lte: upperLimit };
+      }
+      if (!upperLimit && lowerLimit) {
+        queryObject["refunded.at"] = { $gte: lowerLimit };
+      }
+    }
+    if (by) {
+      queryObject["refunded.by"] = by;
+    }
+    if (reason) {
+      queryObject["refunded.reason"] = { $regex: reason, $options: "i" };
     }
   }
   if (totalPlayers) {

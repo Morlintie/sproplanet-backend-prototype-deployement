@@ -41,8 +41,21 @@ const bookingSchema = new mongoose.Schema(
     },
     cancel: {
       at: Date,
-      by: { type: mongoose.Types.ObjectId, ref: "User" },
+      by: { type: mongoose.Types.ObjectId, refPath: "cancelModel" },
       reason: { type: String, trim: true, maxlength: 240 },
+    },
+    cancelModel: {
+      type: String,
+      enum: ["User", "Company"],
+    },
+    refunded: {
+      at: Date,
+      by: { type: mongoose.Types.ObjectId, refPath: "refundedModel" },
+      reason: { type: String, trim: true, maxlength: 240 },
+    },
+    refundedModel: {
+      type: String,
+      enum: ["User", "Company"],
     },
 
     totalPlayers: { type: Number, min: 2, max: 22, default: 14 },
