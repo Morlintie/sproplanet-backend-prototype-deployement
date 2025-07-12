@@ -1,0 +1,118 @@
+const mongoose = require("mongoose");
+const { BadRequestError } = require("../errors");
+
+const participantSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+    joinedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+/** pitch booked on another platform */
+const customPitchSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true, maxlength: 100 },
+    address: { type: String, trim: true, maxlength: 250 },
+    district: String,
+    city: String,
+    location: {
+      type: { type: String, enum: ["Point"], default: "Point" },
+      coordinates: { type: [Number] }, // [lng, lat] – optional for map pin
+    },
+    photo: { type: String, trim: true, default: "somethings" },
+  },
+  { _id: false }
+);
+
+const locationSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: ["Point"], default: "Point" },
+    coordinates: {
+      type: [Number],
+      required: [true, "Please provide pitch coordinates."],
+    },
+  },
+  { _id: false }
+);
+
+const waitingListSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Types.ObjectId, ref: "User", required: true },
+    requestedAt: { type: Date, default: Date.now() },
+    seen: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const matchAdvertSchema = new mongoose.Schema(
+  {
+    createdBy: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    startsAt: { type: Date, required: true },
+
+    pitch: { type: mongoose.Types.ObjectId, ref: "Pitch" }, // ← internal booking
+    customPitch: customPitchSchema,
+    location: locationSchema, // ← external booking
+    booking: { type: mongoose.Types.ObjectId, ref: "Booking" }, // optional link
+
+    playersNeeded: {
+      type: Number,
+      min: 1,
+      max: 10, // business rule: >10 ⇒ must use Session flow
+      required: true,
+    },
+    goalKeepersNeeded: {
+      type: Number,
+      min: 0,
+      max: 2,
+      default: 0,
+    },
+    participants: [participantSchema], // players who joined
+    waitingList: [waitingListSchema],
+
+    notes: { type: String, trim: true, maxlength: 300 },
+    status: {
+      type: String,
+      enum: ["open", "full", "cancelled", "expired", "completed"],
+      default: "open",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    archived: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
+matchAdvertSchema.pre("validate", function (next) {
+  if (!!this.pitch === !!this.customPitch) {
+    return next(
+      new BadRequestError("Provide either pitch or customPitch, not both")
+    );
+  }
+  if (this.playersNeeded <= this.participants.length) {
+    this.status = "full";
+  }
+  next();
+});
+
+matchAdvertSchema.virtual("openSlots").get(function () {
+  return this.playersNeeded - this.participants.length;
+});
+
+matchAdvertSchema.index({ startsAt: 1 });
+matchAdvertSchema.index({ status: 1 });
+
+matchAdvertSchema.index({ location: "2dsphere" });
+
+const Advert = mongoose.model("MatchAdvert", matchAdvertSchema);
+module.exports = Advert;

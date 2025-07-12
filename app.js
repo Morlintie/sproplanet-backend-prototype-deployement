@@ -16,6 +16,7 @@ const companyRouter = require("./routes/companyRouter");
 const pitchRouter = require("./routes/pitchRouter");
 const pitchReviewRouter = require("./routes/pitchReviewRouter");
 const bookingRouter = require("./routes/bookingRouter");
+const advertRouter = require("./routes/advertRouter");
 //security
 const cors = require("cors");
 //others
@@ -55,6 +56,7 @@ app.use("/api/v1/company", companyRouter);
 app.use("/api/v1/pitch", pitchRouter);
 app.use("/api/v1/pitch-review", pitchReviewRouter);
 app.use("/api/v1/booking", bookingRouter);
+app.use("/api/v1/advert", advertRouter);
 
 app.use(errorHandlerMiddleware);
 app.use(notFoundMiddleware);
