@@ -6,10 +6,6 @@ const requestAdvert = async (req, res) => {
   res.send("Request advert");
 };
 
-const inviteToAdvert = async (req, res) => {
-  res.send("Invite to advert");
-};
-
 const getAllAdverts = async (req, res) => {
   res.send("get all adverts");
 };
@@ -42,12 +38,12 @@ const cancelAdvert = async (req, res) => {
   res.send("Cancel advert");
 };
 
-const replyToRequestAdvert = async (req, res) => {
-  res.send("Reply to request advert");
+const acceptRequestAdvert = async (req, res) => {
+  res.send("Accept request advert");
 };
 
-const replyToInviteAdvert = async (req, res) => {
-  res.send("Reply to invite advert");
+const rejectRequestAdvert = async (req, res) => {
+  res.send("Reject request advert");
 };
 
 const deleteAdvert = async (req, res) => {
@@ -56,10 +52,6 @@ const deleteAdvert = async (req, res) => {
 
 const revokeRequestAdvert = async (req, res) => {
   res.send("Revoke request advert");
-};
-
-const revokeInviteAdvert = async (req, res) => {
-  res.send("Revoke invite advert");
 };
 
 const leaveAdvert = async (req, res) => {
@@ -73,7 +65,7 @@ const expelFromAdvert = async (req, res) => {
 module.exports = {
   createAdvert,
   requestAdvert,
-  inviteToAdvert,
+
   getAllAdverts,
   getUserAdverts,
   getPerviousUserAdverts,
@@ -82,11 +74,13 @@ module.exports = {
   updateAdvert,
   softDeleteAdvert,
   cancelAdvert,
-  replyToRequestAdvert,
-  replyToInviteAdvert,
+
+  acceptRequestAdvert,
+  rejectRequestAdvert,
+
   deleteAdvert,
   revokeRequestAdvert,
-  revokeInviteAdvert,
+
   leaveAdvert,
   expelFromAdvert,
 };
