@@ -7,7 +7,7 @@ const companySchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Please provide company name"],
-      unique: [true, "This company name has already been taken."],
+      unique: true,
     },
 
     password: {
@@ -19,14 +19,14 @@ const companySchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Please provide company email"],
-      unique: [true, "This company email has already been taken."],
+      unique: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please provide a valid email."],
     },
     phone: {
       type: String,
       required: [true, "Please provide company phone number."],
       match: [/^\+?[\d\s\-().]{7,20}$/, "Please provide a valid phone number."],
-      unique: [true, "This company phone number has already been taken."],
+      unique: true,
     },
     address: {
       type: String,
@@ -46,7 +46,7 @@ const companySchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please provide VKN_TCKN number."],
       match: [/\b\d{10,11}\b/g, "Please provide a valid VKN_TCKN number."],
-      unique: [true, "VKN_TCKN number must be unique."],
+      unique: true,
     },
     type: {
       type: String,

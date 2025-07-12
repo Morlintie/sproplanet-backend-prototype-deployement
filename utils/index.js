@@ -20,6 +20,7 @@ const paymentHelper = require("./helpers/payment");
 const { middlemanTax, pitchTax } = require("./taxes");
 const dateToIso = require("./dateToIso");
 const companyBookingQuery = require("./companyBookingQuery");
+const setupCronJobs = require("./cron");
 
 module.exports = {
   resetPasswordEmail,
@@ -41,4 +42,5 @@ module.exports = {
   pitchTax,
   dateToIso,
   companyBookingQuery,
+  setupCronJobs,
 };

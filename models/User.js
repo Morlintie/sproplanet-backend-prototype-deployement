@@ -9,12 +9,12 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Please provide username"],
-      unique: [true, "This username has already been taken."],
+      unique: true,
     },
     email: {
       type: String,
       required: [true, "Please provide user email"],
-      unique: [true, "This email has already been taken."],
+      unique: true,
       trim: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please provide a valid email."],
     },
@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema(
     phoneNumber: {
       type: Number,
       match: [/^\+?[\d\s\-().]{7,20}$/, "Please provide a valid phone number."],
-      unique: [true, "This phone number has already been taken."],
+      unique: true,
     },
 
     description: {
@@ -144,7 +144,7 @@ const userSchema = new mongoose.Schema(
       type: [{ type: mongoose.Types.ObjectId, ref: "Pitch", default: [] }],
     }, // In the future an algorithm that makes the pitches suggested more for the users.
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
 userSchema.pre("save", async function (next) {
@@ -211,6 +211,14 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     throw new BadRequestError("Password comparison failed.");
   }
 };
+
+userSchema.virtual("bookings", {
+  ref: "Booking",
+  localField: "_id",
+  foreignField: "bookedBy",
+  justOne: false,
+  options: { sort: { createdAt: -1 } },
+});
 
 const User = mongoose.model("User", userSchema);
 

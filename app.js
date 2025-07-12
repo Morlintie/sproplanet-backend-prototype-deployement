@@ -4,6 +4,7 @@ require("express-async-errors");
 const express = require("express");
 const connectDB = require("./db/connection");
 const cookieParser = require("cookie-parser");
+const { setupCronJobs } = require("./utils");
 //middlewares
 const errorHandlerMiddleware = require("./middlewares/errorHandlerMiddleware");
 const notFoundMiddleware = require("./middlewares/notFoundMiddleware");
@@ -45,6 +46,8 @@ cloudinary.config({
 app.use(morgan("tiny"));
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(passport.initialize());
+
+setupCronJobs();
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);

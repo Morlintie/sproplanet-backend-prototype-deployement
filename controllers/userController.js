@@ -148,6 +148,11 @@ const showUser = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
 
   if (!user) {
@@ -295,6 +300,11 @@ const sendFriendRequest = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
 
   res.status(StatusCodes.CREATED).json({ user: friendRequest });
@@ -338,6 +348,11 @@ const updateSingleUser = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
   if (!newUser) {
     throw new NotFoundError("User couldn't found.");
@@ -353,7 +368,7 @@ const updateSingleUser = async (req, res) => {
     email: newUser.email,
     role: newUser.role,
     userId: newUser._id,
-    favoritePitches: user.favoritePitches,
+    favoritePitches: newUser.favoritePitches,
   };
   createCookie(res, cookieUser, refreshToken);
   res.status(StatusCodes.OK).json({ user: newUser });
@@ -564,6 +579,11 @@ const replyFriendRequest = async (req, res) => {
         path: "favoritePitches",
         select:
           "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+      })
+      .populate({
+        path: "bookings",
+        select:
+          "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
       });
     res.status(StatusCodes.OK).json({ user: currentUserFriends });
   }
@@ -607,6 +627,11 @@ const replyFriendRequest = async (req, res) => {
         path: "favoritePitches",
         select:
           "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+      })
+      .populate({
+        path: "bookings",
+        select:
+          "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
       });
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
   }
@@ -680,6 +705,11 @@ const revokeSelfFriendRequest = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -738,6 +768,11 @@ const exitFromFriends = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -797,6 +832,11 @@ const removeFromFriends = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -966,6 +1006,11 @@ const deleteRecentlySearchedUser = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -1026,6 +1071,11 @@ const deleteRecentlySearchedPitch = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -1077,6 +1127,11 @@ const addFavoritePitch = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
 
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
@@ -1129,6 +1184,11 @@ const removeFavoritePitch = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "bookings",
+      select:
+        "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
     });
 
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
