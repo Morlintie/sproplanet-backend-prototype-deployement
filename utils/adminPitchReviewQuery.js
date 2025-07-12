@@ -351,10 +351,12 @@ const adminPitchReviewUpdateQuery = (req) => {
   }
 
   if (createdAt) {
-    updateObject.createdAt = new Date(createdAt);
+    const [day, month, year] = createdAt.split(".").map(Number);
+    updateObject.createdAt = new Date(year, month - 1, day).toISOString();
   }
   if (updatedAt) {
-    updateObject.updatedAt = new Date(updatedAt);
+    const [day, month, year] = updatedAt.split(".").map(Number);
+    updateObject.updatedAt = new Date(year, month - 1, day).toISOString();
   }
   if (replies) {
     if (replies.add) {
@@ -372,8 +374,18 @@ const adminPitchReviewUpdateQuery = (req) => {
         };
       }
       if (replies.remove.createdAt) {
-        const upperLimit = replies.remove.createdAt.upperLimit;
-        const lowerLimit = replies.remove.createdAt.lowerLimit;
+        let upperLimit;
+        let lowerLimit;
+        if (replies.remove.createdAt.upperLimit) {
+          const [upperDay, upperMonth, upperYear] =
+            replies.remove.createdAt.upperLimit.split(".").map(Number);
+          upperLimit = new Date(upperYear, upperMonth - 1, upperDay);
+        }
+        if (replies.remove.createdAt.lowerLimit) {
+          const [lowerDay, lowerMonth, lowerYear] =
+            replies.remove.createdAt.lowerLimit.split(".").map(Number);
+          lowerLimit = new Date(lowerYear, lowerMonth - 1, lowerDay);
+        }
         if (upperLimit && lowerLimit) {
           replyRemoveObject.createdAt = { $gte: lowerLimit, $lte: upperLimit };
         } else if (upperLimit) {
@@ -384,21 +396,24 @@ const adminPitchReviewUpdateQuery = (req) => {
       }
 
       if (replies.remove.updatedAt) {
-        const upperLimit = replies.remove.updatedAt.upperLimit;
-        const lowerLimit = replies.remove.updatedAt.lowerLimit;
+        let upperLimit;
+        let lowerLimit;
+        if (replies.remove.updatedAt.upperLimit) {
+          const [upperDay, upperMonth, upperYear] =
+            replies.remove.updatedAt.upperLimit.split(".").map(Number);
+          upperLimit = new Date(upperYear, upperMonth - 1, upperDay);
+        }
+        if (replies.remove.updatedAt.lowerLimit) {
+          const [lowerDay, lowerMonth, lowerYear] =
+            replies.remove.updatedAt.lowerLimit.split(".").map(Number);
+          lowerLimit = new Date(lowerYear, lowerMonth - 1, lowerDay);
+        }
         if (upperLimit && lowerLimit) {
           replyRemoveObject.updatedAt = { $gte: lowerLimit, $lte: upperLimit };
         } else if (upperLimit) {
           replyRemoveObject.updatedAt = { $lte: upperLimit };
         } else if (lowerLimit) {
           replyRemoveObject.updatedAt = { $gte: lowerLimit };
-        }
-      }
-      if (replies.remove.isEdited) {
-        if (replies.remove.isEdited === "true") {
-          replyRemoveObject.isEdited = true;
-        } else if (replies.remove.isEdited === "false") {
-          replyRemoveObject.isEdited = false;
         }
       }
 

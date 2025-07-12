@@ -16,9 +16,9 @@ const {
 } = require("../utils");
 
 const createReview = async (req, res) => {
-  const { pitchId, rating, title, comment } = req.body;
+  const { pitchId, rating, title, comment, photos } = req.body;
   const { userId } = req.user;
-  const photos = req.files?.photos;
+
   const pitch = await Pitch.findOne({ _id: pitchId }).lean();
   if (!pitch) {
     throw new NotFoundError("Pitch not found.");
