@@ -131,6 +131,7 @@ const getPreviousUserBookings = async (req, res) => {
   res.status(StatusCodes.OK).json({
     bookings: previousBookings,
     total: pitchCount,
+    count: previousBookings.length,
     limit,
   });
 };
@@ -257,6 +258,7 @@ const getCompanyBookings = async (req, res) => {
       bookings: companyBookings,
       total: pitchCount,
       limit,
+      count: companyBookings.length,
     });
   }
 };
@@ -351,6 +353,7 @@ const getPreviousCompanyBookings = async (req, res) => {
       bookings: companyBookings,
       total: pitchCount,
       limit,
+      count: companyBookings.length,
     });
   }
 };
@@ -445,6 +448,7 @@ const getCurrentCompanyBookings = async (req, res) => {
       bookings: companyBookings,
       total: pitchCount,
       limit,
+      count: companyBookings.length,
     });
   }
 };

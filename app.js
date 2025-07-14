@@ -5,6 +5,13 @@ const express = require("express");
 const connectDB = require("./db/connection");
 const cookieParser = require("cookie-parser");
 const { setupCronJobs } = require("./utils");
+const {
+  app,
+  server,
+  io,
+  onlineUsers,
+  notificationNamespace,
+} = require("./server/serverConfig");
 //middlewares
 const errorHandlerMiddleware = require("./middlewares/errorHandlerMiddleware");
 const notFoundMiddleware = require("./middlewares/notFoundMiddleware");
@@ -26,7 +33,8 @@ const fileUpload = require("express-fileupload");
 const cloudinary = require("cloudinary").v2;
 
 const PORT = process.env.PORT;
-const app = express();
+
+//setting up middlewares
 
 app.use(cors({ origin: process.env.ORIGIN_FRONTEND, credentials: true }));
 
@@ -49,7 +57,11 @@ app.use(morgan("tiny"));
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(passport.initialize());
 
+// setting up cron jobs
+
 setupCronJobs();
+
+//setting up routes
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
@@ -60,13 +72,41 @@ app.use("/api/v1/booking", bookingRouter);
 app.use("/api/v1/advert", advertRouter);
 app.use("/api/v1/invitation", invitationRouter);
 
+//socket setup
+
+io.on("connection", (socket) => {
+  console.log("A new client connected with id:", socket.id);
+  const { userId } = socket.handshake.query;
+  if (userId) {
+    onlineUsers[userId] = socket.id;
+    io.emit("onlineUsers", Object.keys(onlineUsers));
+  }
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected with id:", socket.id);
+    for (const [key, value] of Object.entries(onlineUsers)) {
+      if (value === socket.id) {
+        delete onlineUsers[key];
+        io.emit("onlineUsers", Object.keys(onlineUsers));
+        break;
+      }
+    }
+  });
+});
+
+notificationNamespace.on("connection", (socket) => {
+  console.log("Notification client connected with id:", socket.id);
+});
+
+//error handling middlewares
+
 app.use(errorHandlerMiddleware);
 app.use(notFoundMiddleware);
 
 const start = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server run on port ${PORT}`);
     });
   } catch (err) {

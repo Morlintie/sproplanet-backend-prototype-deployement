@@ -18,7 +18,7 @@ const customPitchSchema = new mongoose.Schema(
     city: String,
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
-      coordinates: { type: [Number] }, // [lng, lat] – optional for map pin
+      coordinates: { type: [Number] },
     },
     photo: { type: String, trim: true, default: "somethings" },
   },
@@ -28,10 +28,17 @@ const customPitchSchema = new mongoose.Schema(
 const locationSchema = new mongoose.Schema(
   {
     type: { type: String, enum: ["Point"], default: "Point" },
-    coordinates: {
-      type: [Number],
-      required: [true, "Please provide pitch coordinates."],
-    },
+    coordinates: { type: [Number] },
+  },
+  { _id: false }
+);
+
+const addressSchema = new mongoose.Schema(
+  {
+    address: { type: String, trim: true, maxlength: 250 },
+    district: String,
+    city: String,
+    location: locationSchema,
   },
   { _id: false }
 );
@@ -53,11 +60,13 @@ const matchAdvertSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+
+    name: { type: String, trim: true, required: true, maxlength: 100 },
     startsAt: { type: Date, required: true },
 
     pitch: { type: mongoose.Types.ObjectId, ref: "Pitch" }, // ← internal booking
     customPitch: customPitchSchema,
-    location: locationSchema, // ← external booking
+    address: addressSchema, // ← external booking
     booking: { type: mongoose.Types.ObjectId, ref: "Booking" }, // optional link
 
     playersNeeded: {
@@ -72,8 +81,8 @@ const matchAdvertSchema = new mongoose.Schema(
       max: 2,
       default: 0,
     },
-    participants: [participantSchema], // players who joined
-    waitingList: [waitingListSchema],
+    participants: { type: [participantSchema], default: [] }, // players who joined
+    waitingList: { type: [waitingListSchema], default: [] },
 
     notes: { type: String, trim: true, maxlength: 300 },
     status: {
@@ -109,10 +118,22 @@ matchAdvertSchema.virtual("openSlots").get(function () {
   return this.playersNeeded - this.participants.length;
 });
 
+matchAdvertSchema.index(
+  { startsAt: 1, pitch: 1, createdBy: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: false,
+      archived: false,
+      $or: [{ status: "open" }, { status: "full" }],
+    },
+  }
+);
+
 matchAdvertSchema.index({ startsAt: 1 });
 matchAdvertSchema.index({ status: 1 });
 
-matchAdvertSchema.index({ location: "2dsphere" });
+matchAdvertSchema.index({ "address.location": "2dsphere" });
 
-const Advert = mongoose.model("MatchAdvert", matchAdvertSchema);
+const Advert = mongoose.model("Advert", matchAdvertSchema);
 module.exports = Advert;

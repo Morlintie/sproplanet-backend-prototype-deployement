@@ -195,7 +195,7 @@ const getAllPitches = async (req, res) => {
 
 const getAllVicinityPitches = async (req, res) => {
   const { coordinates } = req.body;
-  if (!coordinates) {
+  if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
     throw new BadRequestError("Please provide required data.");
   }
   const limit = 20;
