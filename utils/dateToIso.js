@@ -1,6 +1,9 @@
 //22.10.2025-22:00
 
 const dateToIso = (date) => {
+  if (!date) {
+    return;
+  }
   const [datePart, timePart] = date.split("-");
   const [day, month, year] = datePart.split(".").map((part) => parseInt(part));
   const [hours, minutes] = timePart.split(":").map((part) => parseInt(part));

@@ -10,6 +10,15 @@ const participantSchema = new mongoose.Schema(
 );
 
 /** pitch booked on another platform */
+
+const photoSchema = new mongoose.Schema(
+  {
+    url: { type: String, required: true },
+    public_id: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const customPitchSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 100 },
@@ -20,7 +29,7 @@ const customPitchSchema = new mongoose.Schema(
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number] },
     },
-    photo: { type: String, trim: true, default: "somethings" },
+    photo: photoSchema,
   },
   { _id: false }
 );
@@ -90,6 +99,7 @@ const matchAdvertSchema = new mongoose.Schema(
       enum: ["open", "full", "cancelled", "expired", "completed"],
       default: "open",
     },
+    adminAdvert: { type: [mongoose.Types.ObjectId], ref: "User", default: [] },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -108,9 +118,18 @@ matchAdvertSchema.pre("validate", function (next) {
       new BadRequestError("Provide either pitch or customPitch, not both")
     );
   }
-  if (this.playersNeeded <= this.participants.length) {
+  if (
+    this.playersNeeded + this.goalKeepersNeeded <= this.participants.length &&
+    (this.status === "open" || this.status === "full")
+  ) {
     this.status = "full";
+  } else if (
+    this.status === "full" &&
+    this.playersNeeded + this.goalKeepersNeeded > this.participants.length
+  ) {
+    this.status = "open";
   }
+
   next();
 });
 

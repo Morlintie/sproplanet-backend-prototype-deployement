@@ -16,9 +16,12 @@ const {
   deleteAdvert,
   revokeRequestAdvert,
   getVicinityAdverts,
-
+  getParticipantAdverts,
   leaveAdvert,
   expelFromAdvert,
+  addAdminToAdvert,
+  removeAdminFromAdvert,
+  getWaitingListAdverts,
 } = require("../controllers/advertController");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 const roleMiddleware = require("../middlewares/roleMiddleware");
@@ -40,19 +43,46 @@ router.get(
   authenticationMiddleware,
   getCurrentUserAdverts
 );
+router.get("/participant", authenticationMiddleware, getParticipantAdverts);
+router.get("/waiting-list", authenticationMiddleware, getWaitingListAdverts);
 router.get("/:id", authenticationMiddleware, getSingleAdvert);
 
-router.patch("/delete/:id", softDeleteAdvert);
-router.patch("/request/accept/:id", acceptRequestAdvert);
-router.patch("/request/reject/:id", rejectRequestAdvert);
-router.patch("/request/seen/:id", markAdvertRequestSeen);
-router.patch("/cancel/:id", cancelAdvert);
-router.patch("/:id", updateAdvert);
+router.patch("/delete/:id", authenticationMiddleware, softDeleteAdvert);
+router.patch(
+  "/request/accept/:id",
+  authenticationMiddleware,
+  acceptRequestAdvert
+);
+router.patch(
+  "/request/reject/:id",
+  authenticationMiddleware,
+  rejectRequestAdvert
+);
+router.patch(
+  "/request/seen/:id",
+  authenticationMiddleware,
+  markAdvertRequestSeen
+);
+router.patch("/cancel/:id", authenticationMiddleware, cancelAdvert);
+router.patch("/admin/add/:id", authenticationMiddleware, addAdminToAdvert);
+router.patch(
+  "/admin/remove/:id",
+  authenticationMiddleware,
+  removeAdminFromAdvert
+);
 
-router.delete("/request/:id", revokeRequestAdvert);
+router.patch("/:id", authenticationMiddleware, updateAdvert);
 
-router.delete("/leave/:id", leaveAdvert);
-router.delete("/expel/:id", expelFromAdvert);
-router.delete("/:id", deleteAdvert);
+router.delete("/request/:id", authenticationMiddleware, revokeRequestAdvert);
+
+router.delete("/leave/:id", authenticationMiddleware, leaveAdvert);
+router.delete("/expel/:id", authenticationMiddleware, expelFromAdvert);
+router.delete(
+  "/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteAdvert
+);
 
 module.exports = router;
