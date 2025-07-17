@@ -81,13 +81,13 @@ const matchAdvertSchema = new mongoose.Schema(
     playersNeeded: {
       type: Number,
       min: 1,
-      max: 10, // business rule: >10 ⇒ must use Session flow
+
       required: true,
     },
     goalKeepersNeeded: {
       type: Number,
       min: 0,
-      max: 2,
+
       default: 0,
     },
     participants: { type: [participantSchema], default: [] }, // players who joined

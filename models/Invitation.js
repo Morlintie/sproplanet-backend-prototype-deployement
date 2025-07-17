@@ -33,6 +33,8 @@ const invitationSchema = new mongoose.Schema(
     seen: { type: Boolean, default: false },
 
     respondedAt: Date,
+    isDeleted: { type: Boolean, default: false },
+    archived: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -41,7 +43,11 @@ invitationSchema.index(
   { advert: 1, sender: 1, recipient: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: { $in: ["pending accepted"] } },
+    partialFilterExpression: {
+      status: { $in: ["pending", "accepted"] },
+      isDeleted: false,
+      archived: false,
+    },
   }
 );
 

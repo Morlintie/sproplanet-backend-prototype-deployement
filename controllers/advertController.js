@@ -1378,6 +1378,13 @@ const acceptRequestAdvert = async (req, res) => {
 
   },
 {new: true, runValidators: true}).select(userSelectedFields).lean()
+if(advert.participants.some((p) => {
+  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id).emit("new-participant", {
+    advert: updatedAdvert,
+  })
+}
 res.status(StatusCodes.OK).json({
   advert: updatedAdvert
 })
@@ -1407,6 +1414,13 @@ res.status(StatusCodes.OK).json({
 
   },
 {new: true, runValidators: true}).select(select).lean()
+if(advert.participants.some((p) => {
+  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id).emit("new-participant", {
+    advert: updatedAdvert,
+  })
+}
 res.status(StatusCodes.OK).json({
   advert: updatedAdvert
 })
@@ -1838,11 +1852,20 @@ const leaveAdvert = async (req, res) => {
       archived: false
     }, {
       $pull: {
-        participants: {user: userId}
+        participants: {user: userId},
+        adminAdvert: userId
+        
       }
     }, {
       new: true, runValidators: true
     }).select(userSelectedFields).lean()
+    if(advert.participants.some((p) => {
+  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id).emit("leave-participant", {
+    advert: updatedAdvert,
+  })
+}
     res.status(StatusCodes.OK).json({
       advert: updatedAdvert
     })
@@ -1866,17 +1889,24 @@ const leaveAdvert = async (req, res) => {
     }
     const updatedAdvert = await Advert.findOneAndUpdate({
       _id:id,
-      isDeleted: false,
-      archived: false,
+     
 
 
     }, {
       $pull: {
-        participants: {user:participantId}
+        participants: {user:participantId},
+        adminAdvert: participantId
       }
     }, {
       new: true, runValidators: true
     }).select(select).lean()
+    if(advert.participants.some((p) => {
+  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id).emit("leave-participant", {
+    advert: updatedAdvert,
+  })
+}
     res.status(StatusCodes.OK).json({
       advert: updatedAdvert
     })
@@ -1920,10 +1950,18 @@ const expelFromAdvert = async (req, res) => {
     archived: false
    }, {
     $pull: {
-      participants: {user: participantId}
+      participants: {user: participantId},
+      adminAdvert: participantId
     }
    }, {
     new: true, runValidators: true}).select(userSelectedFields).lean()
+    if(advert.participants.some((p) => {
+  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id).emit("expel-participant", {
+    advert: updatedAdvert,
+  })
+}
     res.status(StatusCodes.OK).json({
       advert: updatedAdvert
     })
@@ -1944,11 +1982,19 @@ const expelFromAdvert = async (req, res) => {
    
   }, {
     $pull: {
-      participants: {user: participantId}
+      participants: {user: participantId},
+      adminAdvert: participantId
     }
   }, {
     new: true, runValidators: true
   }).select(select).lean()
+  if(advert.participants.some((p) => {
+  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id).emit("expel-participant", {
+    advert: updatedAdvert,
+  })
+}
   res.status(StatusCodes.OK).json({
     advert: updatedAdvert
   })
