@@ -25,13 +25,14 @@ const {
 } = require("../controllers/advertController");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 const roleMiddleware = require("../middlewares/roleMiddleware");
+const passUserInfoMiddleware = require("../middlewares/passUserInfoMiddleware");
 const router = express.Router();
 
 router.post("/", authenticationMiddleware, createAdvert);
 router.post("/request/:id", authenticationMiddleware, requestAdvert);
 
-router.get("/", authenticationMiddleware, getAllAdverts);
-router.get("/vicinity", authenticationMiddleware, getVicinityAdverts);
+router.get("/", passUserInfoMiddleware, getAllAdverts);
+router.get("/vicinity", passUserInfoMiddleware, getVicinityAdverts);
 router.get("/user/:id", authenticationMiddleware, getUserAdverts);
 router.get(
   "/user/:id/previous",
@@ -45,7 +46,7 @@ router.get(
 );
 router.get("/participant", authenticationMiddleware, getParticipantAdverts);
 router.get("/waiting-list", authenticationMiddleware, getWaitingListAdverts);
-router.get("/:id", authenticationMiddleware, getSingleAdvert);
+router.get("/:id", passUserInfoMiddleware, getSingleAdvert);
 
 router.patch("/delete/:id", authenticationMiddleware, softDeleteAdvert);
 router.patch(

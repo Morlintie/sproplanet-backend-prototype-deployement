@@ -548,7 +548,7 @@ const payBooking = async (req, res) => {
     const booking = await Booking.findOneAndUpdate(
       { _id: id, bookedBy: userId },
       { "price.paid": true },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     )
       .lean()
       .populate({
@@ -580,7 +580,7 @@ const payBooking = async (req, res) => {
     const booking = await Booking.findOneAndUpdate(
       { _id: id },
       { "price.paid": true },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     ).lean();
     if (!booking) {
       throw new NotFoundError("Booking not found");
@@ -616,7 +616,7 @@ const updateBooking = async (req, res) => {
         bookedBy: userId,
       },
       updateObject,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     )
       .select(userSelectedFields)
       .lean()
@@ -651,7 +651,7 @@ const updateBooking = async (req, res) => {
         _id: id,
       },
       updateObject,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     ).lean();
     if (!booking) {
       throw new NotFoundError("Booking not found");
@@ -696,7 +696,7 @@ const replyBooking = async (req, res) => {
       booking = await Booking.findOneAndUpdate(
         { _id: id, company: companyId },
         { status },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true, timestamps: true }
       )
         .select(ownerSelectedFields)
         .lean()
@@ -736,7 +736,8 @@ const replyBooking = async (req, res) => {
           "cancel.by": companyId,
           "cancel.reason": reason,
           cancelModel: "Company",
-        }
+        },
+        { new: true, runValidators: true, timestamps: true }
       )
         .select(ownerSelectedFields)
         .lean()
@@ -789,6 +790,11 @@ const replyBooking = async (req, res) => {
           "cancel.by": req.user.userId,
           "cancel.reason": reason,
           cancelModel: "User",
+        },
+        {
+          new: true,
+          runValidators: true,
+          timestamps: true,
         }
       );
     }
@@ -841,7 +847,7 @@ const cancelBookingUser = async (req, res) => {
         "cancel.reason": reason,
         cancelModel: "User",
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     )
       .select(userSelectedFields)
       .lean()
@@ -876,7 +882,7 @@ const cancelBookingUser = async (req, res) => {
         "cancel.reason": reason,
         cancelModel: "User",
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     );
     if (!booking) {
       throw new NotFoundError("Booking not found");
@@ -920,7 +926,7 @@ const switchBooking = async (req, res) => {
     const booking = await Booking.findOneAndUpdate(
       { _id: id, company: companyId },
       updateObject,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     )
       .select(ownerSelectedFields)
       .lean()
@@ -949,6 +955,7 @@ const switchBooking = async (req, res) => {
     const booking = await Booking.findOneAndUpdate({ _id: id }, updateObject, {
       new: true,
       runValidators: true,
+      timestamps: true,
     }).lean();
     if (!booking) {
       throw new NotFoundError("Booking not found");
@@ -1001,7 +1008,7 @@ const refundBooking = async (req, res) => {
         "refunded.reason": reason,
         refundedModel: "User",
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     )
       .select(userSelectedFields)
       .lean()
@@ -1042,7 +1049,7 @@ const refundBooking = async (req, res) => {
         "refunded.reason": reason,
         refundedModel: "User",
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     ).lean();
     if (!booking) {
       throw new NotFoundError("Booking not found");
@@ -1098,7 +1105,7 @@ const rejectBooking = async (req, res) => {
         "refunded.reason": reason,
         refundedModel: "Company",
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     )
       .select(ownerSelectedFields)
       .lean()
@@ -1139,7 +1146,7 @@ const rejectBooking = async (req, res) => {
         "refunded.reason": reason,
         refundedModel: "User",
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, timestamps: true }
     ).lean();
     if (!booking) {
       throw new NotFoundError("Booking not found");

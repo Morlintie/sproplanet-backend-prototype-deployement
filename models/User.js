@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const Token = require("./Token");
+const Advert = require("./Advert");
 
 const { BadRequestError } = require("../errors");
 
@@ -196,6 +197,20 @@ userSchema.post("findOneAndDelete", async function (doc) {
       }
     );
     await Token.findOneAndDelete({ user: doc._id });
+    await Advert.updateMany(
+      {
+        "participants.user": doc._id,
+        adminAdvert: doc._id,
+        "waitingList.user": doc._id,
+      },
+      {
+        $pull: {
+          participants: { $elemMatch: { user: doc._id } },
+          adminAdvert: doc._id,
+          waitingList: { $elemMatch: { user: doc._id } },
+        },
+      }
+    );
   }
 });
 
