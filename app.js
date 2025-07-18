@@ -25,6 +25,7 @@ const pitchReviewRouter = require("./routes/pitchReviewRouter");
 const bookingRouter = require("./routes/bookingRouter");
 const advertRouter = require("./routes/advertRouter");
 const invitationRouter = require("./routes/InvitationRouter");
+const advertChatRouter = require("./routes/advertChatRouter");
 //security
 const cors = require("cors");
 //others
@@ -71,6 +72,7 @@ app.use("/api/v1/pitch-review", pitchReviewRouter);
 app.use("/api/v1/booking", bookingRouter);
 app.use("/api/v1/advert", advertRouter);
 app.use("/api/v1/invitation", invitationRouter);
+app.use("/api/v1/advert-chat", advertChatRouter);
 
 //socket setup
 
@@ -96,6 +98,11 @@ io.on("connection", (socket) => {
 
 notificationNamespace.on("connection", (socket) => {
   console.log("Notification client connected with id:", socket.id);
+
+  socket.on("joinRoom", ({ roomId }) => {
+    socket.join(roomId);
+    console.log(`Client with id: ${socket.id} joined room: ${roomId}`);
+  });
 });
 
 //error handling middlewares
