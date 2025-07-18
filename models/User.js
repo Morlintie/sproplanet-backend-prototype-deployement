@@ -235,6 +235,22 @@ userSchema.virtual("bookings", {
   options: { sort: { createdAt: -1 } },
 });
 
+userSchema.virtual("advertParticipation", {
+  ref: "Advert",
+  localField: "_id",
+  foreignField: "participants.user",
+  justOne: false,
+  options: { sort: { createdAt: -1 } },
+});
+
+userSchema.virtual("advertWaitingList", {
+  ref: "Advert",
+  localField: "_id",
+  foreignField: "waitingList.user",
+  justOne: false,
+  options: { sort: { createdAt: -1 } },
+});
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

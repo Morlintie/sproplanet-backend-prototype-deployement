@@ -91,6 +91,14 @@ const getSingleUser = async (req, res) => {
       path: "favoritePitches",
       select:
         "-createdAt -updatedAt -__v -totalBookings -totalRevenue -tags -searchKeywords ",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   if (!user) {
     throw new NotFoundError("User couldn't found.");
@@ -153,6 +161,14 @@ const showUser = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
 
   if (!user) {
@@ -305,6 +321,14 @@ const sendFriendRequest = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
 
   res.status(StatusCodes.CREATED).json({ user: friendRequest });
@@ -353,6 +377,14 @@ const updateSingleUser = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   if (!newUser) {
     throw new NotFoundError("User couldn't found.");
@@ -584,6 +616,14 @@ const replyFriendRequest = async (req, res) => {
         path: "bookings",
         select:
           "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+      })
+      .populate({
+        path: "advertParticipation",
+        select: "-__v -isDeleted -archived",
+      })
+      .populate({
+        path: "advertWaitingList",
+        select: "-__v -isDeleted -archived",
       });
     res.status(StatusCodes.OK).json({ user: currentUserFriends });
   }
@@ -632,6 +672,14 @@ const replyFriendRequest = async (req, res) => {
         path: "bookings",
         select:
           "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+      })
+      .populate({
+        path: "advertParticipation",
+        select: "-__v -isDeleted -archived",
+      })
+      .populate({
+        path: "advertWaitingList",
+        select: "-__v -isDeleted -archived",
       });
     res.status(StatusCodes.OK).json({ friends: currentUserFriends });
   }
@@ -710,6 +758,14 @@ const revokeSelfFriendRequest = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -773,6 +829,14 @@ const exitFromFriends = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -837,6 +901,14 @@ const removeFromFriends = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -1011,6 +1083,14 @@ const deleteRecentlySearchedUser = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -1076,6 +1156,14 @@ const deleteRecentlySearchedPitch = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
 };
@@ -1132,6 +1220,14 @@ const addFavoritePitch = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
 
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
@@ -1189,6 +1285,14 @@ const removeFavoritePitch = async (req, res) => {
       path: "bookings",
       select:
         "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId",
+    })
+    .populate({
+      path: "advertParticipation",
+      select: "-__v -isDeleted -archived",
+    })
+    .populate({
+      path: "advertWaitingList",
+      select: "-__v -isDeleted -archived",
     });
 
   res.status(StatusCodes.OK).json({ user: newCurrentUser });
