@@ -2,8 +2,9 @@ const { BadRequestError, NotFoundError, ForbiddenError } = require("../errors");
 const Booking = require("../models/Booking");
 const Advert = require("../models/Advert");
 const {
-  onlineUsers,
+
   notificationNamespace,
+  notificationOnlineUsers
 } = require("../server/serverConfig");
 const { StatusCodes } = require("http-status-codes");
 const { dateToIso } = require("../utils");
@@ -215,7 +216,7 @@ const requestAdvert = async (req, res) => {
 
 
     if (advert.participants.some((p) => {
-      return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+      return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
     })) {
       notificationNamespace
         .to(advert._id.toString())
@@ -260,7 +261,7 @@ const requestAdvert = async (req, res) => {
       { new: true, runValidators: true }
     ).lean();
 if (advert.participants.some((p) => {
-      return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+      return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
     })) {
       notificationNamespace
         .to(advert._id.toString())
@@ -1547,9 +1548,9 @@ const acceptRequestAdvert = async (req, res) => {
         select:"name description specifications facilities pricing media contact rating status refundAllowed"
       });
 if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
 })) {
-  notificationNamespace.to(advert._id).emit("new-participant", {
+  notificationNamespace.to(advert._id.toString()).emit("new-participant", {
     advert: updatedAdvert,
   })
 }
@@ -1583,9 +1584,9 @@ res.status(StatusCodes.OK).json({
   },
 {new: true, runValidators: true}).select(select).lean()
 if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
 })) {
-  notificationNamespace.to(advert._id).emit("new-participant", {
+  notificationNamespace.to(advert._id.toString()).emit("new-participant", {
     advert: updatedAdvert,
   })
 }
@@ -1915,7 +1916,7 @@ if(role === "user") {
       });
 
   if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
   })) {
     notificationNamespace.to(advert._id.toString()).emit("advertRequestSeen", {
       advert: updatedAdvert
@@ -1945,7 +1946,7 @@ if(role === "admin")  {
     new: true, runValidators: true
   }).select(select).lean()
   if(advert.participants.some((p) => {
-    return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+    return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
     })) {
       notificationNamespace.to(advert._id.toString()).emit("advertRequestSeen", {
         advert: updatedAdvert
@@ -2088,9 +2089,9 @@ const leaveAdvert = async (req, res) => {
         select:"name description specifications facilities pricing media contact rating status refundAllowed"
       });
     if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
 })) {
-  notificationNamespace.to(advert._id).emit("leave-participant", {
+  notificationNamespace.to(advert._id.toString()).emit("leave-participant", {
     advert: updatedAdvert,
   })
 }
@@ -2129,9 +2130,9 @@ const leaveAdvert = async (req, res) => {
       new: true, runValidators: true
     }).select(select).lean()
     if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
 })) {
-  notificationNamespace.to(advert._id).emit("leave-participant", {
+  notificationNamespace.to(advert._id.toString()).emit("leave-participant", {
     advert: updatedAdvert,
   })
 }
@@ -2196,9 +2197,9 @@ const expelFromAdvert = async (req, res) => {
         select:"name description specifications facilities pricing media contact rating status refundAllowed"
       });
     if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
 })) {
-  notificationNamespace.to(advert._id).emit("expel-participant", {
+  notificationNamespace.to(advert._id.toString()).emit("expel-participant", {
     advert: updatedAdvert,
   })
 }
@@ -2229,9 +2230,9 @@ const expelFromAdvert = async (req, res) => {
     new: true, runValidators: true
   }).select(select).lean()
   if(advert.participants.some((p) => {
-  return onlineUsers[p.user.toString()] !== undefined && onlineUsers[p.user.toString()] !== null
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
 })) {
-  notificationNamespace.to(advert._id).emit("expel-participant", {
+  notificationNamespace.to(advert._id.toString()).emit("expel-participant", {
     advert: updatedAdvert,
   })
 }

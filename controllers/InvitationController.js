@@ -4,7 +4,8 @@ const Invitation = require("../models/Invitation");
 const Advert = require("../models/Advert");
 const {
   notificationNamespace,
-  onlineUsers,
+
+  notificationOnlineUsers,
 } = require("../server/serverConfig");
 
 const createInvite = async (req, res) => {
@@ -70,10 +71,12 @@ const createInvite = async (req, res) => {
       }
     });
     const invite = await Invitation.create(createObject);
-    if (onlineUsers[recipient]) {
-      notificationNamespace.to(onlineUsers[recipient]).emit("new-invite", {
-        invite,
-      });
+    if (notificationOnlineUsers[recipient]) {
+      notificationNamespace
+        .to(notificationOnlineUsers[recipient])
+        .emit("new-invite", {
+          invite,
+        });
     }
     res.status(StatusCodes.CREATED).json({
       message: "Invitation created successfully",
@@ -104,10 +107,12 @@ const createInvite = async (req, res) => {
       }
     });
     const invite = await Invitation.create(createObject);
-    if (onlineUsers[recipient]) {
-      notificationNamespace.to(onlineUsers[recipient]).emit("new-invite", {
-        invite,
-      });
+    if (notificationOnlineUsers[recipient]) {
+      notificationNamespace
+        .to(notificationOnlineUsers[recipient])
+        .emit("new-invite", {
+          invite,
+        });
     }
     res.status(StatusCodes.CREATED).json({
       message: "Invitation created successfully",
@@ -379,9 +384,9 @@ const revokeInvite = async (req, res) => {
     if (!invite) {
       throw new NotFoundError("Invitation not found or cannot be revoked");
     }
-    if (onlineUsers[invite.recipient]) {
+    if (notificationOnlineUsers[invite.recipient]) {
       notificationNamespace
-        .to(onlineUsers[invite.recipient])
+        .to(notificationOnlineUsers[invite.recipient])
         .emit("invite-revoked", {
           invite,
         });
@@ -418,9 +423,9 @@ const revokeInvite = async (req, res) => {
     if (!invite) {
       throw new NotFoundError("Invitation not found");
     }
-    if (onlineUsers[invite.recipient]) {
+    if (notificationOnlineUsers[invite.recipient]) {
       notificationNamespace
-        .to(onlineUsers[invite.recipient])
+        .to(notificationOnlineUsers[invite.recipient])
         .emit("invite-revoked", {
           invite,
         });
@@ -517,9 +522,9 @@ const acceptInvite = async (req, res) => {
     )
       .select(userSelectedFields)
       .lean();
-    if (onlineUsers[invite.sender]) {
+    if (notificationOnlineUsers[invite.sender]) {
       notificationNamespace
-        .to(onlineUsers[invite.sender])
+        .to(notificationOnlineUsers[invite.sender])
         .emit("invite-accepted", {
           invite: newInvite,
         });
@@ -528,12 +533,12 @@ const acceptInvite = async (req, res) => {
     if (
       advert.participants.some((p) => {
         return (
-          onlineUsers[p.user.toString()] !== undefined ||
-          onlineUsers[p.user.toString()] !== null
+          notificationOnlineUsers[p.user.toString()] !== undefined ||
+          notificationOnlineUsers[p.user.toString()] !== null
         );
       })
     ) {
-      notificationNamespace.to(advert._id).emit("new-participant", {
+      notificationNamespace.to(advert._id.toString()).emit("new-participant", {
         advert: newAdvert,
       });
     }
@@ -621,9 +626,9 @@ const acceptInvite = async (req, res) => {
     )
       .select(select)
       .lean();
-    if (onlineUsers[invite.sender]) {
+    if (notificationOnlineUsers[invite.sender]) {
       notificationNamespace
-        .to(onlineUsers[invite.sender])
+        .to(notificationOnlineUsers[invite.sender])
         .emit("invite-accepted", {
           invite: newInvite,
         });
@@ -631,12 +636,12 @@ const acceptInvite = async (req, res) => {
     if (
       advert.participants.some((p) => {
         return (
-          onlineUsers[p.user.toString()] !== undefined ||
-          onlineUsers[p.user.toString()] !== null
+          notificationOnlineUsers[p.user.toString()] !== undefined ||
+          notificationOnlineUsers[p.user.toString()] !== null
         );
       })
     ) {
-      notificationNamespace.to(advert._id).emit("new-participant", {
+      notificationNamespace.to(advert._id.toString()).emit("new-participant", {
         advert: newAdvert,
       });
     }
@@ -670,9 +675,9 @@ const rejectInvite = async (req, res) => {
     if (!invite) {
       throw new NotFoundError("Invitation not found");
     }
-    if (onlineUsers[invite.sender]) {
+    if (notificationOnlineUsers[invite.sender]) {
       notificationNamespace
-        .to(onlineUsers[invite.sender])
+        .to(notificationOnlineUsers[invite.sender])
         .emit("invite-rejected", {
           invite,
         });
@@ -698,9 +703,9 @@ const rejectInvite = async (req, res) => {
     if (!invite) {
       throw new NotFoundError("Invitation not found");
     }
-    if (onlineUsers[invite.sender]) {
+    if (notificationOnlineUsers[invite.sender]) {
       notificationNamespace
-        .to(onlineUsers[invite.sender])
+        .to(notificationOnlineUsers[invite.sender])
         .emit("invite-rejected", { invite });
     }
     res.status(StatusCodes.OK).json({
@@ -741,18 +746,18 @@ const softDeleteInvite = async (req, res) => {
       throw new NotFoundError("Invitation not found");
     }
     if (invite.sender === userId) {
-      if (onlineUsers[invite.recipient]) {
+      if (notificationOnlineUsers[invite.recipient]) {
         notificationNamespace
-          .to(onlineUsers[invite.recipient])
+          .to(notificationOnlineUsers[invite.recipient])
           .emit("invite-deleted", {
             inviteId: invite._id,
           });
       }
     }
     if (invite.recipient === userId) {
-      if (onlineUsers[invite.sender]) {
+      if (notificationOnlineUsers[invite.sender]) {
         notificationNamespace
-          .to(onlineUsers[invite.sender])
+          .to(notificationOnlineUsers[invite.sender])
           .emit("invite-deleted", {
             inviteId: invite._id,
           });
@@ -790,16 +795,16 @@ const softDeleteInvite = async (req, res) => {
     if (!invite) {
       throw new NotFoundError("Invitation not found");
     }
-    if (onlineUsers[invite.recipient]) {
+    if (notificationOnlineUsers[invite.recipient]) {
       notificationNamespace
-        .to(onlineUsers[invite.recipient])
+        .to(notificationOnlineUsers[invite.recipient])
         .emit("invite-deleted", {
           inviteId: invite - _id,
         });
     }
-    if (onlineUsers[invite.sender]) {
+    if (notificationOnlineUsers[invite.sender]) {
       notificationNamespace
-        .to(onlineUsers[invite.sender])
+        .to(notificationOnlineUsers[invite.sender])
         .emit("invite-deleted", {
           inviteId: invite._id,
         });

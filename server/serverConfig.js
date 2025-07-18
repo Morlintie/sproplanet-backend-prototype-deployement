@@ -14,4 +14,19 @@ const onlineUsers = {};
 
 const notificationNamespace = io.of("/notifications");
 
-module.exports = { app, server, io, onlineUsers, notificationNamespace };
+const notificationOnlineUsers = {};
+
+const chatNamespace = io.of("/chat");
+
+const chatOnlineUsers = {};
+
+module.exports = {
+  app,
+  server,
+  io,
+  onlineUsers,
+  notificationNamespace,
+  notificationOnlineUsers,
+  chatNamespace,
+  chatOnlineUsers,
+};

@@ -11,6 +11,9 @@ const {
   io,
   onlineUsers,
   notificationNamespace,
+  notificationOnlineUsers,
+  chatOnlineUsers,
+  chatNamespace,
 } = require("./server/serverConfig");
 //middlewares
 const errorHandlerMiddleware = require("./middlewares/errorHandlerMiddleware");
@@ -98,10 +101,48 @@ io.on("connection", (socket) => {
 
 notificationNamespace.on("connection", (socket) => {
   console.log("Notification client connected with id:", socket.id);
+  const { userId } = socket.handshake.query;
+  if (userId) {
+    notificationOnlineUsers[userId] = socket.id;
+  }
 
   socket.on("joinRoom", ({ roomId }) => {
     socket.join(roomId);
     console.log(`Client with id: ${socket.id} joined room: ${roomId}`);
+  });
+
+  socket.on("disconnect", () => {
+    for (const [key, value] of Object.entries(notificationOnlineUsers)) {
+      if (value === socket.id) {
+        delete notificationOnlineUsers[key];
+        break;
+      }
+    }
+    console.log("Notification client disconnected with id:", socket.id);
+  });
+});
+
+chatNamespace.on("connection", (socket) => {
+  console.log("Chat client connected with id:", socket.id);
+
+  const { userId } = socket.handshake.query;
+  if (userId) {
+    chatOnlineUsers[userId] = socket.id;
+  }
+
+  socket.on("joinRoom", ({ roomId }) => {
+    socket.join(roomId);
+    console.log(`Client with id: ${socket.id} joined room: ${roomId}`);
+  });
+
+  socket.on("disconnect", () => {
+    for (const [key, value] of Object.entries(chatOnlineUsers)) {
+      if (value === socket.id) {
+        delete chatOnlineUsers[key];
+        break;
+      }
+    }
+    console.log("Chat client disconnected with id:", socket.id);
   });
 });
 
