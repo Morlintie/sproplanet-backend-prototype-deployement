@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const Token = require("./Token");
 const Advert = require("./Advert");
+const AdvertChatMessage = require("./AdvertChat");
 
 const { BadRequestError } = require("../errors");
 
@@ -199,9 +200,11 @@ userSchema.post("findOneAndDelete", async function (doc) {
     await Token.findOneAndDelete({ user: doc._id });
     await Advert.updateMany(
       {
-        "participants.user": doc._id,
-        adminAdvert: doc._id,
-        "waitingList.user": doc._id,
+        $or: [
+          { "participants.user": doc._id },
+          { adminAdvert: doc._id },
+          { "waitingList.user": doc._id },
+        ],
       },
       {
         $pull: {
@@ -211,6 +214,41 @@ userSchema.post("findOneAndDelete", async function (doc) {
         },
       }
     );
+
+    const createdAdverts = await Advert.find({
+      createdBy: doc._id,
+    });
+    if (createdAdverts && createdAdverts.length > 0) {
+      createdAdverts.forEach(async (advert) => {
+        if (advert.adminAdvert && advert.adminAdvert.length > 0) {
+          await Advert.updateOne(
+            { _id: advert._id },
+            {
+              createdBy: advert.adminAdvert[0],
+            }
+          );
+        } else if (advert.participants && advert.participants.length > 0) {
+          await Advert.updateOne(
+            { _id: advert._id },
+            {
+              $addToSet: { adminAdvert: advert.participants[0].user },
+              createdBy: advert.participants[0].user,
+            }
+          );
+        } else {
+          await Advert.deleteOne({ _id: advert._id });
+        }
+      });
+    }
+    await AdvertChatMessage.updateMany(
+      { notSeenBy: doc._id },
+      {
+        $pull: {
+          notSeenBy: doc._id,
+        },
+      }
+    );
+    await AdvertChatMessage.deleteMany({ sender: doc._id });
   }
 });
 

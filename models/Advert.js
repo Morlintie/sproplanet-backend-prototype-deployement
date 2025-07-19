@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { BadRequestError } = require("../errors");
+const AdvertChatMessage = require("./AdvertChat");
 
 const participantSchema = new mongoose.Schema(
   {
@@ -7,7 +8,7 @@ const participantSchema = new mongoose.Schema(
     joinedAt: { type: Date, default: Date.now },
   },
   { _id: false }
-);
+); // User stucturı aşşağıda kullanılacak
 
 /** pitch booked on another platform */
 
@@ -17,7 +18,7 @@ const photoSchema = new mongoose.Schema(
     public_id: { type: String, required: true },
   },
   { _id: false }
-);
+); // Platform dışı rezervasyon sahası için fotoğraf yapısı "customPitchSchema" da kullanılacak
 
 const customPitchSchema = new mongoose.Schema(
   {
@@ -32,7 +33,7 @@ const customPitchSchema = new mongoose.Schema(
     photo: photoSchema,
   },
   { _id: false }
-);
+); // Platform dışı rezervasyon sahası için özel saha yapısı
 
 const locationSchema = new mongoose.Schema(
   {
@@ -40,7 +41,7 @@ const locationSchema = new mongoose.Schema(
     coordinates: { type: [Number] },
   },
   { _id: false }
-);
+); // Konum yapısı, geospatial sorgular için kullanılacak
 
 const addressSchema = new mongoose.Schema(
   {
@@ -50,7 +51,7 @@ const addressSchema = new mongoose.Schema(
     location: locationSchema,
   },
   { _id: false }
-);
+); // adres yapısı
 
 const waitingListSchema = new mongoose.Schema(
   {
@@ -59,7 +60,7 @@ const waitingListSchema = new mongoose.Schema(
     seen: { type: Boolean, default: false },
   },
   { _id: false }
-);
+); // Bekleme listesi yapısı, kullanıcı ve istek zamanı ile birlikte, aşşağıda kullanılacak
 
 const matchAdvertSchema = new mongoose.Schema(
   {
@@ -70,13 +71,13 @@ const matchAdvertSchema = new mongoose.Schema(
       index: true,
     },
 
-    name: { type: String, trim: true, required: true, maxlength: 100 },
-    startsAt: { type: Date, required: true },
+    name: { type: String, trim: true, required: true, maxlength: 100 }, // halısahanın adı
+    startsAt: { type: Date, required: true }, // ne zaman başlıyor
 
     pitch: { type: mongoose.Types.ObjectId, ref: "Pitch" }, // ← internal booking
     customPitch: customPitchSchema,
     address: addressSchema, // ← external booking
-    booking: { type: mongoose.Types.ObjectId, ref: "Booking" }, // optional link
+    booking: { type: mongoose.Types.ObjectId, ref: "Booking" }, // hangi rezervasyonla ilişkili (eğer platfomr içi ise)
 
     playersNeeded: {
       type: Number,
@@ -90,24 +91,24 @@ const matchAdvertSchema = new mongoose.Schema(
 
       default: 0,
     },
-    participants: { type: [participantSchema], default: [] }, // players who joined
-    waitingList: { type: [waitingListSchema], default: [] },
+    participants: { type: [participantSchema], default: [] }, // Katılımcılar
+    waitingList: { type: [waitingListSchema], default: [] }, // Bekleme listesi
 
-    notes: { type: String, trim: true, maxlength: 300 },
+    notes: { type: String, trim: true, maxlength: 300 }, // Ek notlar
     status: {
       type: String,
       enum: ["open", "full", "cancelled", "expired", "completed"],
       default: "open",
-    },
-    adminAdvert: { type: [mongoose.Types.ObjectId], ref: "User", default: [] },
+    }, // Durum: açık, dolu, iptal edildi, süresi dolmuş, tamamlandı
+    adminAdvert: { type: [mongoose.Types.ObjectId], ref: "User", default: [] }, // Adminler, whatapp grub adminler gibi
     isDeleted: {
       type: Boolean,
       default: false,
-    },
+    }, // Silinmiş mi? (soft delete)
     archived: {
       type: Boolean,
       default: false,
-    },
+    }, // Arşivlenmiş mi? (soft delete)
   },
   { timestamps: true }
 );
@@ -153,6 +154,12 @@ matchAdvertSchema.index({ startsAt: 1 });
 matchAdvertSchema.index({ status: 1 });
 
 matchAdvertSchema.index({ "address.location": "2dsphere" });
+
+matchAdvertSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    await AdvertChatMessage.deleteMany({ advert: doc._id });
+  }
+});
 
 const Advert = mongoose.model("Advert", matchAdvertSchema);
 module.exports = Advert;

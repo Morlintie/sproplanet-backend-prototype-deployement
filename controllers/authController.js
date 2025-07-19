@@ -107,7 +107,6 @@ const login = async (req, res) => {
       email: user.email,
       role: user.role,
       userId: user._id,
-      favoritePitches: user.favoritePitches,
     };
 
     let refreshToken = await Token.findOne({ user: user._id });
@@ -343,7 +342,6 @@ const setGoogleCookie = async (req, res) => {
     email: user.email,
     role: user.role,
     userId: user._id,
-    favoritePitches: user.favoritePitches,
   };
 
   let refreshToken = await Token.findOne({ user: user._id });

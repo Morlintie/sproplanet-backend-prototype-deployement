@@ -1970,7 +1970,7 @@ const deleteAdvert = async (req, res) => {
  if(!advert) {
   throw new NotFoundError("Advert not found")
  }
- await Advert.deleteOne({_id:id})
+ await Advert.findOneAndDelete({_id:id})
  res.status(StatusCodes.NO_CONTENT).json({message: "Advert deleted successfully"})
 };
 
