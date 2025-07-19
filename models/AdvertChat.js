@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const attachmentSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
+    public_id: { type: String, required: true },
     mimeType: { type: String }, // image/png, video/mp4 …
     caption: { type: String, trim: true, maxlength: 120 },
   },
@@ -12,12 +13,12 @@ const attachmentSchema = new mongoose.Schema(
 const messageSchema = new mongoose.Schema(
   {
     advert: {
-      type: Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: "MatchAdvert",
       required: true,
       index: true,
     },
-    sender: { type: Types.ObjectId, ref: "User", required: true },
+    sender: { type: mongoose.Types.ObjectId, ref: "User", required: true },
 
     type: {
       type: String,
@@ -28,7 +29,7 @@ const messageSchema = new mongoose.Schema(
     attachments: [attachmentSchema],
 
     /* read receipts — store ONLY who has *not* seen to keep arrays short */
-    notSeenBy: [{ type: Types.ObjectId, ref: "User", index: true }],
+    notSeenBy: [{ type: mongoose.Types.ObjectId, ref: "User", index: true }],
     isDeleted: { type: Boolean, default: false },
     archived: { type: Boolean, default: false },
   },

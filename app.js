@@ -111,6 +111,11 @@ notificationNamespace.on("connection", (socket) => {
     console.log(`Client with id: ${socket.id} joined room: ${roomId}`);
   });
 
+  socket.on("leaveRoom", ({ roomId }) => {
+    socket.leave(roomId);
+    console.log(`Client with id: ${socket.id} left room: ${roomId}`);
+  });
+
   socket.on("disconnect", () => {
     for (const [key, value] of Object.entries(notificationOnlineUsers)) {
       if (value === socket.id) {
@@ -133,6 +138,11 @@ chatNamespace.on("connection", (socket) => {
   socket.on("joinRoom", ({ roomId }) => {
     socket.join(roomId);
     console.log(`Client with id: ${socket.id} joined room: ${roomId}`);
+  });
+
+  socket.on("leaveRoom", ({ roomId }) => {
+    socket.leave(roomId);
+    console.log(`Client with id: ${socket.id} left room: ${roomId}`);
   });
 
   socket.on("disconnect", () => {

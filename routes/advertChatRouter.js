@@ -4,22 +4,30 @@ const {
   sendMessage,
   getMessages,
   getUnseenMessages,
-  updateMessage,
+  getSingleMessage,
   softDeleteMessage,
   markMessageSeen,
   deleteMessage,
 } = require("../controllers/advertChatController");
+const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
+const roleMiddleware = require("../middlewares/roleMiddleware");
 const router = express.Router();
 
-router.post("/send", sendMessage);
+router.post("/send/:id", authenticationMiddleware, sendMessage);
 
-router.get("/messages/:id", getMessages);
-router.get("/unseen/:id", getUnseenMessages);
+router.get("/messages/:id", authenticationMiddleware, getMessages);
+router.get("/unseen", authenticationMiddleware, getUnseenMessages);
+router.get("/message/:id", authenticationMiddleware, getSingleMessage);
 
-router.patch("/update/:id", updateMessage);
-router.patch("/delete/:id", softDeleteMessage),
-  router.patch("/mark/:id", markMessageSeen);
+router.patch("/delete/:id", authenticationMiddleware, softDeleteMessage);
+router.patch("/mark/:id", authenticationMiddleware, markMessageSeen);
 
-router.delete("/delete/:id", deleteMessage);
+router.delete(
+  "/delete/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "admin");
+  },
+  deleteMessage
+);
 
 module.exports = router;
