@@ -168,7 +168,12 @@ const getMessages = async (req, res) => {
     })
       .select(userSelectedFields)
       .sort({ createdAt: 1 })
-      .lean();
+      .lean()
+      .populate({
+        path: "sender",
+        select:
+          "name profilePicture email _id school age goalKeeper phoneNumber description",
+      });
     if (!messages) {
       throw new NotFoundError("Messages not found.");
     }
@@ -308,7 +313,40 @@ const getSingleMessage = async (req, res) => {
       archived: false,
     })
       .select(userSelectedFields)
-      .lean();
+      .lean()
+      .populate({
+        path: "sender",
+        select:
+          "name profilePicture email _id school age goalKeeper phoneNumber description",
+      })
+      .populate({
+        path: "advert",
+        select: "-__v -isDeleted -archived ",
+        populate: {
+          path: "booking",
+          select: "start status totalPlayers price notes ",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description",
+        },
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed",
+        },
+      })
+      .populate({
+        path: "notSeenBy",
+        select:
+          "name profilePicture email _id school age goalKeeper phoneNumber description",
+      });
     if (!message) {
       throw new NotFoundError("Message not found or you are not the sender");
     }
