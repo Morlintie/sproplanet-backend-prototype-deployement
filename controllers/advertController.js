@@ -915,7 +915,7 @@ const getParticipantAdverts = async (req, res) => {
   const {userId, role} = req.user
 
   if(role === "user") {
-    console.log("This is running")
+  
   
     const userSelectedFields = "-__v -isDeleted -archived ";
     const adverts = await Advert.find({
@@ -1025,6 +1025,49 @@ const getWaitingListAdverts = async (req, res) => {
     res.status(StatusCodes.OK).json({
       adverts
     })
+  }
+}
+
+const inviteLinkAdvert = async (req, res) => {
+  const {id} = req.params
+  const {role, userId} = req.user
+  const {date} = req.query
+  if(!id || !date) {
+    throw new BadRequestError("Please provide required data")
+  }
+
+  if(role === "user") {
+
+    const advert = await Advert.findOne({_id: id, isDeleted: false, archived: false}).select().lean()
+    if(!advert) {
+      throw new NotFoundError("Advert not found")
+    }
+    if(advert.status === "full") {
+      throw new BadRequestError("Advert is full")
+    }
+    const now = new Date()
+    if(date < now - 1000 * 60 * 60 * 24 * 3) {
+      throw new BadRequestError("The invite link has been expired")
+    }
+    if(advert.participants.some((p) => p.user.toString()=== userId)) {
+      throw new BadRequestError("You are already a participant in this advert")
+    }
+    if(advert.waitingList.some((w) => w.user.toString() === userId)) {
+      throw new BadRequestError("You have already requested to join this advert")
+    }
+    
+  await Advert.updateOne({
+    _id: id,
+    isDeleted: false, archived: false
+  }, {
+    $addToSet: {
+      participants: {
+        user: userId
+      }
+    }
+  })
+  res.redirect(`/our/advert/chat/frontend`)
+
   }
 }
 
@@ -2058,12 +2101,131 @@ const leaveAdvert = async (req, res) => {
     })) {
       throw new BadRequestError("You are not a participant in this advert")
     }
+
+    let updatedAdvert;
+    const userSelectedFields = "-__v -isDeleted -archived ";
     if(advert.createdBy.toString() === userId  ) {
-      throw new BadRequestError("You cannot leave an advert you created, please delete it instead")
+      if(advert.adminAdvert.length > 2) {
+        const newCreator = advert.adminAdvert.filter((a) => {
+          return !a.toString() === userId
+        })
+        updatedAdvert = await Advert.findOneAndUpdate({
+          _id: id,
+          isDeleted: false,
+          archived: false
+        }, {
+          $pull: {
+            participants: {$elemMatch: {user: userId}},
+            adminAdvert: userId,
+            
+
+          },
+          createdBy: newCreator[0]
+        }, {
+          new: true, runValidators: true
+        }).select(userSelectedFields).lean().populate({
+        path: "booking",
+        select : "start status totalPlayers price notes "
+      }).populate({
+        path: "participants.user",
+        select: "name email school age profilePicture goalKeeper phoneNumber description"
+      }).populate({
+        path: "waitingList.user",
+        select: "name email school age profilePicture goalKeeper phoneNumber description"
+      }).populate({
+        path: "pitch",
+        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+      });
+         if(advert.participants.some((p) => {
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id.toString()).emit("leave-participant", {
+    advert: updatedAdvert,
+  })
+}
+return res.status(StatusCodes.OK).json({
+  message: "You have left the advert successfully, and a new creator has been assigned"
+})
+      }
+      if(advert.participants.length > 2) {
+        const newCreator = advert.participants.filter((p) => {
+          return !(p.user._id.toString() === userId)
+        })
+       
+       await Advert.updateOne({
+          _id: id,
+          isDeleted: false,
+          archived: false
+        }, {
+          $pull: {
+            participants: {$elemMatch: {user: userId}},
+            adminAdvert: userId,
+          
+          },
+         
+          createdBy: newCreator[0].user._id
+
+        })
+        updatedAdvert = await Advert.findOneAndUpdate({
+          _id: id,
+          isDeleted: false,
+          archived: false
+        }, {
+          $addToSet: {
+            adminAdvert: newCreator[0].user._id
+          }
+
+          
+         
+       
+
+        }, {
+          new: true, runValidators: true
+        }).select(userSelectedFields).lean().populate({
+        path: "booking",
+        select : "start status totalPlayers price notes "
+      }).populate({
+        path: "participants.user",
+        select: "name email school age profilePicture goalKeeper phoneNumber description"
+      }).populate({
+        path: "waitingList.user",
+        select: "name email school age profilePicture goalKeeper phoneNumber description"
+      }).populate({
+        path: "pitch",
+        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+      });
+
+          if(advert.participants.some((p) => {
+  return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
+})) {
+  notificationNamespace.to(advert._id.toString()).emit("leave-participant", {
+    advert: updatedAdvert,
+  })
+}
+   return res.status(StatusCodes.OK).json({
+    message: "You have left the advert successfully, and a new creator has been assigned"
+   })
+
+      }
+
+      await Advert.updateOne({
+        _id: id,
+        isDeleted: false,
+        archived: false
+      }, {
+        isDeleted: true,
+        archived: true
+      })
+
+      return res.status(StatusCodes.OK).json({
+        message: "You have left the advert successfully, and it has been deleted"
+      })
+
+      
 
     }
-    const userSelectedFields = "-__v -isDeleted -archived ";
-    const updatedAdvert = await Advert.findOneAndUpdate({
+    
+     updatedAdvert = await Advert.findOneAndUpdate({
       _id: id,
       isDeleted: false,
       archived: false
@@ -2251,6 +2413,7 @@ module.exports = {
   getPerviousUserAdverts,
   getCurrentUserAdverts,
   getSingleAdvert,
+  inviteLinkAdvert,
   updateAdvert,
   softDeleteAdvert,
   cancelAdvert,

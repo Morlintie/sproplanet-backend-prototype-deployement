@@ -9,6 +9,7 @@ const {
   getPerviousUserAdverts,
   getCurrentUserAdverts,
   getSingleAdvert,
+  inviteLinkAdvert,
   updateAdvert,
   softDeleteAdvert,
   cancelAdvert,
@@ -46,6 +47,7 @@ router.get(
 );
 router.get("/participant", authenticationMiddleware, getParticipantAdverts);
 router.get("/waiting-list", authenticationMiddleware, getWaitingListAdverts);
+router.get("/invite/:id", authenticationMiddleware, inviteLinkAdvert);
 router.get("/:id", passUserInfoMiddleware, getSingleAdvert);
 
 router.patch("/delete/:id", authenticationMiddleware, softDeleteAdvert);
