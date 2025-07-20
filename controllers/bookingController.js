@@ -475,7 +475,7 @@ const getSingleBooking = async (req, res) => {
     throw new BadRequestError("Please provide required data");
   }
 
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields =
       "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId ";
     const booking = await Booking.findOne({
@@ -565,7 +565,7 @@ const payBooking = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const booking = await Booking.findOneAndUpdate(
       { _id: id, bookedBy: userId },
       { "price.paid": true },
@@ -631,7 +631,7 @@ const updateBooking = async (req, res) => {
       delete updateObject[key];
     }
   });
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields =
       "-__v -price.middlemanShare -price.middlemanTax -price.middlemanTxId -price.pitchTxId ";
     const booking = await Booking.findOneAndUpdate(
@@ -848,7 +848,7 @@ const cancelBookingUser = async (req, res) => {
   if (!reason) {
     throw new BadRequestError("Please provide a reason for the cancellation");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const preBooking = await Booking.findOne({
       _id: id,
       bookedBy: userId,
@@ -1013,7 +1013,7 @@ const refundBooking = async (req, res) => {
   if (!reason) {
     throw new BadRequestError("Please provide a reason for the refund");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const booking = await Booking.findOne({ _id: id, bookedBy: userId }).lean();
     if (!booking) {
       throw new NotFoundError("Booking not found for this user");

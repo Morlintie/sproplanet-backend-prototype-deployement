@@ -44,7 +44,7 @@ const createInvite = async (req, res) => {
       "Recipient is already on the waiting list of this advert"
     );
   }
-  if (userRole === "user") {
+  if (userRole === "user" || userRole === "companyOwner") {
     const sender = userId;
     if (!sender) {
       throw new BadRequestError("Please provide all required data");
@@ -137,7 +137,7 @@ const getUserInvites = async (req, res) => {
     }
     queryObject.status = status;
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived ";
     const page = req.query.page ? Number(req.query.page) : 1;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
@@ -271,7 +271,7 @@ const getSendUserInvites = async (req, res) => {
     }
     queryObject.status = status;
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived";
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     const page = req.query.page ? Number(req.query.page) : 1;
@@ -393,7 +393,7 @@ const getSingleInvite = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide invitation id");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived";
     const invite = await Invitation.findOneAndUpdate(
       {
@@ -499,7 +499,7 @@ const revokeInvite = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived";
     const invite = await Invitation.findOneAndUpdate(
       {
@@ -627,7 +627,7 @@ const acceptInvite = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived";
     const invite = await Invitation.findOne({
       _id: id,
@@ -887,7 +887,7 @@ const rejectInvite = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data ");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived";
     const invite = await Invitation.findOneAndUpdate(
       {
@@ -995,7 +995,7 @@ const softDeleteInvite = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived";
     const invite = await Invitation.findOneAndUpdate(
       {

@@ -177,7 +177,7 @@ const requestAdvert = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const advert = await Advert.findOne({ _id: id }).lean();
     if (!advert) {
       throw new NotFoundError("Advert not found");
@@ -567,7 +567,7 @@ const getUserAdverts = async (req, res) => {
     throw new BadRequestError("Please required data");
   }
   const userSelectedFields = "-__v -isDeleted -archived ";
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const limit = 20;
     const page = req.query.page ? parseInt(req.query.page) : 1;
     const skip = (page - 1) * limit;
@@ -657,7 +657,7 @@ const getPerviousUserAdverts = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner" ) {
     const userSelectedFields = "-__v -isDeleted -archived ";
     const limit = 20;
     const page = req.query.page ? parseInt(req.query.page) : 1;
@@ -753,7 +753,7 @@ const getCurrentUserAdverts = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived ";
     const limit = 20;
     const page = req.query.page ? parseInt(req.query.page) : 1;
@@ -850,7 +850,7 @@ const getSingleAdvert = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived ";
     
     let advert = await Advert.findOne({
@@ -932,7 +932,7 @@ const getSingleAdvert = async (req, res) => {
 const getParticipantAdverts = async (req, res) => {
   const {userId, role} = req.user
 
-  if(role === "user") {
+  if( role === "user" || role === "companyOwner") {
   
   
     const userSelectedFields = "-__v -isDeleted -archived ";
@@ -998,7 +998,7 @@ const getParticipantAdverts = async (req, res) => {
 
 const getWaitingListAdverts = async (req, res) => {
   const {userId, role} = req.user
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived"
     const adverts = await Advert.find({
       waitingList: {$elemMatch: {user: userId}},
@@ -1060,7 +1060,7 @@ const inviteLinkAdvert = async (req, res) => {
     throw new BadRequestError("Please provide required data")
   }
 
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
 
     const advert = await Advert.findOne({_id: id, isDeleted: false, archived: false}).select().lean()
     if(!advert) {
@@ -1111,7 +1111,7 @@ const updateAdvert = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived ";
     const advert = await Advert.findOne({_id: id, isDeleted: false, archived: false}).lean()
     if(!advert) {
@@ -1440,7 +1440,7 @@ const softDeleteAdvert = async (req, res) => {
   if(!id) {
     throw new BadRequestError("Please provide required data")
   }
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
 
    
     const advert = await Advert.findOneAndUpdate({
@@ -1488,7 +1488,7 @@ const cancelAdvert = async (req, res) => {
   if(!id) {
     throw new BadRequestError("Please provide required data")
   }
-  if(role === "user") {
+  if( role === "user" || role === "companyOwner") {
 
     const preAdvert = await Advert.findOne({_id: id, isDeleted: false, archived: false}).lean()
     if(!preAdvert) {
@@ -1704,7 +1704,7 @@ const rejectRequestAdvert = async (req, res) => {
     })) {
       throw new BadRequestError("User is already a participant in this advert")
     }
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived"
   
     if(!advert.adminAdvert.includes(userId)) {
@@ -1803,7 +1803,7 @@ const addAdminToAdvert = async (req, res) => {
     })) {
       throw new BadRequestError("User is not a participant in this advert")
     }
-  if(role === "user") {
+  if(role === "user"  || role === "companyOwner") {
    
     if(!advert.adminAdvert.includes(userId)) {
       throw new ForbiddenError("You are not allowed to add admin to this advert")
@@ -1880,7 +1880,7 @@ const removeAdminFromAdvert = async(req, res) => {
   if(!id || !adminId) {
     throw new BadRequestError("Please provide all required data")
   }
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
   const advert = await Advert.findOne({
     _id: id,
     isDeleted: false,
@@ -1974,7 +1974,7 @@ const advert = await Advert.findOne({
 if(!advert) {
   throw new NotFoundError("Advert not found")
 }
-if(role === "user") {
+if(role === "user" || role === "companyOwner") {
   if(!advert.adminAdvert.includes(userId)) {
     throw new ForbiddenError("You are not allowed to mark this advert request as seen")
   }
@@ -2075,7 +2075,7 @@ const revokeRequestAdvert = async (req, res) => {
   if(!advert) {
     throw new NotFoundError("Advert not found")
   }
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
     if(!advert.waitingList.some((w) => {
       return w.user.toString() === userId
     })) {
@@ -2143,7 +2143,7 @@ const leaveAdvert = async (req, res) => {
   if(!advert) {
     throw new NotFoundError("Advert not found")
   }
-  if(role === "user") {
+  if(role === "user" || role === "companyOwner") {
     if(!advert.participants.some((p) => {
       return p.user.toString() === userId
     })) {
@@ -2368,14 +2368,14 @@ const expelFromAdvert = async (req, res) => {
  if(!id || !participantId) {
   throw new BadRequestError("Please provide required data")
  }
- if(role === "user" && userId === participantId) {
+ if((role === "user" || role === "companyOwner") && userId === participantId) {
   throw new BadRequestError("You cannot expel yourself from an advert, please leave it instead")
  }
  const advert = await Advert.findOne({_id: id, isDeleted: false, archived: false}).lean()
  if(!advert) {
   throw new NotFoundError("Advert not found")
  }
- if(role === "user") {
+ if(role === "user" || role === "companyOwner") {
   if(!advert.adminAdvert.some((p) => {
     return p.toString() === userId
   })) {
