@@ -118,7 +118,7 @@ throw new BadRequestError("Please provide participants array")
   const realBooking = await Booking.findOne({ _id: booking }).lean().populate({
     path: "pitch",
     select:
-      "name description location specifications facilities pricing media contact rating status refundAllowed ",
+      "name description location specifications facilities pricing media contact rating status refundAllowed _id ",
   });
   if (!realBooking) {
     throw new NotFoundError("Booking not found");
@@ -403,16 +403,19 @@ const getAllAdverts = async (req, res) => {
       .limit(limit)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!adverts || adverts.length === 0) {
       throw new NotFoundError("No adverts found");
@@ -513,16 +516,19 @@ const getVicinityAdverts = async (req, res) => {
       .limit(limit)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!adverts || adverts.length === 0) {
       throw new NotFoundError("No adverts found in vicinity");
@@ -576,16 +582,19 @@ const getUserAdverts = async (req, res) => {
       .limit(limit)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!adverts || adverts.length === 0) {
       throw new NotFoundError("No adverts found for this user");
@@ -665,16 +674,19 @@ const getPerviousUserAdverts = async (req, res) => {
       .limit(limit)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"  
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!adverts || adverts.length === 0) {
       throw new NotFoundError("No previous adverts found for this user");
@@ -758,16 +770,19 @@ const getCurrentUserAdverts = async (req, res) => {
       .limit(limit)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!adverts || adverts.length === 0) {
       throw new NotFoundError("No previous adverts found for this user");
@@ -846,16 +861,19 @@ const getSingleAdvert = async (req, res) => {
       .select(userSelectedFields)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!advert) {
       throw new NotFoundError("Advert not found");
@@ -924,16 +942,19 @@ const getParticipantAdverts = async (req, res) => {
       isDeleted: false, archived: false
     }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
     if(!adverts || adverts.length === 0) {
       throw new NotFoundError("No adverts found for this user")
@@ -984,16 +1005,19 @@ const getWaitingListAdverts = async (req, res) => {
       isDeleted: false, archived: false
     }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
     if(!adverts || adverts.length === 0) {
       throw new NotFoundError("No advert found for this user")
@@ -1172,16 +1196,19 @@ const updateAdvert = async (req, res) => {
         .select(userSelectedFields)
         .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
      
       return res.status(StatusCodes.OK).json({
@@ -1193,7 +1220,7 @@ const updateAdvert = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name description location specifications facilities pricing media contact rating status refundAllowed ",
+          "name description location specifications facilities pricing media contact rating status refundAllowed _id " ,
       });
     if (!realBooking) {
       throw new NotFoundError("Booking not found");
@@ -1247,16 +1274,19 @@ const updateAdvert = async (req, res) => {
       .select(userSelectedFields)
       .lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     if (!updatedAdvert) {
       throw new NotFoundError("Advert not found");
@@ -1344,7 +1374,7 @@ const updateAdvert = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name description location specifications facilities pricing media contact rating status refundAllowed ",
+          "name description location specifications facilities pricing media contact rating status refundAllowed _id ",
       });
     if (!realBooking) {
       throw new NotFoundError("Booking not found");
@@ -1484,16 +1514,19 @@ const cancelAdvert = async (req, res) => {
       runValidators: true, new: true, timestamps:true
     }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
     
     res.status(StatusCodes.OK).json({
@@ -1579,16 +1612,19 @@ const acceptRequestAdvert = async (req, res) => {
   },
 {new: true, runValidators: true}).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
 if(advert.participants.some((p) => {
   return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
@@ -1695,16 +1731,19 @@ const rejectRequestAdvert = async (req, res) => {
       runValidators: true
     }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });;
     res.status(StatusCodes.OK).json({
       advert: updatedAdvert
@@ -1788,16 +1827,19 @@ const addAdminToAdvert = async (req, res) => {
 
     }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
     res.status(StatusCodes.OK).json({
       advert: updatedAdvert
@@ -1865,16 +1907,19 @@ const removeAdminFromAdvert = async(req, res) => {
     new: true, runValidators: true
   }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
   res.status(StatusCodes.OK).json({
     advert: updatedAdvert
@@ -1946,16 +1991,19 @@ if(role === "user") {
     new: true, runValidators: true
   }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
 
   if(advert.participants.some((p) => {
@@ -2125,16 +2173,19 @@ const leaveAdvert = async (req, res) => {
           new: true, runValidators: true
         }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
          if(advert.participants.some((p) => {
   return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
@@ -2183,16 +2234,19 @@ return res.status(StatusCodes.OK).json({
           new: true, runValidators: true
         }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
 
           if(advert.participants.some((p) => {
@@ -2239,16 +2293,19 @@ return res.status(StatusCodes.OK).json({
       new: true, runValidators: true
     }).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
     if(advert.participants.some((p) => {
   return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null
@@ -2347,16 +2404,19 @@ const expelFromAdvert = async (req, res) => {
    }, {
     new: true, runValidators: true}).select(userSelectedFields).lean().populate({
         path: "booking",
-        select : "start status totalPlayers price notes "
+        select : "start status totalPlayers price notes _id "
       }).populate({
         path: "participants.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "waitingList.user",
-        select: "name email school age profilePicture goalKeeper phoneNumber description"
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id"
       }).populate({
         path: "pitch",
-        select:"name description specifications facilities pricing media contact rating status refundAllowed"
+        select:"name description specifications facilities pricing media contact rating status refundAllowed _id"
+      }).populate({
+        path: "createdBy",
+        select: "name email school age profilePicture goalKeeper phoneNumber description _id "
       });
     if(advert.participants.some((p) => {
   return notificationOnlineUsers[p.user.toString()] !== undefined && notificationOnlineUsers[p.user.toString()] !== null

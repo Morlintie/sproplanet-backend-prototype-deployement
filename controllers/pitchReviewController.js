@@ -86,11 +86,11 @@ const getAllReviews = async (req, res) => {
     .lean()
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     });
   if (!reviews && reviews.length === 0) {
     throw new NotFoundError("No reviews found.");
@@ -116,11 +116,11 @@ const getNextReviews = async (req, res) => {
     .select("-__v -isDeleted -archived")
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     });
   if (!reviews || reviews.length === 0) {
     throw new NotFoundError("No reviews found.");
@@ -146,11 +146,11 @@ const getReview = async (req, res) => {
     .select("-__v -isDeleted -archived")
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     });
   if (!review) {
     throw new NotFoundError("Review not found.");
@@ -183,11 +183,11 @@ const getCompanyReviews = async (req, res) => {
       .lean()
       .populate({
         path: "user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       })
       .populate({
         path: "replies.user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       });
     if (!reviews || reviews.length === 0) {
       throw new NotFoundError("No reviews found.");
@@ -227,11 +227,11 @@ const getCompanyReviews = async (req, res) => {
       .lean()
       .populate({
         path: "user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       })
       .populate({
         path: "replies.user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       });
     if (!reviews || reviews.length === 0) {
       throw new NotFoundError("No reviews found.");
@@ -260,10 +260,10 @@ const getUserReviews = async (req, res) => {
     .select("-__v -isDeleted -archived")
     .skip(skip)
     .lean()
-    .populate({ path: "user", select: "name profilePicture email" })
+    .populate({ path: "user", select: "name profilePicture email _id" })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     });
   if (!reviews || reviews.length === 0) {
     throw new NotFoundError("No reviews found.");
@@ -316,11 +316,11 @@ const updateReview = async (req, res) => {
   )
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .select("-__v -isDeleted -archived");
 
@@ -403,11 +403,11 @@ const insertImages = async (req, res) => {
   )
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .select("-__v -isDeleted -archived");
   res.status(StatusCodes.OK).json({ review: updatedReview });
@@ -482,8 +482,8 @@ const replyReview = async (req, res) => {
     },
     { new: true, runValidators: true }
   )
-    .populate({ path: "user", select: "name profilePicture email" })
-    .populate({ path: "replies.user", select: "name profilePicture email" })
+    .populate({ path: "user", select: "name profilePicture email _id" })
+    .populate({ path: "replies.user", select: "name profilePicture email _id" })
     .select("-__v -isDeleted -archived");
   if (!review) {
     throw new NotFoundError("Review not found.");
@@ -535,11 +535,11 @@ const editReply = async (req, res) => {
   )
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .select("-__v -isDeleted -archived");
   res.status(StatusCodes.OK).json({ review: updatedReply });
@@ -642,8 +642,11 @@ const editReplies = async (req, res) => {
     replyUpdateObject,
     { new: true, runValidators: true }
   )
-    .populate({ path: "user", select: "name profilePicture email" })
-    .populate({ path: "replies.user", select: "name profilePicture email" });
+    .populate({ path: "user", select: "name profilePicture email _id" })
+    .populate({
+      path: "replies.user",
+      select: "name profilePicture email _id",
+    });
   if (!reviews || reviews.length === 0) {
     throw new NotFoundError("No review found.");
   }
@@ -702,11 +705,11 @@ const likeReview = async (req, res) => {
     )
       .populate({
         path: "user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       })
       .populate({
         path: "replies.user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       });
     res.status(StatusCodes.OK).json({ review });
   } else {
@@ -720,11 +723,11 @@ const likeReview = async (req, res) => {
     )
       .populate({
         path: "user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       })
       .populate({
         path: "replies.user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       });
     res.status(StatusCodes.OK).json({ review });
   }
@@ -750,11 +753,11 @@ const dislikeReview = async (req, res) => {
     )
       .populate({
         path: "user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       })
       .populate({
         path: "replies.user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       });
     res.status(StatusCodes.OK).json({ review });
   } else {
@@ -768,11 +771,11 @@ const dislikeReview = async (req, res) => {
     )
       .populate({
         path: "user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       })
       .populate({
         path: "replies.user",
-        select: "name profilePicture email",
+        select: "name profilePicture email _id",
       });
 
     res.status(StatusCodes.OK).json({ review });

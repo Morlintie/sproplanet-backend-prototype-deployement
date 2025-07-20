@@ -257,11 +257,11 @@ const getSinglePitch = async (req, res) => {
     .select("-__v")
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     });
   const totalReviews = await PitchReview.countDocuments({
     pitch: id,
@@ -712,11 +712,11 @@ const getCompanyUserPitch = async (req, res) => {
     .select("-__v")
     .populate({
       path: "user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     })
     .populate({
       path: "replies.user",
-      select: "name profilePicture email",
+      select: "name profilePicture email _id",
     });
   const totalReviews = await PitchReview.countDocuments({
     pitch: pitch._id,

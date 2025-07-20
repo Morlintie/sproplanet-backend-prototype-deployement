@@ -106,19 +106,22 @@ const getPreviousUserBookings = async (req, res) => {
     .populate({
       path: "pitch",
       select:
-        "name location facilities specifications pricing media contact rating refundAllowed",
+        "name location facilities specifications pricing media contact rating refundAllowed _id",
     })
     .populate({
       path: "bookedBy",
-      select: "name email profilePicture goalKeeper description",
+      select:
+        "name email profilePicture goalKeeper  description phoneNumber _id",
     })
     .populate({
       path: "cancel.by",
-      select: "name email profilePicture goalKeeper phone description logo ",
+      select:
+        "name email profilePicture  goalKeeper phone description logo phoneNumber _id  ",
     })
     .populate({
       path: "refunded.by",
-      select: "name email profilePicture goalKeeper phone description logo",
+      select:
+        "name email profilePicture  goalKeeper phone description logo phoneNumber _id",
     });
   if (!previousBookings || previousBookings.length === 0) {
     throw new NotFoundError("No pervious bookings found for this user");
@@ -150,19 +153,22 @@ const getCurrentUserBookings = async (req, res) => {
     .populate({
       path: "pitch",
       select:
-        "name location facilities specifications pricing media contact rating refundAllowed",
+        "name location facilities specifications pricing media contact rating refundAllowed _id",
     })
     .populate({
       path: "bookedBy",
-      select: "name email profilePicture goalKeeper description",
+      select:
+        "name email profilePicture goalKeeper phoneNumber description _id",
     })
     .populate({
       path: "cancel.by",
-      select: "name email profilePicture goalKeeper phone description logo ",
+      select:
+        "name email profilePicture goalKeeper phoneNumber description logo _id ",
     })
     .populate({
       path: "refunded.by",
-      select: "name email profilePicture goalKeeper phone description logo",
+      select:
+        "name email profilePicture goalKeeper phoneNumber description logo _id",
     });
 
   if (!currentUserBookings || currentUserBookings.length === 0) {
@@ -206,19 +212,22 @@ const getCompanyBookings = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description phoneNumber logo _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description phoneNumber logo _id",
       });
     if (!companyBookings || companyBookings.length === 0) {
       throw new NotFoundError("No bookings found for this company");
@@ -299,19 +308,22 @@ const getPreviousCompanyBookings = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     if (!companyBookings || companyBookings.length === 0) {
       throw new NotFoundError("No bookings found for this company");
@@ -394,19 +406,22 @@ const getCurrentCompanyBookings = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     if (!companyBookings || companyBookings.length === 0) {
       throw new NotFoundError("No bookings found for this company");
@@ -472,19 +487,22 @@ const getSingleBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     if (!booking) {
       throw new NotFoundError("Booking not found for this user");
@@ -505,19 +523,22 @@ const getSingleBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     if (!booking) {
       throw new NotFoundError("Booking not found for this company");
@@ -554,19 +575,22 @@ const payBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     if (!booking) {
       throw new NotFoundError("Booking not found fort this user");
@@ -623,19 +647,22 @@ const updateBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     if (!booking) {
       throw new NotFoundError("Booking not found");
@@ -703,20 +730,22 @@ const replyBooking = async (req, res) => {
         .populate({
           path: "pitch",
           select:
-            "name location facilities specifications pricing media contact rating refundAllowed",
+            "name location facilities specifications pricing media contact rating refundAllowed _id",
         })
         .populate({
           path: "bookedBy",
-          select: "name email profilePicture goalKeeper description",
+          select:
+            "name email profilePicture goalKeeper description phoneNumber _id",
         })
         .populate({
           path: "cancel.by",
           select:
-            "name email profilePicture goalKeeper phone description logo ",
+            "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
         })
         .populate({
           path: "refunded.by",
-          select: "name email profilePicture goalKeeper phone description logo",
+          select:
+            "name email profilePicture goalKeeper phone description logo phoneNumber _id",
         });
     } else if (status === "cancelled") {
       const { reason } = req.body;
@@ -744,20 +773,22 @@ const replyBooking = async (req, res) => {
         .populate({
           path: "pitch",
           select:
-            "name location facilities specifications pricing media contact rating refundAllowed",
+            "name location facilities specifications pricing media contact rating refundAllowed _id",
         })
         .populate({
           path: "bookedBy",
-          select: "name email profilePicture goalKeeper description",
+          select:
+            "name email profilePicture goalKeeper description phoneNumber _id",
         })
         .populate({
           path: "cancel.by",
           select:
-            "name email profilePicture goalKeeper phone description logo ",
+            "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
         })
         .populate({
           path: "refunded.by",
-          select: "name email profilePicture goalKeeper phone description logo",
+          select:
+            "name email profilePicture goalKeeper phone description logo phoneNumber _id",
         });
     }
 
@@ -854,19 +885,22 @@ const cancelBookingUser = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     res.status(StatusCodes.OK).json({
       booking,
@@ -933,19 +967,22 @@ const switchBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     res.status(StatusCodes.OK).json({
       booking,
@@ -1015,19 +1052,22 @@ const refundBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     res.status(StatusCodes.OK).json({
       booking: updatedBooking,
@@ -1112,19 +1152,22 @@ const rejectBooking = async (req, res) => {
       .populate({
         path: "pitch",
         select:
-          "name location facilities specifications pricing media contact rating refundAllowed",
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
       })
       .populate({
         path: "bookedBy",
-        select: "name email profilePicture goalKeeper description",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
       })
       .populate({
         path: "cancel.by",
-        select: "name email profilePicture goalKeeper phone description logo ",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
       })
       .populate({
         path: "refunded.by",
-        select: "name email profilePicture goalKeeper phone description logo",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
       });
     res.status(StatusCodes.OK).json({
       booking,

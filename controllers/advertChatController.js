@@ -329,17 +329,22 @@ const getSingleMessage = async (req, res) => {
         populate: {
           path: "participants.user",
           select:
-            "name email school age profilePicture goalKeeper phoneNumber description",
+            "name email school age profilePicture friends goalKeeper phoneNumber description",
         },
         populate: {
           path: "waitingList.user",
           select:
-            "name email school age profilePicture goalKeeper phoneNumber description",
+            "name email school age profilePicture friends goalKeeper phoneNumber description",
         },
         populate: {
           path: "pitch",
           select:
             "name description specifications facilities pricing media contact rating status refundAllowed",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture friends goalKeeper phoneNumber description",
         },
       })
       .populate({

@@ -152,7 +152,52 @@ const getUserInvites = async (req, res) => {
       .limit(limit)
       .skip(skip)
       .sort("-createdAt")
-      .lean();
+      .lean()
+      .populate({
+        path: "advert",
+        select: "-isDeleted, -archived -__v ",
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "booking",
+          select:
+            "_id pitch bookedBy start status price totalPlayers notes cancel refunded",
+          populate: {
+            path: "pitch",
+            select:
+              "name description specifications facilities pricing media contact rating status refundAllowed _id",
+          },
+          populate: {
+            path: "bookedBy",
+            select:
+              "name email school age profilePicture goalKeeper phoneNumber description _id",
+          },
+        },
+      })
+      .populate({
+        path: "sender",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      });
+
     if (!invites || invites.length === 0) {
       throw new NotFoundError("No invites found");
     }
@@ -241,7 +286,52 @@ const getSendUserInvites = async (req, res) => {
       .limit(limit)
       .skip(skip)
       .sort("-createdAt")
-      .lean();
+      .lean()
+      .populate({
+        path: "advert",
+        select: "-isDeleted, -archived -__v ",
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "booking",
+          select:
+            "_id pitch bookedBy start status price totalPlayers notes cancel refunded",
+          populate: {
+            path: "pitch",
+            select:
+              "name description specifications facilities pricing media contact rating status refundAllowed _id",
+          },
+          populate: {
+            path: "bookedBy",
+            select:
+              "name email school age profilePicture goalKeeper phoneNumber description _id",
+          },
+        },
+      })
+      .populate({
+        path: "recipient",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      });
+
     if (!invites || invites.length === 0) {
       throw new NotFoundError("No invites found");
     }
@@ -322,7 +412,57 @@ const getSingleInvite = async (req, res) => {
       }
     )
       .select(userSelectedFields)
-      .lean();
+      .lean()
+      .populate({
+        path: "advert",
+        select: "-isDeleted, -archived -__v ",
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "booking",
+          select:
+            "_id pitch bookedBy start status price totalPlayers notes cancel refunded",
+          populate: {
+            path: "pitch",
+            select:
+              "name description specifications facilities pricing media contact rating status refundAllowed _id",
+          },
+          populate: {
+            path: "bookedBy",
+            select:
+              "name email school age profilePicture goalKeeper phoneNumber description _id",
+          },
+        },
+      })
+      .populate({
+        path: "recipient",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      })
+      .populate({
+        path: "sender",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      });
+
     if (!invite) {
       throw new NotFoundError("Invitation not found");
     }
@@ -380,7 +520,52 @@ const revokeInvite = async (req, res) => {
       }
     )
       .select(userSelectedFields)
-      .lean();
+      .lean()
+      .populate({
+        path: "advert",
+        select: "-isDeleted, -archived -__v ",
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "booking",
+          select:
+            "_id pitch bookedBy start status price totalPlayers notes cancel refunded",
+          populate: {
+            path: "pitch",
+            select:
+              "name description specifications facilities pricing media contact rating status refundAllowed _id",
+          },
+          populate: {
+            path: "bookedBy",
+            select:
+              "name email school age profilePicture goalKeeper phoneNumber description _id",
+          },
+        },
+      })
+      .populate({
+        path: "recipient",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      });
+
     if (!invite) {
       throw new NotFoundError("Invitation not found or cannot be revoked");
     }
@@ -521,7 +706,52 @@ const acceptInvite = async (req, res) => {
       }
     )
       .select(userSelectedFields)
-      .lean();
+      .lean()
+      .populate({
+        path: "advert",
+        select: "-isDeleted, -archived -__v ",
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "booking",
+          select:
+            "_id pitch bookedBy start status price totalPlayers notes cancel refunded",
+          populate: {
+            path: "pitch",
+            select:
+              "name description specifications facilities pricing media contact rating status refundAllowed _id",
+          },
+          populate: {
+            path: "bookedBy",
+            select:
+              "name email school age profilePicture goalKeeper phoneNumber description _id",
+          },
+        },
+      })
+      .populate({
+        path: "sender",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      });
+
     if (notificationOnlineUsers[invite.sender]) {
       notificationNamespace
         .to(notificationOnlineUsers[invite.sender])
@@ -671,7 +901,52 @@ const rejectInvite = async (req, res) => {
       { new: true, runValidators: true, timestamps: true }
     )
       .select(userSelectedFields)
-      .lean();
+      .lean()
+      .populate({
+        path: "advert",
+        select: "-isDeleted, -archived -__v ",
+        populate: {
+          path: "pitch",
+          select:
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
+        },
+        populate: {
+          path: "createdBy",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "participants.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "waitingList.user",
+          select:
+            "name email school age profilePicture goalKeeper phoneNumber description _id",
+        },
+        populate: {
+          path: "booking",
+          select:
+            "_id pitch bookedBy start status price totalPlayers notes cancel refunded",
+          populate: {
+            path: "pitch",
+            select:
+              "name description specifications facilities pricing media contact rating status refundAllowed _id",
+          },
+          populate: {
+            path: "bookedBy",
+            select:
+              "name email school age profilePicture goalKeeper phoneNumber description _id",
+          },
+        },
+      })
+      .populate({
+        path: "sender",
+        select:
+          "name email school age profilePicture goalKeeper phoneNumber description _id",
+      });
+
     if (!invite) {
       throw new NotFoundError("Invitation not found");
     }

@@ -29,6 +29,7 @@ const bookingRouter = require("./routes/bookingRouter");
 const advertRouter = require("./routes/advertRouter");
 const invitationRouter = require("./routes/InvitationRouter");
 const advertChatRouter = require("./routes/advertChatRouter");
+const chatRouter = require("./routes/chatRouter");
 //security
 const cors = require("cors");
 //others
@@ -76,6 +77,7 @@ app.use("/api/v1/booking", bookingRouter);
 app.use("/api/v1/advert", advertRouter);
 app.use("/api/v1/invitation", invitationRouter);
 app.use("/api/v1/advert-chat", advertChatRouter);
+app.use("/api/v1/chat", chatRouter);
 
 //socket setup
 

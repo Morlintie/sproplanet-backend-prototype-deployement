@@ -4,7 +4,7 @@ const invitationSchema = new mongoose.Schema(
   {
     advert: {
       type: mongoose.Types.ObjectId,
-      ref: "MatchAdvert",
+      ref: "Advert",
       required: true,
       index: true,
     },
