@@ -21,6 +21,7 @@ const { middlemanTax, pitchTax } = require("./taxes");
 const dateToIso = require("./dateToIso");
 const companyBookingQuery = require("./companyBookingQuery");
 const setupCronJobs = require("./cron");
+const { encryptMessage, decryptMessage } = require("./messageEncryption");
 
 module.exports = {
   resetPasswordEmail,
@@ -43,4 +44,6 @@ module.exports = {
   dateToIso,
   companyBookingQuery,
   setupCronJobs,
+  encryptMessage,
+  decryptMessage,
 };

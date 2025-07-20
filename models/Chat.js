@@ -1,11 +1,22 @@
 const mongoose = require("mongoose");
 const { Schema, Types } = mongoose;
+const { decryptMessage } = require("../utils");
 
-const attachmentSchema = new Schema(
+const itemsSchema = new Schema(
   {
     url: { type: String, required: true },
     public_id: { type: String, required: true },
-    mimeType: { type: String }, // image/png, video/mp4 …
+    mimeType: { type: String, required: true }, // image/png, video/mp4 …
+  },
+  {
+    _id: false,
+  }
+);
+
+const attachmentSchema = new Schema(
+  {
+    items: { type: [itemsSchema], required: true },
+
     caption: { type: String, trim: true, maxlength: 120 },
   },
   { _id: false }
@@ -30,7 +41,7 @@ const directMessageSchema = new Schema(
       default: "text",
     },
     content: { type: String, trim: true, maxlength: 2000 },
-    attachments: [attachmentSchema],
+    attachments: attachmentSchema,
 
     /* read receipt */
     seenAt: { type: Date, default: null }, // null → unseen by recipient
@@ -56,4 +67,54 @@ directMessageSchema.virtual("isSeen").get(function () {
   return !!this.seenAt;
 });
 
-module.exports = mongoose.model("ChatMessage", directMessageSchema);
+directMessageSchema.post("find", function (docs) {
+  docs.forEach((doc) => {
+    if (doc.content) {
+      doc.content = decryptMessage(doc.content);
+    }
+    if (doc.attachments) {
+      if (doc.attachments.caption) {
+        doc.attachments.caption = decryptMessage(doc.attachments.caption);
+      }
+      doc.attachments.items.forEach((item) => {
+        item.url = decryptMessage(item.url);
+      });
+    }
+  });
+});
+
+directMessageSchema.post("findOne", function (doc) {
+  if (doc) {
+    if (doc.content) {
+      doc.content = decryptMessage(doc.content);
+    }
+    if (doc.attachments) {
+      if (doc.attachments.caption) {
+        doc.attachments.caption = decryptMessage(doc.attachments.caption);
+      }
+      doc.attachments.items.forEach((item) => {
+        item.url = decryptMessage(item.url);
+      });
+    }
+  }
+});
+
+directMessageSchema.post("findOneAndUpdate", function (doc) {
+  if (doc) {
+    if (doc.content) {
+      doc.content = decryptMessage(doc.content);
+    }
+    if (doc.attachments) {
+      if (doc.attachments.caption) {
+        doc.attachments.caption = decryptMessage(doc.attachments.caption);
+      }
+      doc.attachments.items.forEach((item) => {
+        item.url = decryptMessage(item.url);
+      });
+    }
+  }
+});
+
+const Chat = mongoose.model("ChatMessage", directMessageSchema);
+
+module.exports = Chat;

@@ -1,10 +1,19 @@
 const mongoose = require("mongoose");
 
-const attachmentSchema = new mongoose.Schema(
+const itemsSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
     public_id: { type: String, required: true },
-    mimeType: { type: String }, // image/png, video/mp4 …
+    mimeType: { type: String, required: true },
+  },
+  {
+    _id: false,
+  }
+);
+
+const attachmentSchema = new mongoose.Schema(
+  {
+    items: { type: [itemsSchema], required: true },
     caption: { type: String, trim: true, maxlength: 120 },
   },
   { _id: false }
@@ -26,7 +35,7 @@ const messageSchema = new mongoose.Schema(
       default: "text",
     },
     content: { type: String, trim: true, maxlength: 2000 },
-    attachments: [attachmentSchema],
+    attachments: attachmentSchema,
 
     /* read receipts — store ONLY who has *not* seen to keep arrays short */
     notSeenBy: [{ type: mongoose.Types.ObjectId, ref: "User", index: true }],

@@ -4,6 +4,7 @@ const Advert = require("../models/Advert");
 const { chatNamespace, chatOnlineUsers } = require("../server/serverConfig");
 const { StatusCodes } = require("http-status-codes");
 const cloudinary = require("cloudinary").v2;
+const { encryptMessage } = require("../utils");
 
 const sendMessage = async (req, res) => {
   const { id } = req.params;
@@ -34,19 +35,23 @@ const sendMessage = async (req, res) => {
   }
 
   if (attachments) {
-    if (!Array.isArray(attachments) || attachments.length === 0) {
+    if (!Array.isArray(attachments.items) || attachments.items.length === 0) {
       throw new BadRequestError(
-        "Attachments must be an array and cannot be empty"
+        "Attachments must be an array with at least one item"
       );
     }
+    const encryptedCaption = attachments.caption
+      ? encryptMessage(attachments.caption)
+      : null;
+    attachments.caption = encryptedCaption;
 
     // [{content, caption, mimetype}]
-    for (let i = 0; i < attachments.length; i++) {
-      if (attachments[i].mimetype === "video/") {
-        if (!attachments[i].content.startsWith("data:video/")) {
+    for (let i = 0; i < attachments.items.length; i++) {
+      if (attachments.items[i].mimetype === "video/") {
+        if (!attachments.items[i].content.startsWith("data:video/")) {
           throw new BadRequestError("Attachment must be a video.");
         }
-        const base64String = attachments[i].content.split(",")[1];
+        const base64String = attachments.items[i].content.split(",")[1];
         const dataInBytes = Buffer.from(base64String, "base64");
         if (dataInBytes.length > 15 * 1024 * 1024) {
           throw new BadRequestError("Video size must be less than 15MB");
@@ -58,18 +63,18 @@ const sendMessage = async (req, res) => {
             folder: "tikitaka/advertChat",
           }
         );
-        attachments[i] = {
-          url: uploadResult.secure_url,
+        const encryptedUrl = encryptMessage(uploadResult.secure_url);
+        attachments.items[i] = {
+          url: encryptedUrl,
           public_id: uploadResult.public_id,
-          mimeType: attachments[i].mimeType,
-          caption: attachments[i].caption || "",
+          mimeType: attachments.items[i].mimeType,
         };
       }
-      if (attachments[i].mimetype.startsWith("image/")) {
-        if (!attachments[i].content.startsWith("data:image/")) {
+      if (attachments.items[i].mimetype.startsWith("image/")) {
+        if (!attachments.items[i].content.startsWith("data:image/")) {
           throw new BadRequestError("Attachment must be an image.");
         }
-        const base64String = attachments[i].content.split(",")[1];
+        const base64String = attachments.items[i].content.split(",")[1];
         const dataInBytes = Buffer.from(base64String, "base64");
         if (dataInBytes.length > 5 * 1024 * 1024) {
           throw new BadRequestError("Image size must be less than 5MB");
@@ -78,11 +83,11 @@ const sendMessage = async (req, res) => {
           resource_type: "image",
           folder: "tikitaka/advertChat",
         });
-        attachments[i] = {
-          url: uploadResult.secure_url,
+        const encryptedUrl = encryptMessage(uploadResult.secure_url);
+        attachments.items[i] = {
+          url: encryptedUrl,
           public_id: uploadResult.public_id,
-          mimeType: attachments[i].mimeType,
-          caption: attachments[i].caption || "",
+          mimeType: attachments.items[i].mimeType,
         };
       }
     }
@@ -107,6 +112,7 @@ const sendMessage = async (req, res) => {
       notSeenBy = [...notSeenBy, advert.participants[i].user];
     }
   }
+  const encryptedContent = content ? encryptMessage(content) : null;
   notSeenBy = notSeenBy.filter((user) => user.toString() !== userId);
   const createObject = {
     advert: id,
@@ -121,7 +127,7 @@ const sendMessage = async (req, res) => {
           ? "video"
           : "system"
         : "text",
-    content,
+    content: encryptedContent,
     attachments,
     notSeenBy,
   };
@@ -324,27 +330,27 @@ const getSingleMessage = async (req, res) => {
         select: "-__v -isDeleted -archived ",
         populate: {
           path: "booking",
-          select: "start status totalPlayers price notes ",
+          select: "start status totalPlayers price notes _id ",
         },
         populate: {
           path: "participants.user",
           select:
-            "name email school age profilePicture friends goalKeeper phoneNumber description",
+            "name email school age profilePicture friends goalKeeper phoneNumber description _id",
         },
         populate: {
           path: "waitingList.user",
           select:
-            "name email school age profilePicture friends goalKeeper phoneNumber description",
+            "name email school age profilePicture friends goalKeeper phoneNumber description _id",
         },
         populate: {
           path: "pitch",
           select:
-            "name description specifications facilities pricing media contact rating status refundAllowed",
+            "name description specifications facilities pricing media contact rating status refundAllowed _id",
         },
         populate: {
           path: "createdBy",
           select:
-            "name email school age profilePicture friends goalKeeper phoneNumber description",
+            "name email school age profilePicture friends goalKeeper phoneNumber description _id",
         },
       })
       .populate({
@@ -413,6 +419,7 @@ const softDeleteMessage = async (req, res) => {
     ) {
       chatNamespace.to(message.advert.toString()).emit("messageDeleted", {
         messageId: id,
+        advertId: message.advert,
       });
     }
     res.status(StatusCodes.NO_CONTENT).json({
@@ -450,6 +457,7 @@ const softDeleteMessage = async (req, res) => {
     ) {
       chatNamespace.to(message.advert.toString()).emit("messageDeleted", {
         messageId: id,
+        advertId: message.advert,
       });
     }
 
