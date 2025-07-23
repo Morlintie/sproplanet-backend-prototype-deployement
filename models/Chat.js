@@ -62,10 +62,7 @@ directMessageSchema.pre("validate", function (next) {
   next();
 });
 
-/* convenience virtual */
-directMessageSchema.virtual("isSeen").get(function () {
-  return !!this.seenAt;
-});
+
 
 directMessageSchema.post("find", function (docs) {
   docs.forEach((doc) => {

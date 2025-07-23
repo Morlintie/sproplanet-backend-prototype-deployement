@@ -9,6 +9,8 @@ const {
   getCompanyBookings,
   getPreviousCompanyBookings,
   getCurrentCompanyBookings,
+  getCurrentPitchBookings,
+  getPreviousPitchBookings,
   getSingleBooking,
   updateBooking,
   replyBooking,
@@ -18,6 +20,7 @@ const {
   deleteBooking,
   payBooking,
   cancelBookingUser,
+  getPitchBookings,
 } = require("../controllers/bookingController");
 
 router.post("/", authenticationMiddleware, createBooking);
@@ -46,6 +49,27 @@ router.get(
   getCurrentCompanyBookings
 );
 router.get("/pay/:id", authenticationMiddleware, payBooking);
+router.get(
+  "/pitch/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "owner", "admin");
+  },
+  getPitchBookings
+);
+router.get(
+  "/pitch/previous/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "owner", "admin");
+  },
+  getPreviousPitchBookings
+);
+router.get(
+  "/pitch/current/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "owner", "admin");
+  },
+  getCurrentPitchBookings
+);
 router.get("/:id", authenticationMiddleware, getSingleBooking);
 
 router.patch("/refund/:id", authenticationMiddleware, refundBooking);

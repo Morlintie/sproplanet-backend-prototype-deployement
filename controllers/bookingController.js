@@ -468,6 +468,321 @@ const getCurrentCompanyBookings = async (req, res) => {
   }
 };
 
+const getPitchBookings = async (req, res) => {
+  const { id } = req.params;
+  const { companyId, role } = req.user;
+  let { sort, select } = req.query;
+  const searchQuery = companyBookingQuery(req);
+  delete searchQuery?.pitch;
+  if (sort) {
+    sort = sort.split(",").join(" ");
+  } else {
+    sort = "-start";
+  }
+  if (select) {
+    select = select.split(",").join(" ");
+  }
+  const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+  const page = req.query.page ? parseInt(req.query.page) : 1;
+  const skip = (page - 1) * limit;
+  if (isNaN(page) || isNaN(limit)) {
+    throw new BadRequestError("Page and limit must be numbers");
+  }
+  if (page < 1 || limit < 1) {
+    throw new BadRequestError("Page and limit cannot be less than 1");
+  }
+
+  if (!id) {
+    throw new BadRequestError("Please provide required data");
+  }
+
+  if (role === "owner") {
+    const ownerSelectedFields =
+      "-__v -price.middlemanTax -price.middlemanTxId ";
+    const pitchBookings = await Booking.find({
+      pitch: id,
+      company: companyId,
+      ...searchQuery,
+    })
+      .select(select)
+      .select(ownerSelectedFields)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .lean()
+      .populate({
+        path: "pitch",
+        select:
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
+      })
+      .populate({
+        path: "bookedBy",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
+      })
+      .populate({
+        path: "cancel.by",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
+      })
+      .populate({
+        path: "refunded.by",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
+      });
+
+    if (!pitchBookings || pitchBookings.length === 0) {
+      throw new BadRequestError("No bookings found for this pitch");
+    }
+    const bookingCount = await Booking.countDocuments({
+      pitch: id,
+      company: companyId,
+      ...searchQuery,
+    });
+    res.status(StatusCodes.OK).json({
+      bookings: pitchBookings,
+      total: bookingCount,
+      limit,
+      count: pitchBookings.length,
+    });
+  }
+  if (role === "admin") {
+    const pitchBookings = await Booking.find({ pitch: id, ...searchQuery });
+    if (!pitchBookings || pitchBookings.length === 0) {
+      throw new BadRequestError("No bookings found for this pitch");
+    }
+    const bookingCount = await Booking.countDocuments({
+      pitch: id,
+      ...searchQuery,
+    })
+      .select(select)
+      .sort(sort);
+    res.status(StatusCodes.OK).json({
+      bookings: pitchBookings,
+      total: bookingCount,
+      limit,
+      count: pitchBookings.length,
+    });
+  }
+};
+
+const getPreviousPitchBookings = async (req, res) => {
+  const { id } = req.params;
+  const { companyId, role } = req.user;
+  let { sort, select } = req.query;
+  const searchQuery = companyBookingQuery(req);
+  delete searchQuery?.pitch;
+  delete searchQuery?.status;
+  if (sort) {
+    sort = sort.split(",").join(" ");
+  } else {
+    sort = "-start";
+  }
+  if (select) {
+    select = select.split(",").join(" ");
+  } else {
+    select = "-__v";
+  }
+  const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+  const page = req.query.page ? parseInt(req.query.page) : 1;
+  const skip = (page - 1) * limit;
+  if (isNaN(page) || isNaN(limit)) {
+    throw new BadRequestError("Page and limit must be numbers");
+  }
+  if (page < 1 || limit < 1) {
+    throw new BadRequestError("Page and limit cannot be less than 1");
+  }
+  if (!id) {
+    throw new BadRequestError("Please provide required data");
+  }
+  if (role === "owner") {
+    const ownerSelectedFields =
+      "-__v -price.middlemanTax -price.middlemanTxId ";
+    const pitchBookings = await Booking.find({
+      pitch: id,
+      company: companyId,
+      $or: [{ status: "completed" }, { status: "cancelled" }],
+      ...searchQuery,
+    })
+      .select(select)
+      .select(ownerSelectedFields)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .lean()
+      .populate({
+        path: "pitch",
+        select:
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
+      })
+      .populate({
+        path: "bookedBy",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
+      })
+      .populate({
+        path: "cancel.by",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
+      })
+      .populate({
+        path: "refunded.by",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
+      });
+    if (!pitchBookings || pitchBookings.length === 0) {
+      throw new BadRequestError("No bookings found for this pitch");
+    }
+    const bookingCount = await Booking.countDocuments({
+      pitch: id,
+      company: companyId,
+      $or: [{ status: "completed" }, { status: "cancelled" }],
+      ...searchQuery,
+    });
+    res.status(StatusCodes.OK).json({
+      bookings: pitchBookings,
+      total: bookingCount,
+      limit,
+      count: pitchBookings.length,
+    });
+  }
+  if (role === "admin") {
+    const pitchBookings = await Booking.find({
+      pitch: id,
+      $or: [{ status: "completed" }, { status: "cancelled" }],
+      ...searchQuery,
+    })
+      .select(select)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .lean();
+    if (!pitchBookings || pitchBookings.length === 0) {
+      throw new BadRequestError("No booking found for this pitch");
+    }
+
+    const bookingCount = await Booking.countDocuments({
+      pitch: id,
+      $or: [{ status: "completed" }, { status: "cancelled" }],
+      ...searchQuery,
+    });
+
+    res.status(StatusCodes.OK).json({
+      bookings: pitchBookings,
+      total: bookingCount,
+      limit,
+      count: pitchBookings.length,
+    });
+  }
+};
+
+const getCurrentPitchBookings = async (req, res) => {
+  const { id } = req.params;
+  const { companyId, role } = req.user;
+  let { sort, select } = req.query;
+  const searchQuery = companyBookingQuery(req);
+  delete searchQuery?.pitch;
+  delete searchQuery?.status;
+  if (sort) {
+    sort = sort.split(",").join(" ");
+  } else {
+    sort = "-start";
+  }
+  if (select) {
+    select = select.split(",").join(" ");
+  } else {
+    select = "-__v";
+  }
+  const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+  const page = req.query.page ? parseInt(req.query.page) : 1;
+  const skip = (page - 1) * limit;
+  if (isNaN(page) || isNaN(limit)) {
+    throw new BadRequestError("Page and limit must be numbers");
+  }
+  if (page < 1 || limit < 1) {
+    throw new BadRequestError("Page and limit cannot be less than 1");
+  }
+  if (!id) {
+    throw new BadRequestError("Please provide required data");
+  }
+  if (role === "owner") {
+    const ownerSelectedFields =
+      "-__v -price.middlemanTax -price.middlemanTxId ";
+    const pitchBookings = await Booking.find({
+      pitch: id,
+      company: companyId,
+      $or: [{ status: "pending" }, { status: "confirmed" }],
+      ...searchQuery,
+    })
+      .select(select)
+      .select(ownerSelectedFields)
+      .limit(limit)
+      .skip(skip)
+      .sort(sort)
+      .lean()
+      .populate({
+        path: "pitch",
+        select:
+          "name location facilities specifications pricing media contact rating refundAllowed _id",
+      })
+      .populate({
+        path: "bookedBy",
+        select:
+          "name email profilePicture goalKeeper description phoneNumber _id",
+      })
+      .populate({
+        path: "cancel.by",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id ",
+      })
+      .populate({
+        path: "refunded.by",
+        select:
+          "name email profilePicture goalKeeper phone description logo phoneNumber _id",
+      });
+    if (!pitchBookings || pitchBookings.length === 0) {
+      throw new BadRequestError("No bookings found for this pitch");
+    }
+    const bookingCount = await Booking.countDocuments({
+      pitch: id,
+      company: companyId,
+      $or: [{ status: "pending" }, { status: "confirmed" }],
+      ...searchQuery,
+    });
+    res.status(StatusCodes.OK).json({
+      bookings: pitchBookings,
+      total: bookingCount,
+      limit,
+      count: pitchBookings.length,
+    });
+  }
+  if (role === "admin") {
+    const pitchBookings = await Booking.find({
+      pitch: id,
+      $or: [{ status: "pending" }, { status: "confirmed" }],
+      ...searchQuery,
+    })
+      .select(select)
+      .sort(sort)
+      .limit(limit)
+      .skip(skip)
+      .lean();
+    if (!pitchBookings || pitchBookings.length === 0) {
+      throw new BadRequestError("No booking found for this pitch");
+    }
+    const bookingCount = await Booking.countDocuments({
+      pitch: id,
+      $or: [{ status: "pending" }, { status: "confirmed" }],
+    });
+    res.status(StatusCodes.OK).json({
+      bookings: pitchBookings,
+      total: bookingCount,
+      limit,
+      count: pitchBookings.length,
+    });
+  }
+};
+
 const getSingleBooking = async (req, res) => {
   const { id } = req.params;
   const { role } = req.user;
@@ -1220,6 +1535,9 @@ module.exports = {
   getCompanyBookings,
   getPreviousCompanyBookings,
   getCurrentCompanyBookings,
+  getPitchBookings,
+  getPreviousPitchBookings,
+  getCurrentPitchBookings,
   getSingleBooking,
   updateBooking,
   cancelBookingUser,

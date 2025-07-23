@@ -162,7 +162,7 @@ const getMessages = async (req, res) => {
     throw new NotFoundError("Advert not found.");
   }
 
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     if (!advert.participants.some((p) => p.user.toString() === userId)) {
       throw new BadRequestError("You are not a participant of this advert.");
     }
@@ -218,7 +218,7 @@ const getMessages = async (req, res) => {
 const getUnseenMessages = async (req, res) => {
   const { userId, role } = req.user;
 
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const participantAdverts = await Advert.find({
       "participants.user": userId,
       isDeleted: false,
@@ -310,7 +310,7 @@ const getSingleMessage = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const userSelectedFields = "-__v -isDeleted -archived ";
     const message = await AdvertChatMessage.findOne({
       _id: id,
@@ -395,7 +395,7 @@ const softDeleteMessage = async (req, res) => {
     throw new BadRequestError("Please provide required data.");
   }
 
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const message = await AdvertChatMessage.findOne({
       _id: id,
       sender: userId,
@@ -473,7 +473,7 @@ const markMessageSeen = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide required data");
   }
-  if (role === "user") {
+  if (role === "user" || role === "companyOwner") {
     const advert = await Advert.findOne({
       _id: id,
       "participants.user": userId,
