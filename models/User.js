@@ -70,9 +70,18 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
     phoneNumber: {
-      type: Number,
+      type: String,
       match: [/^\+?[\d\s\-().]{7,20}$/, "Please provide a valid phone number."],
-      unique: true,
+      validate: {
+        validator: async function (value) {
+          if (!value) return true;
+
+          const user = await this.constructor.findOne({ phoneNumber: value });
+
+          return !user || user._id.equals(this._id);
+        },
+        message: "Phone number already exists.",
+      },
     },
 
     description: {

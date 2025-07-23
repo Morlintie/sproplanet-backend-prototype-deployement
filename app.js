@@ -30,6 +30,7 @@ const advertRouter = require("./routes/advertRouter");
 const invitationRouter = require("./routes/InvitationRouter");
 const advertChatRouter = require("./routes/advertChatRouter");
 const chatRouter = require("./routes/chatRouter");
+const pitchMetricRouter = require("./routes/pitchMetricRouter");
 
 //security
 const cors = require("cors");
@@ -79,6 +80,7 @@ app.use("/api/v1/advert", advertRouter);
 app.use("/api/v1/invitation", invitationRouter);
 app.use("/api/v1/advert-chat", advertChatRouter);
 app.use("/api/v1/chat", chatRouter);
+app.use("/api/v1/pitch-metric", pitchMetricRouter);
 
 //socket setup
 

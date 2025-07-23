@@ -18,6 +18,7 @@ const priceSchema = new mongoose.Schema(
     },
     pitchTxId: { type: String, trim: true, required: true },
     middlemanTxId: { type: String, trim: true, required: true },
+    paidAt: { type: Date, default: Date.now() },
   },
   { _id: false }
 );
