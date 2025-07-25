@@ -13,7 +13,7 @@ const {
   updateDeleteUserRequest,
   checkDeletionCode,
   updateDeleteUser,
-  deleteUser,
+
   getByGoogleId,
   sendFriendRequest,
   replyFriendRequest,
@@ -28,6 +28,7 @@ const {
   removeFromFriends,
   addFavoritePitch,
   removeFavoritePitch,
+  deleteUser,
 } = require("../controllers/userController");
 const router = express.Router();
 

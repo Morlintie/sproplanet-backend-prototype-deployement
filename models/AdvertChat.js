@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { decryptMessage } = require("../utils");
 
 const itemsSchema = new mongoose.Schema(
   {
@@ -46,11 +47,59 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/* chronological fetch */
 messageSchema.index({ advert: 1, createdAt: 1 });
 
-/* “unread for user X in advert Y” */
 messageSchema.index({ advert: 1, notSeenBy: 1 });
+
+messageSchema.post("find", function (docs) {
+  if (docs) {
+    docs.forEach((doc) => {
+      if (doc.content) {
+        doc.content = decryptMessage(doc.content);
+      }
+      if (doc.attachments) {
+        if (doc.attachments.caption) {
+          doc.attachments.caption = decryptMessage(doc.attachments.caption);
+        }
+        doc.attachments.items.forEach((item) => {
+          item.url = decryptMessage(item.url);
+        });
+      }
+    });
+  }
+});
+
+messageSchema.post("findOne", function (doc) {
+  if (doc) {
+    if (doc.content) {
+      doc.content = decryptMessage(doc.content);
+    }
+    if (doc.attachments) {
+      if (doc.attachments.caption) {
+        doc.attachments.caption = decryptMessage(doc.attachments.caption);
+      }
+      doc.attachments.items.forEach((item) => {
+        item.url = decryptMessage(item.url);
+      });
+    }
+  }
+});
+
+messageSchema.post("findOneAndUpdate", function (doc) {
+  if (doc) {
+    if (doc.content) {
+      doc.content = decryptMessage(doc.content);
+    }
+    if (doc.attachments) {
+      if (doc.attachments.caption) {
+        doc.attachments.caption = decryptMessage(doc.attachments.caption);
+      }
+      doc.attachments.items.forEach((item) => {
+        item.url = decryptMessage(item.url);
+      });
+    }
+  }
+});
 
 const AdvertChatMessage = mongoose.model("AdvertChatMessage", messageSchema);
 

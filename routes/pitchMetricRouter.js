@@ -20,6 +20,8 @@ const {
   bestCustomers,
   datePercentage,
   datePercentagePitch,
+  dailyEarned,
+  dailyEarnedPitch,
 } = require("../controllers/pitchMetricController");
 const roleMiddleware = require("../middlewares/roleMiddleware");
 const router = express.Router();
@@ -182,6 +184,22 @@ router.get(
     roleMiddleware(req, res, next, "owner", "admin");
   },
   datePercentagePitch
+);
+
+router.get(
+  "/daily-earned/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "owner", "admin");
+  },
+  dailyEarned
+);
+
+router.get(
+  "/daily-earned-pitch/:id",
+  (req, res, next) => {
+    roleMiddleware(req, res, next, "owner", "admin");
+  },
+  dailyEarnedPitch
 );
 
 module.exports = router;

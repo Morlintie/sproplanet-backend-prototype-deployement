@@ -2299,7 +2299,7 @@ const datePercentagePitch = async (req, res) => {
       {
         $project: {
           month: { $month: "$createdAt" },
-          weekday: { $dayOfWeek: "$createdAt" }, // 1 = Sunday, 2 = Monday, ..., 7 = Saturday
+          weekday: { $dayOfWeek: "$createdAt" },
         },
       },
       {
@@ -2437,6 +2437,493 @@ const datePercentagePitch = async (req, res) => {
   }
 };
 
+const dailyEarned = async (req, res) => {
+  const { companyId, role } = req.user;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (role === "owner") {
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(companyId),
+          createdAt: { $gte: yesterday, $lt: new Date() },
+          status: { $in: ["completed", "confirmed"] },
+          "price.paid": true,
+        },
+      },
+      {
+        $addFields: {
+          dayLabel: {
+            $cond: [{ $gte: ["$createdAt", today] }, "today", "yesterday"],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$dayLabel",
+          totalEarned: { $sum: "$price.hourlyRate" },
+          totalBookings: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              k: "$_id",
+              v: {
+                totalEarned: "$totalEarned",
+                totalBookings: "$totalBookings",
+              },
+            },
+          },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $arrayToObject: "$data",
+          },
+        },
+      },
+      {
+        $project: {
+          today: 1,
+          yesterday: 1,
+          earnedChangePercent: {
+            $cond: [
+              { $gt: ["$yesterday.totalEarned", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalEarned",
+                              "$yesterday.totalEarned",
+                            ],
+                          },
+                          "$yesterday.totalEarned",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+          bookingChangePercent: {
+            $cond: [
+              { $gt: ["$yesterday.totalBookings", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalBookings",
+                              "$yesterday.totalBookings",
+                            ],
+                          },
+                          "$yesterday.totalBookings",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      },
+    ]);
+
+    if (!bookings) {
+      return res.status(StatusCodes.OK).json({
+        dailyRatios: {},
+      });
+    }
+    res.status(StatusCodes.OK).json({
+      dailyRatios: bookings,
+    });
+  }
+  if (role === "admin") {
+    const { id } = req.params;
+    if (!id) {
+      throw new BadRequestError("Please provide require data");
+    }
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(id),
+          createdAt: { $gte: yesterday, $lt: new Date() },
+          status: { $in: ["completed", "confirmed"] },
+          "price.paid": true,
+        },
+      },
+      {
+        $addFields: {
+          dayLabel: {
+            $cond: [{ $gte: ["$createdAt", today] }, "today", "yesterday"],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$dayLabel",
+          totalEarned: { $sum: "$price.hourlyRate" },
+          totalBookings: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              k: "$_id",
+              v: {
+                totalEarned: "$totalEarned",
+                totalBookings: "$totalBookings",
+              },
+            },
+          },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $arrayToObject: "$data",
+          },
+        },
+      },
+      {
+        $project: {
+          today: 1,
+          yesterday: 1,
+          earnedChangePercent: {
+            $cond: [
+              { $gt: ["$yesterday.totalEarned", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalEarned",
+                              "$yesterday.totalEarned",
+                            ],
+                          },
+                          "$yesterday.totalEarned",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+          bookingChangePercent: {
+            $cond: [
+              { $gt: ["$yesterday.totalBookings", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalBookings",
+                              "$yesterday.totalBookings",
+                            ],
+                          },
+                          "$yesterday.totalBookings",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      },
+    ]);
+    if (!bookings) {
+      return res.status(StatusCodes.OK).json({
+        dailyRatios: {},
+      });
+    }
+    res.status(StatusCodes.OK).json({
+      dailyRatios: bookings,
+    });
+  }
+};
+
+const dailyEarnedPitch = async (req, res) => {
+  const { companyId, role } = req.user;
+  const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError("Please provide require data");
+  }
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (role === "owner") {
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(companyId),
+          pitch: new mongoose.Types.ObjectId(id),
+          createdAt: { $gte: yesterday, $lt: new Date() },
+          status: { $in: ["completed", "confirmed"] },
+          "price.paid": true,
+        },
+      },
+      {
+        $addFields: {
+          dayLabel: {
+            $cond: [{ $gte: ["$createdAt", today] }, "today", "yesterday"],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$dayLabel",
+          totalEarned: { $sum: "$price.hourlyRate" },
+          totalBookings: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              k: "$_id",
+              v: {
+                totalEarned: "$totalEarned",
+                totalBookings: "$totalBookings",
+              },
+            },
+          },
+        },
+      },
+
+      {
+        $replaceRoot: {
+          newRoot: {
+            $arrayToObject: "$data",
+          },
+        },
+      },
+      {
+        $project: {
+          today: 1,
+          yesterday: 1,
+          totalEarnedChangePercent: {
+            $cond: [
+              { $gt: ["$yesterday.totalEarned", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalEarned",
+                              "$yesterday.totalEarned",
+                            ],
+                          },
+                          "$yesterday.totalEarned",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+          bookingChangePercent: {
+            $cond: [
+              { $gt: ["$yesterday.totalBookings", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalBookings",
+                              "$yesterday.totalBookings",
+                            ],
+                          },
+                          "$yesterday.totalBookings",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      },
+    ]);
+    if (!bookings) {
+      return res.status(StatusCodes.OK).json({
+        dailyRatios: {},
+      });
+    }
+    res.status(StatusCodes.OK).json({
+      dailyRatios: bookings,
+    });
+  }
+  if (role === "admin") {
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          pitch: new mongoose.Types.ObjectId(id),
+          createdAt: { $gte: yesterday, $lt: new Date() },
+          status: { $in: ["completed", "confirmed"] },
+          "price.paid": true,
+        },
+      },
+      {
+        $addFields: {
+          dayLabel: {
+            $cond: [{ $gte: ["$createdAt", today] }, "today", "yesterday"],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$dayLabel",
+          totalEarned: { $sum: "$price.hourlyRate" },
+          totalBookings: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          data: {
+            $push: {
+              k: "$_id",
+              v: {
+                totalEarned: "$totalEarned",
+                totalBookings: "$totalBookings",
+              },
+            },
+          },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $arrayToObject: "$data",
+          },
+        },
+      },
+      {
+        $project: {
+          today: 1,
+          yesterday: 1,
+          totalEarnedChangePercent: {
+            $cond: [
+              { gt: ["$yesterday.totalEarned", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalEarned",
+                              "$yesterday.totalEarned",
+                            ],
+                          },
+                          "$yesterday.totalEarned",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+          bookingChangePercent: {
+            $cond: [
+              { gt: ["$yesterday.totalBookings", 0] },
+              {
+                $round: [
+                  {
+                    $multiply: [
+                      {
+                        $divide: [
+                          {
+                            $subtract: [
+                              "$today.totalBookings",
+                              "$yesterday.totalBookings",
+                            ],
+                          },
+                          "$yesterday.totalBookings",
+                        ],
+                      },
+                      100,
+                    ],
+                  },
+                  2,
+                ],
+              },
+              null,
+            ],
+          },
+        },
+      },
+    ]);
+    if (!bookings) {
+      return res.status(StatusCodes.OK).json({
+        dailyRatios: {},
+      });
+    }
+    res.status(StatusCodes.OK).json({
+      dailyRatios: bookings,
+    });
+  }
+};
+
 module.exports = {
   totalEarned,
   statusMetrics,
@@ -2458,4 +2945,6 @@ module.exports = {
   bestCustomers,
   datePercentage,
   datePercentagePitch,
+  dailyEarned,
+  dailyEarnedPitch,
 };

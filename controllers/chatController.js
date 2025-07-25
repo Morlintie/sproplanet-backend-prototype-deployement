@@ -127,6 +127,18 @@ const sendMessage = async (req, res) => {
     }
   });
   const message = await Chat.create(createObject);
+  if (message.content) {
+    message.content = decryptMessage(message.content);
+  }
+  if (message.attachments) {
+    if (message.attachments.caption) {
+      message.attachments.caption = decryptMessage(message.attachments.caption);
+    }
+    message.attachments.items = message.attachments.items.forEach((item) => {
+      item.url = decryptMessage(item.url);
+    });
+  }
+
   if (chatOnlineUsers[id]) {
     chatNamespace.to(chatOnlineUsers[id]).emit("individualNewMessage", {
       message,

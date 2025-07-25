@@ -4,7 +4,7 @@ const Advert = require("../models/Advert");
 const { chatNamespace, chatOnlineUsers } = require("../server/serverConfig");
 const { StatusCodes } = require("http-status-codes");
 const cloudinary = require("cloudinary").v2;
-const { encryptMessage } = require("../utils");
+const { encryptMessage, decryptMessage } = require("../utils");
 
 const sendMessage = async (req, res) => {
   const { id } = req.params;
@@ -137,6 +137,19 @@ const sendMessage = async (req, res) => {
     }
   });
   const message = await AdvertChatMessage.create(createObject);
+
+  if (message.content) {
+    message.content = decryptMessage(message.content);
+  }
+  if (message.attachments) {
+    if (message.attachments.caption) {
+      message.attachments.caption = decryptMessage(message.attachments.caption);
+    }
+    message.attachments.items.forEach((item) => {
+      item.url = decryptMessage(item.url);
+    });
+  }
+
   if (
     (await chatNamespace.in(id).fetchSockets()) &&
     (await chatNamespace.in(id).fetchSockets().length) > 0
@@ -578,6 +591,7 @@ const deleteMessage = async (req, res) => {
   ) {
     chatNamespace.to(message.advert.toString()).emit("messageDeleted", {
       messageId: id,
+      advertId: message.advert,
     });
   }
   res.status(StatusCodes.NO_CONTENT).json({

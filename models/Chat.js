@@ -62,8 +62,6 @@ directMessageSchema.pre("validate", function (next) {
   next();
 });
 
-
-
 directMessageSchema.post("find", function (docs) {
   docs.forEach((doc) => {
     if (doc.content) {
