@@ -155,7 +155,23 @@ const userSchema = new mongoose.Schema(
       type: [{ type: mongoose.Types.ObjectId, ref: "Pitch", default: [] }],
     }, // In the future an algorithm that makes the pitches suggested more for the users.
   },
-  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: (_, ret) => {
+        delete ret.id;
+      },
+    },
+    toObject: {
+      virtuals: true,
+      versionKey: false,
+      transform: (_, ret) => {
+        delete ret.id;
+      },
+    },
+  }
 );
 
 userSchema.pre("save", async function (next) {

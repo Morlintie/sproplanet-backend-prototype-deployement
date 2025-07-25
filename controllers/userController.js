@@ -33,7 +33,7 @@ const getManyUser = async (req, res) => {
     "name email role school age profilePicture friends goalKeeper location createdAt updatedAt _id ";
   const users = await User.find({
     name: { $regex: userSearch, $options: "i" },
-    isDeleted: false,
+
     _id: { $ne: userId },
   })
     .select(userSelectedFields)
@@ -80,7 +80,7 @@ const getSingleUser = async (req, res) => {
 
   const userSelectedFields =
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
-  const user = await User.findOne({ _id: id, isDeleted: false })
+  const user = await User.findOne({ _id: id })
     .select(userSelectedFields)
     .populate({
       path: "friends",
@@ -196,7 +196,7 @@ const getManyGoalkeeper = async (req, res) => {
     "name email role school age profilePicture friends goalKeeper location createdAt _id";
   const users = await User.find({
     name: { $regex: userSearch },
-    isDeleted: false,
+
     goalKeeper: true,
   })
     .select(userSelectedFields)
@@ -229,9 +229,7 @@ const sendFriendRequest = async (req, res) => {
     throw new BadRequestError("Please provide user credentials.");
   }
 
-  const sendUser = await User.findOne({ _id: id, isDeleted: false }).select(
-    "-password"
-  );
+  const sendUser = await User.findOne({ _id: id }).select("-password");
 
   const currentUser = await User.findOne({ _id: userId });
 
@@ -546,7 +544,7 @@ const replyFriendRequest = async (req, res) => {
     throw new BadRequestError("Please provide required data.");
   }
 
-  const sendUser = await User.findOne({ _id: id, isDeleted: false });
+  const sendUser = await User.findOne({ _id: id });
   const currentUser = await User.findOne({ _id: userId });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
@@ -571,7 +569,7 @@ const replyFriendRequest = async (req, res) => {
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   if (accepted === "true") {
     await User.findOneAndUpdate(
-      { _id: id, isDeleted: false },
+      { _id: id },
       {
         $pull: { selfFriendRequests: currentUser._id },
         $push: {
@@ -630,7 +628,7 @@ const replyFriendRequest = async (req, res) => {
 
   if (accepted === "false") {
     await User.findOneAndUpdate(
-      { _id: id, isDeleted: false },
+      { _id: id },
       { $pull: { selfFriendRequests: currentUser._id } },
       { new: true, runValidators: true, timestamps: false }
     );
@@ -695,7 +693,7 @@ const revokeSelfFriendRequest = async (req, res) => {
   if (!currentUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  const sendUser = await User.findOne({ _id: id, isDeleted: false });
+  const sendUser = await User.findOne({ _id: id });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -716,7 +714,7 @@ const revokeSelfFriendRequest = async (req, res) => {
   const userSelectedFields =
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
   await User.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    { _id: id },
     { $pull: { friendRequests: currentUser._id } },
     { new: true, runValidators: true }
   );
@@ -780,7 +778,7 @@ const exitFromFriends = async (req, res) => {
   if (!currentUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  const sendUser = await User.findOne({ _id: id, isDeleted: false });
+  const sendUser = await User.findOne({ _id: id });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -851,7 +849,7 @@ const removeFromFriends = async (req, res) => {
   if (!currentUser) {
     throw new NotFoundError("User couldn't found.");
   }
-  const sendUser = await User.findOne({ _id: id, isDeleted: false });
+  const sendUser = await User.findOne({ _id: id });
   if (!sendUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -863,7 +861,7 @@ const removeFromFriends = async (req, res) => {
     "-password -__v -validationNumber -validationExpirationDate -isValid -passwordNumber -passwordExpirationDate -deleteNumber -deleteExpirationDate -archived -isDeleted";
 
   await User.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    { _id: id },
     { $pull: { friends: currentUser._id } },
     { new: true, runValidators: true }
   );
@@ -919,7 +917,7 @@ const updateDeleteUserRequest = async (req, res) => {
   if (!password) {
     throw new BadRequestError("Please provide required data.");
   }
-  const oldUser = await User.findOne({ _id: userId });
+  const oldUser = await User.findOne({ _id: userId, isDeleted: false });
   if (!oldUser) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -936,7 +934,7 @@ const updateDeleteUserRequest = async (req, res) => {
   const fiveMinutes = new Date(Date.now() + 1000 * 60 * 5);
 
   const user = await User.findOneAndUpdate(
-    { _id: userId },
+    { _id: userId, isDeleted: false },
     { deleteNumber: code, deleteExpirationDate: fiveMinutes },
     { new: true, runValidators: true }
   );
@@ -956,7 +954,7 @@ const checkDeletionCode = async (req, res) => {
   if (!code) {
     throw new BadRequestError("Please provide required data.");
   }
-  const user = await User.findOne({ _id: userId });
+  const user = await User.findOne({ _id: userId, isDeleted: false });
   if (!user) {
     throw new NotFoundError("User couldn't found.");
   }
@@ -970,7 +968,7 @@ const checkDeletionCode = async (req, res) => {
   }
 
   await User.findOneAndUpdate(
-    { _id: userId },
+    { _id: userId, isDeleted: false },
     { deleteNumber: "", deleteExpirationDate: null },
     { new: true, runValidators: true }
   );
@@ -987,7 +985,7 @@ const updateDeleteUser = async (req, res) => {
   }
 
   await User.findOneAndUpdate(
-    { _id: userId },
+    { _id: userId, isDeleted: false },
     { isDeleted: true, archived: true },
     { new: true, runValidators: true, timestamps: true }
   );
@@ -1015,11 +1013,11 @@ const deleteUser = async (req, res) => {
   if (!id) {
     throw new BadRequestError("Please provide user credentials.");
   }
-  const user = await User.findOne({ _id: id, isDeleted: false });
+  const user = await User.findOne({ _id: id });
   if (!user) {
     throw new NotFoundError("User couldn't found.");
   }
-  await User.findOneAndDelete({ _id: id, isDeleted: false });
+  await User.findOneAndDelete({ _id: id });
 
   res.status(StatusCodes.NO_CONTENT).json({ msg: "User has been deleted." });
 };
@@ -1031,7 +1029,7 @@ const deleteRecentlySearchedUser = async (req, res) => {
     throw new BadRequestError("Please provide required data.");
   }
   const currentUser = await User.findOne({ _id: userId });
-  const user = await User.findOne({ _id: id, isDeleted: false });
+  const user = await User.findOne({ _id: id });
   if (!currentUser || !user) {
     throw new NotFoundError("User not found.");
   }

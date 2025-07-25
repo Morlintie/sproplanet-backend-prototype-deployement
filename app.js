@@ -150,6 +150,28 @@ chatNamespace.on("connection", (socket) => {
     console.log(`Client with id: ${socket.id} left room: ${roomId}`);
   });
 
+  socket.on("typingRoom", ({ roomId, userId }) => {
+    socket.to(roomId).emit("typingInRoom", { userId });
+  });
+
+  socket.on("stopTypingRoom", ({ roomId, userId }) => {
+    socket.to(roomId).emit("stopTypingInRoom", { userId });
+  });
+
+  socket.on("typingPrivate", ({ userId, receiverId }) => {
+    const receiverSocketId = chatOnlineUsers[receiverId];
+    if (receiverSocketId) {
+      socket.to(receiverSocketId).emit("typingInPrivate", { userId });
+    }
+  });
+
+  socket.on("stopTypingPrivate", ({ userId, receiverId }) => {
+    const receiverSocketId = chatOnlineUsers[receiverId];
+    if (receiverSocketId) {
+      socket.to(receiverSocketId).emit("stopTypingInPrivate", { userId });
+    }
+  });
+
   socket.on("disconnect", () => {
     for (const [key, value] of Object.entries(chatOnlineUsers)) {
       if (value === socket.id) {
