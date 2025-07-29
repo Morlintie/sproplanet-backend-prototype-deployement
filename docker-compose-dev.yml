@@ -1,0 +1,45 @@
+version: "3.8"
+services:
+  app:
+    image: sporplanet-initial-backend-dev
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: development
+    init: true
+    environment:
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - ORIGIN_FRONTEND=${ORIGIN_FRONTEND}
+      - CLOUD_NAME=${CLOUD_NAME}
+      - CLOUD_KEY=${CLOUD_KEY}
+      - CLOUD_SECRET=${CLOUD_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ETHEREAL_USER=${ETHEREAL_USER}
+      - ETHEREAL_PASS=${ETHEREAL_PASS}
+    volumes:
+      - type: bind
+        source: ./src
+        target: /usr/src/app
+      - /usr/src/app/node_modules
+    networks: -sporplanet-dev-network
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+  nginx:
+    image: sporplanet-nginx-dev
+    build:
+      dockerfile: Dockerfile.nginx
+    init: true
+    networks:
+      - sporplanet-dev-network
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+networks:
+  sporplanet-dev-network:
+    driver: bridge
