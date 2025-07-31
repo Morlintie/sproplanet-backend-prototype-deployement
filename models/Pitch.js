@@ -97,6 +97,7 @@ const pitchSchema = new mongoose.Schema(
         default: false,
       },
       shoeRenting: { type: Boolean, default: false },
+      camera: { type: Boolean, default: false },
       otherAmenities: [String], // cafe, wifi, etc.
     },
 
@@ -105,6 +106,11 @@ const pitchSchema = new mongoose.Schema(
         type: Number,
         required: [true, "Please provide hourly rate."],
         min: [0, "Hourly rate cannot be negative"],
+      },
+      nightHourlyRate: {
+        type: Number,
+        required: [true, "Please provide night hourly rate."],
+        min: [0, "Night hourly rate cannot be negative"],
       },
       currency: {
         type: String,
