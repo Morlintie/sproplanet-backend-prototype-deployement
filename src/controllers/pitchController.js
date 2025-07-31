@@ -49,8 +49,16 @@ const createPitch = async (req, res) => {
 
 const getAllPitches = async (req, res) => {
   const role = req?.user?.role;
-  const { city, district, isIndoor, hasLighting, rating, sort, refundAllowed } =
-    req.query;
+  const {
+    city,
+    district,
+    isIndoor,
+    hasLighting,
+    rating,
+    sort,
+    refundAllowed,
+    camera,
+  } = req.query;
   let { search, recommendedCapacity, facilities, pricing } = req.body;
   if (role === "banned") {
     throw new ForbiddenError(
@@ -159,11 +167,14 @@ const getAllPitches = async (req, res) => {
       [adjustedRatingArray[1]]: parseFloat(adjustedRatingArray[2]),
     };
   }
+  if (camera) {
+    searchQuery["facilities.camera"] = camera === "true" ? true : false;
+  }
   if (sort) {
     sortBy = sort.split(",").join(" ");
   }
 
-  const limit = 20;
+  const limit = 18;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
   const userSelectedFields = "-status -__v -totalBookings -totalRevenue";
@@ -198,7 +209,7 @@ const getAllVicinityPitches = async (req, res) => {
   if (!coordinates || !Array.isArray(coordinates) || coordinates.length !== 2) {
     throw new BadRequestError("Please provide required data.");
   }
-  const limit = 20;
+  const limit = 18;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
   const userSelectedFields = "-status -__v -totalBookings -totalRevenue";
@@ -309,7 +320,7 @@ const getAdminPitches = async (req, res) => {
   }
 
   const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
+  const limit = Number(req.query.limit) || 18;
   const skip = (page - 1) * limit;
   const adminQuery = adminPitchQuery(req);
   const pitches = await Pitch.find({
@@ -460,6 +471,10 @@ const getCompanyUserPitches = async (req, res) => {
         $regex: facilities.otherAmenities || "",
         $options: "i",
       };
+    }
+    if (facilities.camera) {
+      searchQuery["facilities.camera"] =
+        facilities.camera === "true" ? true : false;
     }
   }
 
@@ -654,7 +669,7 @@ const getCompanyUserPitches = async (req, res) => {
     sortBy = sort.split(",").join(" ");
   }
 
-  const limit = 20;
+  const limit = 18;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * limit;
   const userSelectedFields = " -__v ";
@@ -903,6 +918,7 @@ const updateCompanyUserPitches = async (req, res) => {
     lastMaintenanceDate,
     nextMaintenanceDate,
     refundAllowed,
+    camera,
   } = req.body;
 
   const update = {
@@ -940,6 +956,8 @@ const updateCompanyUserPitches = async (req, res) => {
         : shoeRenting === "true"
         ? true
         : false,
+    "facilities.camera":
+      camera === undefined ? undefined : camera === "true" ? true : false,
     "pricing.hourlyRate": hourlyRate,
     "pricing.currency": currency,
     "pricing.specialDayMultiplier": specialDayMultiplier,
@@ -1012,6 +1030,7 @@ const updateCompanyUserPitch = async (req, res) => {
     lastMaintenanceDate,
     nextMaintenanceDate,
     refundAllowed,
+    camera,
   } = req.body;
   if (!id) {
     throw new BadRequestError("Please provide required data.");
@@ -1060,6 +1079,8 @@ const updateCompanyUserPitch = async (req, res) => {
         : shoeRenting === "true"
         ? true
         : false,
+    "facilities.camera":
+      camera === undefined ? undefined : camera === "true" ? true : false,
     "pricing.hourlyRate": hourlyRate,
     "pricing.currency": currency,
     "pricing.specialDayMultiplier": specialDayMultiplier,

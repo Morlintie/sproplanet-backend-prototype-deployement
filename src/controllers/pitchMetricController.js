@@ -1,5 +1,5 @@
 const Booking = require("../models/Booking");
-const { StatusCodes } = require("http-status-codes");
+const { StatusCodes, TOO_MANY_REQUESTS } = require("http-status-codes");
 const { NotFoundError, BadRequestError } = require("../errors");
 const mongoose = require("mongoose");
 const PitchReview = require("../models/PitchReview");
@@ -2924,6 +2924,112 @@ const dailyEarnedPitch = async (req, res) => {
   }
 };
 
+const dailyStatics = async (req, res) => {
+  const { companyId, role } = req.user;
+  if (role === "owner") {
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(companyId),
+          status: { $in: ["completed", "confirmed"] },
+          "price.paid": true,
+        },
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          totalBookings: { $sum: 1 },
+          totalEarned: { $sum: "$price.hourlyRate" },
+        },
+      },
+      {
+        $project: {
+          day: {
+            $arrayElemAt: [
+              [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+              ],
+              { $subtract: ["$_id", 1] },
+            ],
+          },
+          totalBookings: 1,
+          totalEarned: 1,
+          _id: 0,
+        },
+      },
+    ]);
+    if (!bookings || bookings.length === 0) {
+      return res.status(StatusCodes.OK).json({
+        dailyStatics: [],
+      });
+    }
+    res.status(StatusCodes.OK).json({
+      dailyStatics: bookings,
+    });
+  }
+  if (role === "admin") {
+    const { id } = req.params;
+    if (!id) {
+      throw new BadRequestError("Please provide required data");
+    }
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          company: new mongoose.Types.ObjectId(id),
+          status: { $in: ["completed", "confirmed"] },
+          "price.paid": true,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dayOfWeek: "$createdAt",
+          },
+          totalBookings: { $sum: 1 },
+          totalEarned: { $sum: "$price.hourlyRate" },
+        },
+      },
+      {
+        $project: {
+          day: {
+            $arrayElemAt: [
+              [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+              ],
+              { $subtract: ["$_id", 1] },
+            ],
+          },
+          totalBookings: 1,
+          totalEarned: 1,
+          _id: 0,
+        },
+      },
+    ]);
+    if (!bookings || bookings.length === 0) {
+      return res.status(StatusCodes.OK).json({
+        dailyStatics: [],
+      });
+    }
+    res.status(StatusCodes.OK).json({
+      dailyStatics: bookings,
+    });
+  }
+};
+
 module.exports = {
   totalEarned,
   statusMetrics,
@@ -2947,4 +3053,5 @@ module.exports = {
   datePercentagePitch,
   dailyEarned,
   dailyEarnedPitch,
+  dailyStatics,
 };
